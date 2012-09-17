@@ -1,6 +1,7 @@
-""" Module: asana_requester
+""" Module: asana_foreman
 
-All functions for interacting with Asana.
+AsanaForeman subclasses Foreman and handles all interaction between Jackalope
+and Asana.
 
 """
 # ran ./setup.py on pandemicsyn / asana
@@ -9,7 +10,7 @@ from asana import asana
 
 import settings
 
-from requester import Requester, Task
+from foreman import Foreman, Task
 
 
 FIELD_TYPE = "asana"
@@ -19,7 +20,7 @@ FIELD_PRICE = "price"
 FIELD_NOTES = "notes"
 
 
-class AsanaRequester(Requester):
+class AsanaForeman(Foreman):
 
     """ Connect with Asana to allow requests.
 
@@ -31,26 +32,26 @@ class AsanaRequester(Requester):
 
 
     def __init__(self):
-        """ Construct AsanaRequester. """
+        """ Construct AsanaForeman. """
         self._asana_api = asana.AsanaAPI(
                 settings.ASANA_API_KEY,
                 debug=True)
-        self._workspaces = AsanaRequester.produce_dict(
+        self._workspaces = AsanaForeman.produce_dict(
                 self._asana_api.list_workspaces())
 
 
     def get_tasks(self):
         """ Return the Tasks that will be done. """
-        test_workspace_id = AsanaRequester.retrieve_id(
+        test_workspace_id = AsanaForeman.retrieve_id(
                 self._workspaces.get(settings.TEST_WORKSPACE_ID))
 
-        tags = AsanaRequester.produce_dict(
+        tags = AsanaForeman.produce_dict(
                 self._asana_api.get_tags(test_workspace_id))
 
-        test_tag_id = AsanaRequester.retrieve_id(
+        test_tag_id = AsanaForeman.retrieve_id(
                 tags.get(settings.JACKALOPE_TAG_ID))
 
-        short_tasks = AsanaRequester.produce_dict(
+        short_tasks = AsanaForeman.produce_dict(
                 self._asana_api.get_tag_tasks(test_tag_id))
 
         tasks = []
@@ -69,7 +70,7 @@ class AsanaRequester(Requester):
     @staticmethod
     def produce_dict(asana_list):
         """ Convert the list into a dict keyed on ID. """
-        return {AsanaRequester.retrieve_id(a): a for a in asana_list}
+        return {AsanaForeman.retrieve_id(a): a for a in asana_list}
 
 
 class AsanaTask(Task):
@@ -77,7 +78,7 @@ class AsanaTask(Task):
     """ Construct a Task using Asana task data.
 
     Required:
-    str _type           Requester type.
+    str _type           Foreman type.
     id _id              The id of the task, pulled from the source.
     str _name           The name of the task, pulled from the source.
     int _price          The price of the task in US Dollars.

@@ -5,12 +5,12 @@ Jackalope Test to mess around with connecting the Asana API to the TaskRabbit
 API.
 
 """
-from requesters.asana_requester import AsanaRequester
+from foreman.asana_foreman import AsanaForeman
 
 
 def main():
-    requester = AsanaRequester()
-    tasks = requester.get_tasks()
+    foreman = AsanaForeman()
+    tasks = foreman.get_tasks()
 
     for t in tasks.values():
         print "id: {}".format(t.id)

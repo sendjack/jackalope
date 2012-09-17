@@ -1,6 +1,8 @@
-""" Module: requester
+""" Module: foreman
 
-An outline of how a generic Requester should be structured.
+Foreman is the base class for all interactions with task creation APIs. These
+external services act as 'foremen' for task creation and assignment. Each
+service/API will have it's own subclass.
 
 """
 from util.decorators import constant
@@ -38,18 +40,18 @@ class _Status(object):
 STATUS = _Status()
 
 
-class Requester(object):
+class Foreman(object):
 
-    """ Abstract superclass for connecting to external request apis. """
+    """ Abstract superclass for connecting to external foreman apis. """
 
 
     def __init__(self):
-        """ Construct Requester. """
+        """ Construct Foreman. """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
     def get_tasks(self):
-        """ Return the Tasks that will be done. """
+        """ Return the Tasks that to do. """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
@@ -59,7 +61,7 @@ class Task(object):
 
     Required:
     str _status     The Status of the Task
-    str _type       Requester type.
+    str _type       Foreman type.
     id _id          The id of the task, pulled from the source.
     str _name       The name of the task, pulled from the source.
     int _price      The price of the task in US Dollars.
