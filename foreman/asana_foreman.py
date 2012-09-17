@@ -9,9 +9,9 @@ import xml.etree.cElementTree as ET
 from asana import asana
 
 import settings
+from spec.foreman import ForemanSpec
 
-from foreman import Foreman, Task
-
+from base import Foreman
 
 FIELD_TYPE = "asana"
 FIELD_ID = "id"
@@ -40,8 +40,8 @@ class AsanaForeman(Foreman):
                 self._asana_api.list_workspaces())
 
 
-    def get_tasks(self):
-        """ Return the Tasks that will be done. """
+    def get_specs(self):
+        """ Return ForemanSpecs from the Foreman's service. """
         test_workspace_id = AsanaForeman.retrieve_id(
                 self._workspaces.get(settings.TEST_WORKSPACE_ID))
 
@@ -51,14 +51,70 @@ class AsanaForeman(Foreman):
         test_tag_id = AsanaForeman.retrieve_id(
                 tags.get(settings.JACKALOPE_TAG_ID))
 
-        short_tasks = AsanaForeman.produce_dict(
+        short_asana_tasks = AsanaForeman.produce_dict(
                 self._asana_api.get_tag_tasks(test_tag_id))
 
-        tasks = []
-        for task_id in short_tasks.keys():
-            tasks.append(AsanaTask(self._asana_api.get_task(task_id)))
+        specs = []
+        for asana_task_id in short_asana_tasks.keys():
+            spec = self._construct_spec(
+                    self._asana_api.get_task(asana_task_id))
+            specs.append(spec)
 
-        return {t.id: t for t in tasks}
+        return {s.id: s for s in specs}
+
+
+    def _construct_spec(self, raw_spec):
+        """ Construct Spec from the raw spec.
+
+        Required:
+        dict raw_spec       The raw spec from the data source.
+
+        Return:
+        ForemanSpec         The Spec built from the raw spec.
+
+        """
+        asana_task = raw_spec  # accessing asana specific fields
+
+        # get required  mapped fields
+        type = FIELD_TYPE
+        id = asana_task[FIELD_ID]
+        name = asana_task[FIELD_NAME]
+
+        # get required embedded fields
+        price = AsanaForeman._extract_field(asana_task, FIELD_PRICE)
+
+        # get optional mapped fields
+        description = AsanaForeman._extract_description(asana_task)
+
+        # get optional embedded fields
+
+        spec = ForemanSpec(id, type, name, price)
+        spec.set_description(description)
+
+        return spec
+
+
+    @staticmethod
+    def _extract_description(asana_task):
+        """ Use the "notes" field but remove the embedded content. """
+        xml_blob = AsanaForeman._convert_field_to_xml(
+                asana_task.get(FIELD_NOTES))
+        return ET.XML(xml_blob).text.strip()
+
+
+    @staticmethod
+    def _extract_field(asana_task, field):
+        """ Extract the embedded field in "notes" and return it. """
+        xml_blob = AsanaForeman._convert_field_to_xml(
+                asana_task.get(FIELD_NOTES))
+        elem = ET.XML(xml_blob)
+        return elem.find(field).text.strip()
+
+
+    @staticmethod
+    def _convert_field_to_xml(field):
+        """ Converts a field to xml by wrapping it in xml tags. """
+        return "<blob>{}</blob>".format(field)
 
 
     @staticmethod
@@ -71,63 +127,3 @@ class AsanaForeman(Foreman):
     def produce_dict(asana_list):
         """ Convert the list into a dict keyed on ID. """
         return {AsanaForeman.retrieve_id(a): a for a in asana_list}
-
-
-class AsanaTask(Task):
-
-    """ Construct a Task using Asana task data.
-
-    Required:
-    str _type           Foreman type.
-    id _id              The id of the task, pulled from the source.
-    str _name           The name of the task, pulled from the source.
-    int _price          The price of the task in US Dollars.
-
-    Optional:
-    str _description    Task description
-
-    """
-
-
-    def _construct_task(self, proto_task):
-        """ Construct Task.
-
-        Required:
-        dict proto_task     The raw task from the data source.
-
-        """
-        asana_task = proto_task  # accessing asana specific fields
-
-        # set required  mapped fields
-        self._type = FIELD_TYPE
-        self._id = asana_task[FIELD_ID]
-        self._name = asana_task[FIELD_NAME]
-
-        # set required embedded fields
-        self._price = AsanaTask._extract_field(asana_task, FIELD_PRICE)
-
-        # set optional mapped fields
-        self._description = AsanaTask._extract_description(asana_task)
-
-        # set optional embedded fields
-
-
-    @staticmethod
-    def _extract_description(asana_task):
-        """ Use the "notes" field but remove the embedded content. """
-        xml_blob = AsanaTask._convert_field_to_xml(asana_task.get(FIELD_NOTES))
-        return ET.XML(xml_blob).text.strip()
-
-
-    @staticmethod
-    def _extract_field(asana_task, field):
-        """ Extract the embedded field in "notes" and return it. """
-        xml_blob = AsanaTask._convert_field_to_xml(asana_task.get(FIELD_NOTES))
-        elem = ET.XML(xml_blob)
-        return elem.find(field).text.strip()
-
-
-    @staticmethod
-    def _convert_field_to_xml(field):
-        """ Converts a field to xml by wrapping it in xml tags. """
-        return "<blob>{}</blob>".format(field)

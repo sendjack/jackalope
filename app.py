@@ -10,14 +10,14 @@ from foreman.asana_foreman import AsanaForeman
 
 def main():
     foreman = AsanaForeman()
-    tasks = foreman.get_tasks()
+    specs = foreman.get_specs()
 
-    for t in tasks.values():
-        print "id: {}".format(t.id)
-        print "name: {}".format(t.name)
-        print "price: {}".format(t.price)
-        print "description: {}".format(t.description)
-        print "ready?: {}".format(t.is_task_ready())
+    for s in specs.values():
+        print "id: {}".format(s.id)
+        print "name: {}".format(s.name)
+        print "price: {}".format(s.price)
+        print "description: {}".format(s.description)
+        print "ready?: {}".format(s.is_spec_ready())
         print ""
 
 
