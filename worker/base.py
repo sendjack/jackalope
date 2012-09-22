@@ -87,6 +87,17 @@ class ServiceWorker(object):
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
+    def _produce_dict(self, raw_tasks):
+        """ Convert the list of raw tasks into a dict keyed on 'id'. """
+        return {self._retrieve_id(t): t for t in raw_tasks}
+
+
+    @staticmethod
+    def _retrieve_id(raw_task):
+        """ Get the 'id' from the raw_task. """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
 class Employer(ServiceWorker):
 
     """ Abstract superclass for interacting with Employer (e.g., project

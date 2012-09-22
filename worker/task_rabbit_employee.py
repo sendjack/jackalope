@@ -73,9 +73,7 @@ class TaskRabbitEmployee(Employee):
 
         """
         items_dict = self._get(TASKS_PATH)
-        task_rabbit_task_list = items_dict[FIELD_ITEMS]
-        # TODO make this dictionary happen in Foreman or ServiceWorker
-        task_rabbit_tasks = {t[FIELD_ID]: t for t in task_rabbit_task_list}
+        task_rabbit_tasks = self._produce_dict(items_dict[FIELD_ITEMS])
 
         tasks = []
         for task_rabbit_task_id in task_rabbit_tasks.keys():
@@ -205,3 +203,10 @@ class TaskRabbitEmployee(Employee):
         tr_task_wrapper = {}
         tr_task_wrapper["task"] = tr_task
         return tr_task_wrapper
+
+
+    @staticmethod
+    def _retrieve_id(raw_task):
+        """ Get the 'id' from the raw task. """
+        task_rabbit_task = raw_task  # need to access task rabbit fields.
+        return task_rabbit_task[FIELD_ID]

@@ -36,7 +36,7 @@ class AsanaEmployer(Employer):
         self._asana_api = asana.AsanaAPI(
                 settings.ASANA_API_KEY,
                 debug=True)
-        self._workspaces = AsanaEmployer.produce_dict(
+        self._workspaces = self._produce_dict(
                 self._asana_api.list_workspaces())
 
 
@@ -53,16 +53,16 @@ class AsanaEmployer(Employer):
         dict    all the Tasks keyed on id
 
         """
-        test_workspace_id = AsanaEmployer.retrieve_id(
+        test_workspace_id = AsanaEmployer._retrieve_id(
                 self._workspaces.get(settings.TEST_WORKSPACE_ID))
 
-        tags = AsanaEmployer.produce_dict(
+        tags = self._produce_dict(
                 self._asana_api.get_tags(test_workspace_id))
 
-        test_tag_id = AsanaEmployer.retrieve_id(
+        test_tag_id = AsanaEmployer._retrieve_id(
                 tags.get(settings.JACKALOPE_TAG_ID))
 
-        short_asana_tasks = AsanaEmployer.produce_dict(
+        short_asana_tasks = self._produce_dict(
                 self._asana_api.get_tag_tasks(test_tag_id))
 
         tasks = {}
@@ -102,7 +102,7 @@ class AsanaEmployer(Employer):
         task = Task(id, service, name, price)
         task.set_description(description)
 
-        return task 
+        return task
 
 
     @staticmethod
@@ -129,12 +129,7 @@ class AsanaEmployer(Employer):
 
 
     @staticmethod
-    def retrieve_id(asana_object):
-        """ Get the ID from the asana_object. """
-        return asana_object[FIELD_ID]
-
-
-    @staticmethod
-    def produce_dict(asana_list):
-        """ Convert the list into a dict keyed on ID. """
-        return {AsanaEmployer.retrieve_id(a): a for a in asana_list}
+    def _retrieve_id(raw_task):
+        """ Get the 'id' from the raw task. """
+        asana_task = raw_task  # need to access asana fields.
+        return asana_task[FIELD_ID]
