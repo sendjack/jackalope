@@ -10,7 +10,7 @@ import oauth2
 import json
 
 import settings
-from spec import Spec
+from task import Task
 
 from base import Employee
 
@@ -59,49 +59,44 @@ class TaskRabbitEmployee(Employee):
                 #header_format=HEADER_FORMAT)
 
 
-    def read_spec(self, spec_id):
-        """ Connect to Employee's service and return the requested spec.
+    def read_task(self, task_id):
+        """ Connect to Worker's service and return the requested Task."""
+        raw_task = self._get("{}/{}".format(TASKS_PATH, str(task_id)))
+        return self._construct_task(raw_task)
+
+
+    def read_tasks(self):
+        """ Connect to Worker's service and return all tasks.
 
         Return:
-        Spec    the requested spec
+        dict    all the Tasks keyed on id
 
         """
-        raw_spec = self._get("{}/{}".format(TASKS_PATH, str(spec_id)))
-        return self._construct_spec(raw_spec)
+        items_dict = self._get(TASKS_PATH)
+        task_rabbit_task_list = items_dict[FIELD_ITEMS]
+        # TODO make this dictionary happen in Foreman or ServiceWorker
+        task_rabbit_tasks = {t[FIELD_ID]: t for t in task_rabbit_task_list}
+
+        tasks = []
+        for task_rabbit_task_id in task_rabbit_tasks.keys():
+            task = self._construct_task(task_rabbit_tasks[task_rabbit_task_id])
+            tasks[task.id] = task
+
+        return tasks
 
 
-    def read_specs(self):
-        """ Connect to Employee's service and return all specs.
-
-        Return:
-        dict    all the Specs keyed on id
-
-        """
-        task_rabbit_tasks = self._get(TASKS_PATH)
-        raw_specs = task_rabbit_tasks[FIELD_ITEMS]
-        # TODO make this dictionary happen in TaskManager
-        raw_spec_dict = {s[FIELD_ID]: s for s in raw_specs}
-
-        specs = []
-        for task_rabbit_task_id in raw_spec_dict.keys():
-            spec = self._construct_spec(raw_spec_dict[task_rabbit_task_id])
-            specs[spec.id] = spec
-
-        return specs
-
-
-    def create_spec(self, employee_spec):
-        """ Use a Employee's Spec to create a spec in the Employee's Service.
+    def create_task(self, employee_task):
+        """ Use a Employee's Task to create a task in the Employee's Service.
 
         Required:
-        Spec employee_spec the Employee's Spec.
+        Task employee_task      the Employee's Task.
 
         Return:
         bool                True is successful
 
         """
-        spec_dict = self._deconstruct_spec(employee_spec)
-        return self._post(TASKS_PATH, spec_dict)
+        raw_task_dict = self._deconstruct_task(employee_task)
+        return self._post(TASKS_PATH, raw_task_dict)
 
 
     def _get(self, path):
@@ -163,17 +158,17 @@ class TaskRabbitEmployee(Employee):
         return response.parsed
 
 
-    def _construct_spec(self, raw_spec):
-        """ Construct Spec from the raw spec.
+    def _construct_task(self, raw_task):
+        """ Construct Task from the raw task.
 
         Required:
-        dict raw_spec   The raw spec from the data source
+        dict raw_task   The raw task from the data source
 
         Return:
-        Spec            The Spec built from the raw spec.
+        Task            The Task built from the raw task.
 
         """
-        tr_task = raw_spec  # accessing task rabbit specific fields
+        tr_task = raw_task  # accessing task rabbit specific fields
 
         # get required mapped fields
         service = FIELD_SERVICE
@@ -184,28 +179,28 @@ class TaskRabbitEmployee(Employee):
         price = tr_task.get(FIELD_PRICE)
         description = tr_task.get(FIELD_DESCRIPTION)
 
-        spec = Spec(id, service, name, price)
-        spec.set_description(description)
+        task = Task(id, service, name, price)
+        task.set_description(description)
 
-        return spec
+        return task
 
 
-    def _deconstruct_spec(self, employee_spec):
-        """ Deconstruct Spec into a raw spec.
+    def _deconstruct_task(self, employee_task):
+        """ Deconstruct Task into a raw task.
 
         Required:
-        Spec employee_spec  The Spec to deconstruct into a dict
+        Task employee_task  The Task to deconstruct into a dict
 
         Return:
-        dict                The raw spec to send to send to the Service
+        dict                The raw task to send to send to the Service
 
         """
         tr_task = {}
 
-        # tr_task[FIELD_ID] = employee_spec.id
-        tr_task[FIELD_NAME] = employee_spec.name
-        tr_task[FIELD_PRICE] = employee_spec.price
-        tr_task[FIELD_DESCRIPTION] = employee_spec.description
+        # tr_task[FIELD_ID] = employee_task.id
+        tr_task[FIELD_NAME] = employee_task.name
+        tr_task[FIELD_PRICE] = employee_task.price
+        tr_task[FIELD_DESCRIPTION] = employee_task.description
 
         tr_task_wrapper = {}
         tr_task_wrapper["task"] = tr_task

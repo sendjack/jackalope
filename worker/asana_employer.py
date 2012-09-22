@@ -9,7 +9,7 @@ import xml.etree.cElementTree as ET
 from asana import asana
 
 import settings
-from spec import Spec
+from task import Task
 
 from base import Employer
 
@@ -40,8 +40,19 @@ class AsanaEmployer(Employer):
                 self._asana_api.list_workspaces())
 
 
-    def read_specs(self):
-        """ Return Specs from the Employer's service. """
+    def read_task(self, task_id):
+        """ Connect to Worker's service and return the requested Task."""
+        # FIXME: implement
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def read_tasks(self):
+        """ Connect to Worker's service and return all tasks.
+
+        Return:
+        dict    all the Tasks keyed on id
+
+        """
         test_workspace_id = AsanaEmployer.retrieve_id(
                 self._workspaces.get(settings.TEST_WORKSPACE_ID))
 
@@ -54,26 +65,26 @@ class AsanaEmployer(Employer):
         short_asana_tasks = AsanaEmployer.produce_dict(
                 self._asana_api.get_tag_tasks(test_tag_id))
 
-        specs = {}
+        tasks = {}
         for asana_task_id in short_asana_tasks.keys():
-            spec = self._construct_spec(
+            task = self._construct_task(
                     self._asana_api.get_task(asana_task_id))
-            specs[spec.id] = spec
+            tasks[task.id] = task
 
-        return specs
+        return tasks
 
 
-    def _construct_spec(self, raw_spec):
-        """ Construct Spec from the raw spec.
+    def _construct_task(self, raw_task):
+        """ Construct Task from the raw task.
 
         Required:
-        dict raw_spec       The raw spec from the data source.
+        dict raw_task       The raw task from the data source.
 
         Return:
-        Spec         The Spec built from the raw spec.
+        Task The Task built from the raw task.
 
         """
-        asana_task = raw_spec  # accessing asana specific fields
+        asana_task = raw_task  # accessing asana specific fields
 
         # get required  mapped fields
         service = FIELD_SERVICE
@@ -88,10 +99,10 @@ class AsanaEmployer(Employer):
 
         # get optional embedded fields
 
-        spec = Spec(id, service, name, price)
-        spec.set_description(description)
+        task = Task(id, service, name, price)
+        task.set_description(description)
 
-        return spec
+        return task 
 
 
     @staticmethod

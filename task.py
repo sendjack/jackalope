@@ -1,9 +1,7 @@
 """ Module: task
 
-This module handles all coordination between Foremans and Workers. Each Task
-has a ForemanSpec and a WorkerSpec. The TaskManager is in charge of resolving
-differences between the Specs and making sure the Foreman or Worker handles the
-needed resolution.
+Task is a specification for a task that can be used to pass data between
+services. The Foreman will use Tasks to coordinate activity.
 
 """
 from util.decorators import constant
@@ -42,37 +40,77 @@ STATUS = _Status()
 
 class Task(object):
 
-    """ Abstract superclass for structuring all Tasks.
+    """ A specification for a task.
+
+    Required:
+    id _id              The id of the Task, pulled from the source.
+    str _status         The Status of the Task.
+    str _service        The Service's type.
+    str _name           The name of the Task, pulled from the source.
+    int _price          The price of the Task in US Dollars.
+
+    Optional:
+    str _description    The description of the Task.
+
     """
 
 
-    def is_new(self):
-        """ Return True if the Task's status is NEW. """
-        if self._status == STATUS.NEW:
-            return True
+    def __init__(self, id, service, name, price):
+        """ Construct Task.
+
+        Required:
+        id id       The id of the Task.
+        str service The type of external service that is associated.
+        str name    The name field of the Task.
+        str price   The price that the Foreman will pay for the Task.
+
+        """
+        self._id = id
+        self._status = STATUS.NEW
+        self._service = service
+        self._name = name
+        self._price = price
+
+        self._description = None
+
+        if self.is_task_ready():
+            self._status = STATUS.SPECIFICATION_COMPLETE
         else:
-            return False
+            self._status = STATUS.SPECIFICATION_INCOMPLETE
 
 
-    def is_specification_incomplete(self):
-        """ Return True if the Task's status is SPECIFICATION_INCOMPLETE. """
-        if self._status == STATUS.SPECIFICATION_INCOMPLETE:
-            return True
-        else:
-            return False
+    @property
+    def id(self):
+        """ Return id. """
+        return self._id
 
 
-    def is_specification_complete(self):
-        """ Return True if the Task's status is SPECIFICATION_COMPLETE. """
-        if self._status == STATUS.SPECIFICATION_COMPLETE:
-            return True
-        else:
-            return False
+    @property
+    def name(self):
+        """ Return name. """
+        return self._name
 
 
-    def is_submitted(self):
-        """ Return True if the Task's status is SUBMITTED. """
-        if self._status == STATUS.SUBMITTED:
+    @property
+    def price(self):
+        """ Return price. """
+        return self._price
+
+
+    @property
+    def description(self):
+        """ Return description. """
+        return self._description
+
+
+    def set_description(self, description):
+        """ Set the description. """
+        self._description = description
+
+
+    def is_task_ready(self):
+        """ Return True if all the required fields have values. """
+        if self._service and self._id and self._name and self._price:
             return True
         else:
             return False

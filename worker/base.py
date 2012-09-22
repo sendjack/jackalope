@@ -19,31 +19,26 @@ class ServiceWorker(object):
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
-    def read_spec(self, spec_id):
-        """ Connect to Worker service and return the requested spec.
+    def read_task(self, task_id):
+        """ Connect to Worker's service and return the requested Task."""
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def read_tasks(self):
+        """ Connect to Worker's service and return all tasks.
 
         Return:
-        Spec        the requested Spec
+        dict    all the Tasks keyed on id
 
         """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
-    def read_specs(self):
-        """ Connect to Worker's service and return all specs.
-
-        Return:
-        dict    all the Specs keyed on id
-
-        """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
-
-
-    def create_spec(self, worker_spec):
-        """ Use a Worker's Spec to create a spec in the Worker's Service.
+    def create_task(self, worker_task):
+        """ Use a Worker's Task to create a task in the Worker's Service.
 
         Required:
-        Spec worker_spec    the Worker's Spec.
+        Task worker_task    the Worker's Task.
 
         Return:
         bool                True is successful
@@ -79,14 +74,14 @@ class ServiceWorker(object):
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
-    def _construct_spec(self, raw_spec):
-        """ Construct Spec from the raw spec.
+    def _construct_task(self, raw_task):
+        """ Construct Task from the raw task.
 
         Required:
-        dict raw_spec   The raw spec from the data source
+        dict raw_task   The raw task from the data source
 
         Return:
-        Spec            The Spec built from the raw spec.
+        Task The Task built from the raw task.
 
         """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
