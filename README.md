@@ -12,3 +12,5 @@ has a Foreman and Worker component to it.
 Dependencies:
 ---------
 Python wrapper for Asana API: https://github.com/pandemicsyn/asana
+Python wrapper for OAuth2: https://github.com/liluo/py-oauth2
+    pip install py-oauth2

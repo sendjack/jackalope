@@ -1,8 +1,8 @@
-""" Module: foreman
+""" Module: spec
 
-The ForemanSpec is a generic specification for a task as the Foreman sees it.
-Typically instructions will taken from the ForemanSpec and pushed to the
-WorkerSpec.
+The Spec is a generic specification for a task.
+Typically instructions will taken from the Foreman's Spec and pushed to the
+Worker's Spec.
 
 """
 from util.decorators import constant
@@ -39,14 +39,14 @@ class _Status(object):
 STATUS = _Status()
 
 
-class ForemanSpec(object):
+class Spec(object):
 
-    """ A specification for a task as the Foreman sees it.
+    """ A specification for a task.
 
     Required:
     id _id              The id of the Spec, pulled from the source.
     str _status         The Status of the Spec
-    str _type           Foreman type.
+    str _service        The Service's type.
     str _name           The name of the Spec, pulled from the source.
     int _price          The price of the Spec in US Dollars.
 
@@ -55,22 +55,20 @@ class ForemanSpec(object):
 
     """
 
-    # TODO: have ForemanSpec subclass from Spec
 
-
-    def __init__(self, id, type, name, price):
+    def __init__(self, id, service, name, price):
         """ Construct Spec
 
         Required:
         id id       The id of the Spec.
-        str type    The type of external service that is associated.
+        str service The type of external service that is associated.
         str name    The name field of the Spec.
         str price   The price that the Foreman will pay for the Spec.
 
         """
         self._id = id
         self._status = STATUS.NEW
-        self._type = type
+        self._service = service
         self._name = name
         self._price = price
 
@@ -80,6 +78,7 @@ class ForemanSpec(object):
             self._status = STATUS.SPECIFICATION_COMPLETE
         else:
             self._status = STATUS.SPECIFICATION_INCOMPLETE
+
 
     @property
     def id(self):
@@ -112,7 +111,7 @@ class ForemanSpec(object):
 
     def is_spec_ready(self):
         """ Return True if all the required fields have values. """
-        if self._type and self._id and self._name and self._price:
+        if self._service and self._id and self._name and self._price:
             return True
         else:
             return False

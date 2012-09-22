@@ -9,11 +9,11 @@ import xml.etree.cElementTree as ET
 from asana import asana
 
 import settings
-from spec.foreman import ForemanSpec
+from spec import Spec
 
 from base import Foreman
 
-FIELD_TYPE = "asana"
+FIELD_SERVICE = "asana"
 FIELD_ID = "id"
 FIELD_NAME = "name"
 FIELD_PRICE = "price"
@@ -40,8 +40,8 @@ class AsanaForeman(Foreman):
                 self._asana_api.list_workspaces())
 
 
-    def get_specs(self):
-        """ Return ForemanSpecs from the Foreman's service. """
+    def read_specs(self):
+        """ Return Specs from the Foreman's service. """
         test_workspace_id = AsanaForeman.retrieve_id(
                 self._workspaces.get(settings.TEST_WORKSPACE_ID))
 
@@ -54,13 +54,13 @@ class AsanaForeman(Foreman):
         short_asana_tasks = AsanaForeman.produce_dict(
                 self._asana_api.get_tag_tasks(test_tag_id))
 
-        specs = []
+        specs = {}
         for asana_task_id in short_asana_tasks.keys():
             spec = self._construct_spec(
                     self._asana_api.get_task(asana_task_id))
-            specs.append(spec)
+            specs[spec.id] = spec
 
-        return {s.id: s for s in specs}
+        return specs
 
 
     def _construct_spec(self, raw_spec):
@@ -70,13 +70,13 @@ class AsanaForeman(Foreman):
         dict raw_spec       The raw spec from the data source.
 
         Return:
-        ForemanSpec         The Spec built from the raw spec.
+        Spec         The Spec built from the raw spec.
 
         """
         asana_task = raw_spec  # accessing asana specific fields
 
         # get required  mapped fields
-        type = FIELD_TYPE
+        service = FIELD_SERVICE
         id = asana_task[FIELD_ID]
         name = asana_task[FIELD_NAME]
 
@@ -88,7 +88,7 @@ class AsanaForeman(Foreman):
 
         # get optional embedded fields
 
-        spec = ForemanSpec(id, type, name, price)
+        spec = Spec(id, service, name, price)
         spec.set_description(description)
 
         return spec
