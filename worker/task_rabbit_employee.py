@@ -1,6 +1,6 @@
-""" Module: task_rabbit_worker
+""" Module: task_rabbit_employee
 
-TaskRabbitWorker subclasses Worker and handles all interaction between
+TaskRabbitEmployee subclasses Employee and handles all interaction between
 Jackalope and TaskRabbit.
 
 """
@@ -12,7 +12,7 @@ import json
 import settings
 from spec import Spec
 
-from base import Worker
+from base import Employee
 
 FIELD_SERVICE = "task_rabbit"
 FIELD_ID = "id"
@@ -35,13 +35,13 @@ APPLICATION_JSON = "application_json"
 TASKS_PATH = "/api/v1/tasks"
 
 
-class TaskRabbitWorker(Worker):
+class TaskRabbitEmployee(Employee):
 
     """ Connect with TaskRabbit to allow requests. """
 
 
     def __init__(self):
-        """ Construct TaskRabbitWorker. """
+        """ Construct TaskRabbitEmployee. """
         client = oauth2.Client(
                 settings.TASK_RABBIT_KEY,
                 settings.TASK_RABBIT_SECRET,
@@ -60,7 +60,7 @@ class TaskRabbitWorker(Worker):
 
 
     def read_spec(self, spec_id):
-        """ Connect to Worker's service and return the requested spec.
+        """ Connect to Employee's service and return the requested spec.
 
         Return:
         Spec    the requested spec
@@ -71,7 +71,7 @@ class TaskRabbitWorker(Worker):
 
 
     def read_specs(self):
-        """ Connect to Worker's service and return all specs.
+        """ Connect to Employee's service and return all specs.
 
         Return:
         dict    all the Specs keyed on id
@@ -90,17 +90,17 @@ class TaskRabbitWorker(Worker):
         return specs
 
 
-    def create_spec(self, worker_spec):
-        """ Use a Worker's Spec to create a spec in the Worker's Service.
+    def create_spec(self, employee_spec):
+        """ Use a Employee's Spec to create a spec in the Employee's Service.
 
         Required:
-        Spec worker_spec    the Worker's Spec.
+        Spec employee_spec the Employee's Spec.
 
         Return:
         bool                True is successful
 
         """
-        spec_dict = self._deconstruct_spec(worker_spec)
+        spec_dict = self._deconstruct_spec(employee_spec)
         return self._post(TASKS_PATH, spec_dict)
 
 
@@ -132,7 +132,7 @@ class TaskRabbitWorker(Worker):
 
 
     def _post(self, path, data_dict):
-        """ Connect to Worker's service with a POST request.
+        """ Connect to Employee's service with a POST request.
 
         Required:
         str path        path to desired action
@@ -190,11 +190,11 @@ class TaskRabbitWorker(Worker):
         return spec
 
 
-    def _deconstruct_spec(self, worker_spec):
+    def _deconstruct_spec(self, employee_spec):
         """ Deconstruct Spec into a raw spec.
 
         Required:
-        Spec worker_spec    The Spec to deconstruct into a dict
+        Spec employee_spec  The Spec to deconstruct into a dict
 
         Return:
         dict                The raw spec to send to send to the Service
@@ -202,10 +202,10 @@ class TaskRabbitWorker(Worker):
         """
         tr_task = {}
 
-        # tr_task[FIELD_ID] = worker_spec.id
-        tr_task[FIELD_NAME] = worker_spec.name
-        tr_task[FIELD_PRICE] = worker_spec.price
-        tr_task[FIELD_DESCRIPTION] = worker_spec.description
+        # tr_task[FIELD_ID] = employee_spec.id
+        tr_task[FIELD_NAME] = employee_spec.name
+        tr_task[FIELD_PRICE] = employee_spec.price
+        tr_task[FIELD_DESCRIPTION] = employee_spec.description
 
         tr_task_wrapper = {}
         tr_task_wrapper["task"] = tr_task

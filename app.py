@@ -5,13 +5,13 @@ Jackalope Test to mess around with connecting the Asana API to the TaskRabbit
 API.
 
 """
-from foreman.asana_foreman import AsanaForeman
-from worker.task_rabbit_worker import TaskRabbitWorker
+from worker.asana_employer import AsanaEmployer
+from worker.task_rabbit_employee import TaskRabbitEmployee
 
 
 def main():
-    foreman = AsanaForeman()
-    specs = foreman.read_specs()
+    employer = AsanaEmployer()
+    specs = employer.read_specs()
 
     for s in specs.values():
         print "id: {}".format(s.id)
@@ -21,12 +21,12 @@ def main():
         print "ready?: {}".format(s.is_spec_ready())
         print ""
 
-    worker = TaskRabbitWorker()
-    spec = worker.read_spec(54)
+    employee = TaskRabbitEmployee()
+    spec = employee.read_spec(54)
     print spec.name
 
     print "NOW TO CREATION"
-    tr_response = worker.create_spec(specs.values()[0])
+    tr_response = employee.create_spec(specs.values()[0])
     print tr_response
 
 

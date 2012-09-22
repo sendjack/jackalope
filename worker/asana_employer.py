@@ -1,6 +1,6 @@
-""" Module: asana_foreman
+""" Module: asana_employer
 
-AsanaForeman subclasses Foreman and handles all interaction between Jackalope
+AsanaEmployer subclasses Employer and handles all interaction between Jackalope
 and Asana.
 
 """
@@ -11,7 +11,7 @@ from asana import asana
 import settings
 from spec import Spec
 
-from base import Foreman
+from base import Employer
 
 FIELD_SERVICE = "asana"
 FIELD_ID = "id"
@@ -20,7 +20,7 @@ FIELD_PRICE = "price"
 FIELD_NOTES = "notes"
 
 
-class AsanaForeman(Foreman):
+class AsanaEmployer(Employer):
 
     """ Connect with Asana to allow requests.
 
@@ -32,26 +32,26 @@ class AsanaForeman(Foreman):
 
 
     def __init__(self):
-        """ Construct AsanaForeman. """
+        """ Construct AsanaEmployer. """
         self._asana_api = asana.AsanaAPI(
                 settings.ASANA_API_KEY,
                 debug=True)
-        self._workspaces = AsanaForeman.produce_dict(
+        self._workspaces = AsanaEmployer.produce_dict(
                 self._asana_api.list_workspaces())
 
 
     def read_specs(self):
-        """ Return Specs from the Foreman's service. """
-        test_workspace_id = AsanaForeman.retrieve_id(
+        """ Return Specs from the Employer's service. """
+        test_workspace_id = AsanaEmployer.retrieve_id(
                 self._workspaces.get(settings.TEST_WORKSPACE_ID))
 
-        tags = AsanaForeman.produce_dict(
+        tags = AsanaEmployer.produce_dict(
                 self._asana_api.get_tags(test_workspace_id))
 
-        test_tag_id = AsanaForeman.retrieve_id(
+        test_tag_id = AsanaEmployer.retrieve_id(
                 tags.get(settings.JACKALOPE_TAG_ID))
 
-        short_asana_tasks = AsanaForeman.produce_dict(
+        short_asana_tasks = AsanaEmployer.produce_dict(
                 self._asana_api.get_tag_tasks(test_tag_id))
 
         specs = {}
@@ -81,10 +81,10 @@ class AsanaForeman(Foreman):
         name = asana_task[FIELD_NAME]
 
         # get required embedded fields
-        price = AsanaForeman._extract_field(asana_task, FIELD_PRICE)
+        price = AsanaEmployer._extract_field(asana_task, FIELD_PRICE)
 
         # get optional mapped fields
-        description = AsanaForeman._extract_description(asana_task)
+        description = AsanaEmployer._extract_description(asana_task)
 
         # get optional embedded fields
 
@@ -97,7 +97,7 @@ class AsanaForeman(Foreman):
     @staticmethod
     def _extract_description(asana_task):
         """ Use the "notes" field but remove the embedded content. """
-        xml_blob = AsanaForeman._convert_field_to_xml(
+        xml_blob = AsanaEmployer._convert_field_to_xml(
                 asana_task.get(FIELD_NOTES))
         return ET.XML(xml_blob).text.strip()
 
@@ -105,7 +105,7 @@ class AsanaForeman(Foreman):
     @staticmethod
     def _extract_field(asana_task, field):
         """ Extract the embedded field in "notes" and return it. """
-        xml_blob = AsanaForeman._convert_field_to_xml(
+        xml_blob = AsanaEmployer._convert_field_to_xml(
                 asana_task.get(FIELD_NOTES))
         elem = ET.XML(xml_blob)
         return elem.find(field).text.strip()
@@ -126,4 +126,4 @@ class AsanaForeman(Foreman):
     @staticmethod
     def produce_dict(asana_list):
         """ Convert the list into a dict keyed on ID. """
-        return {AsanaForeman.retrieve_id(a): a for a in asana_list}
+        return {AsanaEmployer.retrieve_id(a): a for a in asana_list}

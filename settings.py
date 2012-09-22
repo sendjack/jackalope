@@ -12,6 +12,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 # Generic Error messages
 NOT_IMPLEMENTED_ERROR = "Subclass and override."
+INIT_INTERFACE_ERROR = "Do not try to instantiate an interface."
 
 
 # Asana

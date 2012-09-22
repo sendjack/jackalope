@@ -1,20 +1,21 @@
 """ Module: base
 
-Worker is the base class for all interactions with task doer APIs. These
-external services act as 'workers' for task completion. Each service/API will
-have its own subclass.
+ServiceWorker is the base class for all interactions with external service's
+APIs. Employer (ServiceWorker) handles interactions with task doer type
+services and Employee (ServiceWorker) handles interactions with project
+management type services. Each service/API will have its own subclass.
 
 """
 import settings
 
 
-class Worker(object):
+class ServiceWorker(object):
 
-    """ Abstract superclass for connecting to external worker apis. """
+    """ Abstract superclass for connecting to external apis. """
 
 
     def __init__(self):
-        """ Construct Worker. """
+        """ Construct ServiceWorker. """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
@@ -88,4 +89,26 @@ class Worker(object):
         Spec            The Spec built from the raw spec.
 
         """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+class Employer(ServiceWorker):
+
+    """ Abstract superclass for interacting with Employer (e.g., project
+    management services. """
+
+
+    def __init__(self):
+        """ Construct Employer. """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+class Employee(ServiceWorker):
+
+    """ Abstract superclass for interacting with Employee (e.g., task doers)
+    services."""
+
+
+    def __init__(self):
+        """ Construct Employee. """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
