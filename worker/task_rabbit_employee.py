@@ -4,10 +4,9 @@ TaskRabbitEmployee subclasses Employee and handles all interaction between
 Jackalope and TaskRabbit.
 
 """
-# Use the py_oauth2 library
-# https://github.com/liluo/py-oauth2
-import oauth2
+import copy
 import json
+import requests
 
 import settings
 from task import Task
@@ -25,38 +24,35 @@ FIELD_ITEMS = "items"
 CITY_ID = "4"
 
 SITE = "https://taskrabbitdev.com"
-AUTHORIZE_URL = "https://taskrabbitdev.com/api/authorize"
-TOKEN_URL = "https://taskrabbitdev.com/api/oauth/token"
-HEADER_FORMAT = "OAuth %s"
+AUTHORIZATION_HEADER = "Authorization"
+OAUTH_PREFIX = "OAuth "
 APPLICATION_HEADER = "X-Client-Application"
 CONTENT_TYPE = "Content-Type"
-APPLICATION_JSON = "application_json"
+APPLICATION_JSON = "application/json"
+
+AUTHORIZE_URL = "https://taskrabbitdev.com/api/authorize"
+TOKEN_URL = "https://taskrabbitdev.com/api/oauth/token"
 
 TASKS_PATH = "/api/v1/tasks"
 
 
 class TaskRabbitEmployee(Employee):
 
-    """ Connect with TaskRabbit to allow requests. """
+    """ Connect with TaskRabbit to allow requests.
+
+    Required:
+    dict _headers       headers to send with every type of request.
+
+    """
 
 
     def __init__(self):
         """ Construct TaskRabbitEmployee. """
-        client = oauth2.Client(
-                settings.TASK_RABBIT_KEY,
-                settings.TASK_RABBIT_SECRET,
-                site=SITE,
-                authorize_url=AUTHORIZE_URL,
-                token_url=TOKEN_URL,
-                header_format=HEADER_FORMAT)
 
-        self._access_token = client.auth_code.get_token(
-                settings.TASK_RABBIT_USER_CODE,
-                redirect_uri="")
-        #self._access_token = oauth2.AccessToken(
-                #client=client,
-                #token=access_token,
-                #header_format=HEADER_FORMAT)
+        access_token = settings.TASK_RABBIT_ACCESS_TOKEN
+        self._headers = {
+                APPLICATION_HEADER: settings.TASK_RABBIT_SECRET,
+                AUTHORIZATION_HEADER: OAUTH_PREFIX + access_token}
 
 
     def read_task(self, task_id):
@@ -109,19 +105,10 @@ class TaskRabbitEmployee(Employee):
         str         The parsed response.
 
         """
-        headers = {APPLICATION_HEADER: settings.TASK_RABBIT_SECRET}
-        response = self._access_token.get(
-                path,
-                headers=headers)
-        print "GET"
-        print response
-        print("body: {}".format(response.body))
-        print("response: {}".format(response.response))
-        print("reason: {}".format(response.reason))
-        print("status: {}".format(response.status))
-        print("ct: {}".format(response.content_type))
-        print ""
-        return response.parsed
+        url = SITE + path
+        response = requests.get(url, headers=self._headers)
+
+        return response.json
 
 
     def _post(self, path, data_dict):
@@ -135,25 +122,16 @@ class TaskRabbitEmployee(Employee):
         str     The parsed response
 
         """
-        headers = {
-                APPLICATION_HEADER: settings.TASK_RABBIT_SECRET,
-                CONTENT_TYPE: APPLICATION_JSON}
-        json_data = json.dumps(data_dict)
-        print json_data
-        response = self._access_token.post(
-                path,
-                body=json_data,
-                headers=headers)
+        url = SITE + path
+        post_headers = copy.copy(self._headers)  # don't update reusable dict
+        post_headers[CONTENT_TYPE] = APPLICATION_JSON
 
-        print "POST"
-        print response
-        print("body: {}".format(response.body))
-        print("response: {}".format(response.response))
-        print("reason: {}".format(response.reason))
-        print("status: {}".format(response.status))
-        print("ct: {}".format(response.content_type))
-        print ""
-        return response.parsed
+        response = requests.post(
+                url,
+                data=json.dumps(data_dict),
+                headers=post_headers)
+
+        return response.json
 
 
     def _construct_task(self, raw_task):
@@ -198,8 +176,9 @@ class TaskRabbitEmployee(Employee):
 
         # tr_task[FIELD_ID] = employee_task.id
         tr_task[FIELD_NAME] = employee_task.name
-        tr_task[FIELD_PRICE] = employee_task.price
+        tr_task[FIELD_PRICE] = int(employee_task.price)
         tr_task[FIELD_DESCRIPTION] = employee_task.description
+        tr_task["city_id"] = 4
 
         tr_task_wrapper = {}
         tr_task_wrapper["task"] = tr_task

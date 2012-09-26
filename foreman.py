@@ -5,6 +5,7 @@ This module handles all coordination between Employer and Employee workers.
 """
 from util.decorators import constant
 from worker.asana_employer import AsanaEmployer
+from worker.task_rabbit_employee import TaskRabbitEmployee
 
 
 class _Status(object):
@@ -47,7 +48,8 @@ class Foreman(object):
     """ Manage all Employer, Employee, Task interactions.
 
     Required:
-    list employers      a list of all employers to poll.
+    list employers      a list of all Employers to poll.
+    list employees      a list of all Employees to push to.
 
     """
 
@@ -56,6 +58,10 @@ class Foreman(object):
         """ Construct a Foreman. """
         self._employers = [
                 AsanaEmployer()
+                ]
+
+        self._employees = [
+                TaskRabbitEmployee()
                 ]
 
 
@@ -81,6 +87,16 @@ class Foreman(object):
                     print "spec complete"
                 else:
                     print "ERROR: We don't handle other cases yet."
+
+
+        tr = self._employees[0]
+
+        task = tr.read_task(54)
+        print task.name
+
+        print "NOW TO CREATION"
+        tr_response = tr.create_task(tasks.values()[0])
+        print tr_response
 
 
     def _evaluate_task(self, task):
