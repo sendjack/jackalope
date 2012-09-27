@@ -108,18 +108,17 @@ class AsanaEmployer(Employer):
     @staticmethod
     def _extract_description(asana_task):
         """ Use the "notes" field but remove the embedded content. """
-        xml_blob = AsanaEmployer._convert_field_to_xml(
-                asana_task.get(FIELD_NOTES))
-        return ET.XML(xml_blob).text.strip()
+        return AsanaEmployer._extract_field(asana_task)
 
 
     @staticmethod
-    def _extract_field(asana_task, field):
+    def _extract_field(asana_task, field=None):
         """ Extract the embedded field in "notes" and return it. """
-        xml_blob = AsanaEmployer._convert_field_to_xml(
-                asana_task.get(FIELD_NOTES))
+        notes = asana_task.get(FIELD_NOTES)
+        xml_blob = AsanaEmployer._convert_field_to_xml(notes)
         elem = ET.XML(xml_blob)
-        return elem.find(field).text.strip()
+        text = elem.text if field is None else elem.find(field).text
+        return text.strip() if text else ""
 
 
     @staticmethod
