@@ -177,7 +177,8 @@ class TaskRabbitEmployee(Employee):
         price = tr_task.get(FIELD_PRICE)
         description = tr_task.get(FIELD_DESCRIPTION)
 
-        task = Task(id, service, name, price)
+        task = Task(id, service, name)
+        task.set_price(price)
         task.set_description(description)
 
         return task

@@ -99,8 +99,9 @@ class AsanaEmployer(Employer):
 
         # get optional embedded fields
 
-        task = Task(id, service, name, price)
+        task = Task(id, service, name)
         task.set_description(description)
+        task.set_price(price)
 
         return task
 
