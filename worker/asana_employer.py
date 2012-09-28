@@ -32,6 +32,10 @@ class _Field(object):
         return "price"
 
     @constant
+    def EMAIL(self):
+        return "email"
+
+    @constant
     def DESCRIPTION(self):
         return "description"
 
@@ -82,6 +86,7 @@ class AsanaEmployer(Employer):
         test_workspace_id = AsanaEmployer._retrieve_id(
                 self._workspaces.get(settings.TEST_WORKSPACE_ID))
 
+        # FIXME: should be polling for tasks assigned to Jack, not tagged
         tags = self._produce_dict(
                 self._asana_api.get_tags(test_workspace_id))
 
@@ -105,9 +110,8 @@ class AsanaEmployer(Employer):
         fields = {}
 
         fields[FIELD.DESCRIPTION] = self._extract_field(asana_task)
-        fields[FIELD.PRICE] = self._extract_field(
-                asana_task,
-                FIELD.PRICE)
+        fields[FIELD.PRICE] = self._extract_field(asana_task, FIELD.PRICE)
+        fields[FIELD.EMAIL] = self._extract_field(asana_task, FIELD.EMAIL)
 
         return fields
 
@@ -115,10 +119,18 @@ class AsanaEmployer(Employer):
     def _extract_field(self, asana_task, field=None):
         """ Extract the embedded field and return it. """
         notes = asana_task.get(self._embedding_field)
-        xml_blob = AsanaEmployer._convert_field_to_xml(notes)
-        elem = ET.XML(xml_blob)
-        text = elem.text if field is None else elem.find(field).text
-        return text.strip() if text else ""
+        elem = AsanaEmployer._convert_field_to_xml(notes)
+
+        # when a field is specified, search the blob for a child
+        if field is not None:
+            elem = elem.find(field)
+
+        text = ""
+        if elem is not None:
+            if elem.text is not None:
+                text = elem.text
+
+        return text.strip()
 
 
     @staticmethod
@@ -135,6 +147,54 @@ class AsanaEmployer(Employer):
         return (raw_task[FIELD.ID], raw_task[FIELD.NAME])
 
 
+    def request_fields(self, task):
+        # update descr with needed fields
+        # comment back to employer with explanation
+        # TODO: assign back to assigner
+
+        # from the tag[s], get the [required] fields
+        # FIXME: we can only use this hack because there is one field and we
+        # won't get here unless that exact field is not present.
+        fields = [FIELD.EMAIL]
+
+        # FIXME: need to dedup templates+task.description
+        # FIXME: need to append templates to task.description
+        templates = [self._template_field(f) for f in fields]
+        notes = "{}\n{}".format(task.description, "\n".join(templates))
+
+        preface = "Please include the following fields in the Notes: "
+        comment = "{}{}".format(preface, "; ".join(fields))
+
+        return all([
+                self._asana_api.update_task(task.id, notes=notes),
+                self._add_comment(task.id, comment),
+                ])
+
+
+    def finish_task(self, task):
+        # mark as complete
+        # comment back to employer with a thank you note.
+        # TODO: assign back to assigner
+        return all([
+                self._asana_api.update_task(
+                    task.id,
+                    assignee=None,
+                    completed=True),
+                self._add_comment(task.id, "All done!"),
+                ])
+
+
+    def _template_field(self, field, example=""):
+        """ Return a templated field string, sometimes with an example. """
+        #return "{}: {}".format(field, example)
+        return "<{}>{}</{}>".format(field, example, field)
+
+
+    def _add_comment(self, task_id, message):
+        """ Add a comment to Provide an internal convenience wrapper. """
+        return self._asana_api.add_story(task_id, message)
+
+
     @staticmethod
     def _add_additional_fields(task, raw_task):
         """ Add the rest of the fields form the raw task to the Task.
@@ -149,12 +209,13 @@ class AsanaEmployer(Employer):
         """
         task.set_description(raw_task[FIELD.DESCRIPTION])
         task.set_price(raw_task[FIELD.PRICE])
+        task.set_email(raw_task[FIELD.EMAIL])
 
 
     @staticmethod
     def _convert_field_to_xml(field):
         """ Converts a field to xml by wrapping it in xml tags. """
-        return "<blob>{}</blob>".format(field)
+        return ET.XML("<blob>{}</blob>".format(field))
 
 
     @staticmethod

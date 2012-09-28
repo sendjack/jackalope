@@ -61,6 +61,19 @@ class Task(object):
         self._price = price
 
 
+    # FIXME: remove this!
+    @property
+    def email(self):
+        """ Return email. """
+        return self._email
+
+
+    # FIXME: remove this!
+    def set_email(self, email):
+        """ Set the email. """
+        self._email = email
+
+
     @property
     def description(self):
         """ Return description. """
@@ -74,11 +87,7 @@ class Task(object):
 
     def is_spec_complete(self):
         """ Return True if all the required fields have values. """
-        for field in self._get_required_fields():
-            if field is None:
-                return False
-
-        return True
+        return all(self._get_required_fields())
 
 
     def _get_required_fields(self):
@@ -87,7 +96,10 @@ class Task(object):
                 self._service,
                 self._id,
                 self._name,
-                self._price
+                # FIXME: uncomment this!
+                #self._price,
+                # FIXME: remove this!
+                self._email,
                 ]
 
 

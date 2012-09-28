@@ -96,7 +96,7 @@ class ServiceWorker(object):
         embedded_fields_dict = self._extract_from_embedding_field(raw_task)
 
         # flatten the raw_task
-        del raw_task[embedding_field]
+        raw_task.pop(embedding_field, None)
         raw_task.update(embedded_fields_dict)
 
         # build task

@@ -61,25 +61,26 @@ class Foreman(object):
 
     def send_jack(self):
         """ Poll workers for Tasks and respond to them. """
-        tasks = self._get_tasks_from_employers()
-        self._print_tasks(tasks)
+        tasks = {}
+        for e in self._employers:
+            # TODO: prune tasks already completed
+            tasks = e.read_tasks()
 
-        # FIXME XXX: All of this will happen in the worker.
-        for id, task in tasks.items():
-            status = self._evaluate_task(task)
+            self._print_tasks(tasks)
 
-            if status == STATUS.SPECIFICATION_INCOMPLETE:
-                # update descr with needed fields
-                # comment back to employer with explanation
-                # assign back to assigner
-                print "spec incomplete"
-            elif status == STATUS.SPECIFICATION_COMPLETE:
-                # comment back to employer with a thank you note.
-                # mark as complete
-                # assign back to assigner
-                print "spec complete"
-            else:
-                print "ERROR: We don't handle other cases yet."
+            # FIXME: All of this might happen in the worker?
+
+            for id, task in tasks.items():
+                status = self._evaluate_task(task)
+
+                if status == STATUS.SPECIFICATION_INCOMPLETE:
+                    e.request_fields(task)
+                    print "spec incomplete"
+                elif status == STATUS.SPECIFICATION_COMPLETE:
+                    e.finish_task(task)
+                    print "spec complete"
+                else:
+                    print "ERROR: We don't handle other cases yet."
 
 
     def _evaluate_task(self, task):
@@ -97,15 +98,6 @@ class Foreman(object):
             return STATUS.SPECIFICATION_INCOMPLETE
 
 
-    def _get_tasks_from_employers(self):
-        """ Iterate through each employer and get tasks. """
-        tasks = {}
-        for e in self._employers:
-            tasks.update(e.read_tasks())
-
-        return tasks
-
-
     def _print_tasks(self, tasks):
         """ Print all tasks. """
         print "\nTASKS\n--------"
@@ -113,6 +105,7 @@ class Foreman(object):
             print "id:", t.id
             print "name:", t.name
             print "price:", t.price
+            print "email:", t.email
             print "description:", t.description
             print "spec complete?:", t.is_spec_complete()
             print ""
