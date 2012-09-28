@@ -124,3 +124,33 @@ class RegistrationTask(Task):
                 self._description,
                 self._tag])
         return base_list
+
+
+class TaskFactory(object):
+
+    """ Use the type of task key to map to a specfic subclass of Task. """
+
+    REGISTRATION = "registration"  # RegistrationTask
+
+    # Used to map string task types with Task constructor functions.
+    TASK_TYPE_MAPPING = {
+            REGISTRATION: RegistrationTask
+            }
+
+
+    @classmethod
+    def instantiate_task(class_, task_type, task_id, service, name):
+        """ Use the task type to construct a Task.
+
+        Required:
+        str task_type       The specific type of Task.
+        id  task_id         The service id of the Task.
+        str service         The service that created the Task.
+        str name            The name of the Task.
+
+        Return: Task
+
+        """
+        task_init_function = class_.TASK_TYPE_MAPPING.get(task_type, Task)
+        task = task_init_function(task_id, service, name)
+        return task

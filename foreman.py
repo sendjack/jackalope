@@ -64,6 +64,7 @@ class Foreman(object):
         tasks = self._get_tasks_from_employers()
         self._print_tasks(tasks)
 
+        # FIXME XXX: All of this will happen in the worker.
         for id, task in tasks.items():
             status = self._evaluate_task(task)
 

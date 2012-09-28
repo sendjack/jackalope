@@ -7,15 +7,22 @@ management type services. Each service/API will have its own subclass.
 
 """
 import settings
+from task import TaskFactory
 
 
 class ServiceWorker(object):
 
-    """ Abstract superclass for connecting to external apis. """
+    """ Abstract superclass for connecting to external apis.
+
+    Required:
+    str _embedding_field        The field to use to embed other fields.
+
+    """
 
 
     def __init__(self):
         """ Construct ServiceWorker. """
+        self._embedding_field = None
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
@@ -84,12 +91,64 @@ class ServiceWorker(object):
         Task The Task built from the raw task.
 
         """
+        # extract embedded tasks
+        embedding_field = self._embedding_field
+        embedded_fields_dict = self._extract_from_embedding_field(raw_task)
+
+        # flatten the raw_task
+        del raw_task[embedding_field]
+        raw_task.update(embedded_fields_dict)
+
+        # build task
+        service = self.SERVICE
+        (id, name) = self._extract_required_fields(raw_task)
+        task = TaskFactory.instantiate_task(None, id, service, name)
+        self._add_additional_fields(task, raw_task)
+
+        return task
+
+
+    def _extract_from_embedding_field(self, asana_task):
+        """ Extract the embedded content.
+
+        TODO: Are all subclasses going to need this method?
+
+        """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
     def _produce_dict(self, raw_tasks):
         """ Convert the list of raw tasks into a dict keyed on 'id'. """
         return {self._retrieve_id(t): t for t in raw_tasks}
+
+
+    @staticmethod
+    def _extract_required_fields(raw_task):
+        """ Remove the required fields from the raw_task dict and return them.
+
+        Required:
+        dict raw_task       The raw task dictionary.
+
+        Return:
+        tuple (id, str) - return the the (id, name) tuple.
+
+        """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    @staticmethod
+    def _add_additional_fields(task, raw_task):
+        """ Add the rest of the fields form the raw task to the Task.
+
+        Required:
+        Task task           The Task to finish constructing.
+        dict raw_task       The raw task from the data source.
+
+        Return:
+        Task The Task built from the raw task.
+
+        """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
     @staticmethod
