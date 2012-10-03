@@ -41,19 +41,20 @@ class Foreman(object):
 
             # process each Task and either create or fetch its complement
             for employer_task in employer_tasks.values():
-                employer_task._print_task() if employer_task else None
+                if employer_task:
+                    employer_task._print_task()
 
-                employee_task = None
+                    employee_task = None
 
-                # if task has a complement, go get it, else create it.
-                reciprocal_id = employer_task.reciprocal_id
-                if reciprocal_id:
-                    employee_task = tr.read_task(reciprocal_id)
-                    print employee_task.name
-                else:
-                    employee_task = tr.create_task(employer_task)
-                    print "TASK CREATED: {}".format(employee_task)
+                    # if task has a complement, go get it, else create it.
+                    reciprocal_id = employer_task.reciprocal_id
+                    if reciprocal_id:
+                        employee_task = tr.read_task(reciprocal_id)
+                        print employee_task.name
+                    else:
+                        employee_task = tr.create_task(employer_task)
+                        print "TASK CREATED: {}".format(employee_task)
 
-                # hand the Tasks over to a Job and evaluate the statuses.
-                job = Job(employer_task, employee_task)
-                job.process(employer, tr)
+                    # hand the Tasks over to a Job and evaluate the statuses.
+                    job = Job(employer_task, employee_task)
+                    job.process(employer, tr)

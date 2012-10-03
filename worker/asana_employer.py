@@ -43,6 +43,10 @@ class _Field(object):
     def NOTES(self):
         return "notes"
 
+    @constant
+    def RECIPROCAL_ID(self):
+        return "reciprocal_id"
+
 FIELD = _Field()
 
 
@@ -63,6 +67,7 @@ class AsanaEmployer(Employer):
     def __init__(self):
         """ Construct AsanaEmployer. """
         self._embedding_field = FIELD.NOTES
+
         self._asana_api = asana.AsanaAPI(
                 settings.ASANA_API_KEY,
                 debug=True)
@@ -72,8 +77,9 @@ class AsanaEmployer(Employer):
 
     def read_task(self, task_id):
         """ Connect to Worker's service and return the requested Task."""
-        # FIXME: implement
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raw_task = self._asana_api.get_task(task_id)
+
+        return self._construct_task(raw_task)
 
 
     def read_tasks(self):
@@ -98,22 +104,21 @@ class AsanaEmployer(Employer):
 
         tasks = {}
         for asana_task_id in short_asana_tasks.keys():
-            task = self._construct_task(
-                    self._asana_api.get_task(asana_task_id))
-            tasks[task.id] = task
+            raw_task = self._asana_api.get_task(asana_task_id)
+            task = self._construct_task(raw_task)
+            tasks[asana_task_id] = task
 
         return tasks
 
 
-    def _extract_from_embedding_field(self, asana_task):
-        """ Remove the embedded content. """
-        fields = {}
-
-        fields[FIELD.DESCRIPTION] = self._extract_field(asana_task)
-        fields[FIELD.PRICE] = self._extract_field(asana_task, FIELD.PRICE)
-        fields[FIELD.EMAIL] = self._extract_field(asana_task, FIELD.EMAIL)
-
-        return fields
+    def _embedded_fields(self):
+        """ A list of embedded fields for this service. """
+        return [
+                FIELD.DESCRIPTION,
+                FIELD.PRICE,
+                FIELD.EMAIL,
+                FIELD.RECIPROCAL_ID
+                ]
 
 
     def _extract_field(self, asana_task, field=None):
@@ -133,9 +138,16 @@ class AsanaEmployer(Employer):
         return text.strip()
 
 
+    def _embed_field(self, embedding_value, field, value):
+        """ Embed the field, value in the embedding value. """
+        return "{}\n{}".format(
+                embedding_value,
+                self._template_field(field, value))
+
+
     @staticmethod
     def _extract_required_fields(raw_task):
-        """ Remove the required fields from the raw_task dict and return them.
+        """ Extract the required fields from the raw_task dict and return them.
 
         Required:
         dict raw_task       The raw task dictionary.

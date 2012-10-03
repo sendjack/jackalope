@@ -166,7 +166,7 @@ class Task(object):
                 # FIXME: uncomment this!
                 #self._price,
                 # FIXME: remove this!
-                self._email,
+                #self._email,
                 ]
 
 

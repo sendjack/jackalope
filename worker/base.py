@@ -41,19 +41,6 @@ class ServiceWorker(object):
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
-    def create_task(self, worker_task):
-        """ Use a Worker's Task to create a task in the Worker's Service.
-
-        Required:
-        Task worker_task    the Worker's Task.
-
-        Return:
-        bool                True is successful
-
-        """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
-
-
     def _get(self, path):
         """ Connect to Worker's service with a GET request.
 
@@ -91,13 +78,8 @@ class ServiceWorker(object):
         Task The Task built from the raw task.
 
         """
-        # extract embedded tasks
-        embedding_field = self._embedding_field
-        embedded_fields_dict = self._extract_from_embedding_field(raw_task)
-
-        # flatten the raw_task
-        raw_task.pop(embedding_field, None)
-        raw_task.update(embedded_fields_dict)
+        # flatten raw task dict
+        raw_task = self._flatten_raw_task(raw_task)
 
         # build task
         (id, name) = self._extract_required_fields(raw_task)
@@ -111,6 +93,52 @@ class ServiceWorker(object):
             print "spec incomplete"
 
         return task
+
+
+    def _deconstruct_task(self, task):
+        """ Return raw task dict from Task. """
+        # turn task into dict
+        raw_task = self._pull_fields_from_task(task)
+
+        # unflatten raw task dict
+        raw_task = self._unflatten_raw_task(raw_task)
+
+        return raw_task
+
+
+    def _flatten_raw_task(self, raw_task):
+        """ Pop embedding field, extract embedded fields, and update raw task
+        dict. """
+        # extract embedded
+        embedded_fields_dict = {}
+        for f in self._embedded_fields():
+            embedded_fields_dict[f] = self._extract_field(raw_task, f)
+
+        # remove embedding field and update
+        raw_task.pop(self._embedding_field, None)
+        raw_task.update(embedded_fields_dict)
+
+        return raw_task
+
+
+    def _unflatten_raw_task(self, raw_task):
+        """ Insert embedded fields into embedding field, remove those fields
+        from the dict, and add the new embedding field to the dict. """
+        # pop embedded fields and insert them into embedding value
+        embedding_value = ""
+        for f in self._embedded_fields():
+            value = raw_task.pop(f, None)
+            embedding_value = self._embed_field(embedding_value, f, value)
+
+        # add embedding field, remove embedded fields
+        raw_task[self._embedding_field] = embedding_value
+
+        return raw_task
+
+
+    def _embedded_fields(self):
+        """ A list of embedded fields for this service. """
+        return []
 
 
     def _extract_from_embedding_field(self, asana_task):
@@ -129,7 +157,7 @@ class ServiceWorker(object):
 
     @staticmethod
     def _extract_required_fields(raw_task):
-        """ Remove the required fields from the raw_task dict and return them.
+        """ Extract the required fields from the raw_task dict and return them.
 
         Required:
         dict raw_task       The raw task dictionary.
@@ -181,4 +209,17 @@ class Employee(ServiceWorker):
 
     def __init__(self):
         """ Construct Employee. """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def create_task(self, worker_task):
+        """ Use a Worker's Task to create a task in the Worker's Service.
+
+        Required:
+        Task worker_task    the Worker's Task.
+
+        Return:
+        bool                True is successful
+
+        """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)

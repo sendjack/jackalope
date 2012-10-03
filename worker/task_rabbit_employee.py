@@ -8,20 +8,11 @@ import copy
 import json
 import requests
 
+from util.decorators import constant
 import settings
-from task import Task
 
 from base import Employee
 
-FIELD_SERVICE = "task_rabbit"
-FIELD_ID = "id"
-FIELD_NAME = "name"
-FIELD_PRICE = "named_price"
-FIELD_DESCRIPTION = "description"
-FIELD_CITY_ID = "city_id"
-FIELD_ITEMS = "items"
-
-CITY_ID = "4"
 
 SITE = "https://taskrabbitdev.com"
 AUTHORIZATION_HEADER = "Authorization"
@@ -36,6 +27,46 @@ TOKEN_URL = "https://taskrabbitdev.com/api/oauth/token"
 TASKS_PATH = "/api/v1/tasks"
 
 
+class _Field(object):
+
+    """ The ServiceWorker's field constants for interacting with the
+    services. """
+
+    @constant
+    def ID(self):
+        return "id"
+
+    @constant
+    def NAME(self):
+        return "name"
+
+    @constant
+    def PRICE(self):
+        return "named_price"
+
+    @constant
+    def DESCRIPTION(self):
+        return "description"
+
+    @constant
+    def CITY_ID(self):
+        return "city_id"
+
+    @constant
+    def ITEMS(self):
+        return "items"
+
+    @constant
+    def TASK(self):
+        return "task"
+
+    @constant
+    def RECIPROCAL_ID(self):
+        return "reciprocal_id"
+
+FIELD = _Field()
+
+
 class TaskRabbitEmployee(Employee):
 
     """ Connect with TaskRabbit to allow requests.
@@ -45,9 +76,13 @@ class TaskRabbitEmployee(Employee):
 
     """
 
+    SERVICE = "task_rabbit"
+    CITY_ID = "4"
+
 
     def __init__(self):
         """ Construct TaskRabbitEmployee. """
+        self._embedding_field = None
 
         access_token = settings.TASK_RABBIT_ACCESS_TOKEN
         self._headers = {
@@ -58,6 +93,7 @@ class TaskRabbitEmployee(Employee):
     def read_task(self, task_id):
         """ Connect to Worker's service and return the requested Task."""
         raw_task = self._get("{}/{}".format(TASKS_PATH, str(task_id)))
+
         return self._construct_task(raw_task)
 
 
@@ -69,7 +105,7 @@ class TaskRabbitEmployee(Employee):
 
         """
         items_dict = self._get(TASKS_PATH)
-        task_rabbit_tasks = self._produce_dict(items_dict[FIELD_ITEMS])
+        task_rabbit_tasks = self._produce_dict(items_dict[FIELD.ITEMS])
 
         tasks = []
         for task_rabbit_task_id in task_rabbit_tasks.keys():
@@ -86,11 +122,14 @@ class TaskRabbitEmployee(Employee):
         Task employee_task      the Employee's Task.
 
         Return:
-        bool                True is successful
+        Task the new Task.
 
         """
         raw_task_dict = self._deconstruct_task(employee_task)
-        return self._post(TASKS_PATH, raw_task_dict)
+        print raw_task_dict
+
+        new_raw_task_dict = self._post(TASKS_PATH, raw_task_dict)
+        return self._construct_task(new_raw_task_dict)
 
 
     def _get(self, path):
@@ -134,33 +173,6 @@ class TaskRabbitEmployee(Employee):
         return response.json
 
 
-    def _construct_task(self, raw_task):
-        """ Construct Task from the raw task.
-
-        Required:
-        dict raw_task   The raw task from the data source
-
-        Return:
-        Task            The Task built from the raw task.
-
-        """
-        tr_task = raw_task  # accessing task rabbit specific fields
-
-        # get required mapped fields
-        id = tr_task[FIELD_ID]
-        name = tr_task[FIELD_NAME]
-
-        # get optional mapped fields
-        price = tr_task.get(FIELD_PRICE)
-        description = tr_task.get(FIELD_DESCRIPTION)
-
-        task = Task(id, self, name)
-        task.set_price(price)
-        task.set_description(description)
-
-        return task
-
-
     def _deconstruct_task(self, employee_task):
         """ Deconstruct Task into a raw task.
 
@@ -171,21 +183,67 @@ class TaskRabbitEmployee(Employee):
         dict                The raw task to send to send to the Service
 
         """
+        raw_task = super(TaskRabbitEmployee, self)._deconstruct_task(
+                employee_task)
+        task_wrapper = {}
+        task_wrapper[FIELD.TASK] = raw_task
+
+        return task_wrapper
+
+
+    def _extract_from_embedding_field(self, tr_task):
+        """ Remove the embedded content. """
+        # Task Rabbit doesn't need an embedding field.
+        return {}
+
+
+    def _pull_fields_from_task(self, task):
+        """ Grab fields from the Task and put them in the dict. """
         tr_task = {}
 
-        # tr_task[FIELD_ID] = employee_task.id
-        tr_task[FIELD_NAME] = employee_task.name
-        tr_task[FIELD_PRICE] = int(employee_task.price)
-        tr_task[FIELD_DESCRIPTION] = employee_task.description
-        tr_task["city_id"] = 4
+        # tr_task[FIELD_ID] = task.id
+        tr_task[FIELD.NAME] = task.name
+        tr_task[FIELD.PRICE] = int(task.price)
+        tr_task[FIELD.DESCRIPTION] = task.description
+        tr_task[FIELD.CITY_ID] = int(self.CITY_ID)
 
-        tr_task_wrapper = {}
-        tr_task_wrapper["task"] = tr_task
-        return tr_task_wrapper
+        return tr_task
+
+
+    @staticmethod
+    def _extract_required_fields(raw_task):
+        """ Extract the required fields from the raw_task dict and return them.
+
+        Required:
+        dict raw_task       The raw task dictionary.
+
+        Return:
+        tuple (id, str) - return the the (id, name) tuple.
+
+        """
+        return (raw_task[FIELD.ID], raw_task[FIELD.NAME])
+
+
+    @staticmethod
+    def _add_additional_fields(task, raw_task):
+        """ Add the rest of the fields form the raw task to the Task.
+
+        Required:
+        Task task           The Task to finish constructing.
+        dict raw_task       The raw task from the data source.
+
+        Return:
+        Task The Task built from the raw task.
+
+        """
+        task.set_description(raw_task[FIELD.DESCRIPTION])
+        task.set_price(raw_task[FIELD.PRICE])
+        # optional
+        # task.set_email(raw_task.get(FIELD.EMAIL))
 
 
     @staticmethod
     def _retrieve_id(raw_task):
         """ Get the 'id' from the raw task. """
         task_rabbit_task = raw_task  # need to access task rabbit fields.
-        return task_rabbit_task[FIELD_ID]
+        return task_rabbit_task[FIELD.ID]
