@@ -100,10 +100,15 @@ class ServiceWorker(object):
         raw_task.update(embedded_fields_dict)
 
         # build task
-        service = self.SERVICE
         (id, name) = self._extract_required_fields(raw_task)
-        task = TaskFactory.instantiate_task(None, id, service, name)
+        task = TaskFactory.instantiate_task(None, id, name)
         self._add_additional_fields(task, raw_task)
+
+        # check to make sure spec is ready
+        if not task.is_spec_ready():
+            self.request_fields(task)
+            task = None
+            print "spec incomplete"
 
         return task
 

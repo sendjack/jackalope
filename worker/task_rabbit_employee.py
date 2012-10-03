@@ -147,7 +147,6 @@ class TaskRabbitEmployee(Employee):
         tr_task = raw_task  # accessing task rabbit specific fields
 
         # get required mapped fields
-        service = FIELD_SERVICE
         id = tr_task[FIELD_ID]
         name = tr_task[FIELD_NAME]
 
@@ -155,7 +154,7 @@ class TaskRabbitEmployee(Employee):
         price = tr_task.get(FIELD_PRICE)
         description = tr_task.get(FIELD_DESCRIPTION)
 
-        task = Task(id, service, name)
+        task = Task(id, self, name)
         task.set_price(price)
         task.set_description(description)
 
