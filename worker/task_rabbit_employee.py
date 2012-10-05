@@ -225,6 +225,21 @@ class TaskRabbitEmployee(Employee):
 
 
     @staticmethod
+    def _extract_category(raw_task):
+        """ Extract the required fields from the raw_task dict and return them.
+
+        Required:
+        dict raw_task       The raw task dictionary.
+
+        Return:
+        tuple (id, str) - return the the (id, name) tuple.
+
+        """
+        # FIXME XXX
+        return None
+
+
+    @staticmethod
     def _add_additional_fields(task, raw_task):
         """ Add the rest of the fields form the raw task to the Task.
 

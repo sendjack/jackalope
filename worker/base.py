@@ -83,7 +83,8 @@ class ServiceWorker(object):
 
         # build task
         (id, name) = self._extract_required_fields(raw_task)
-        task = TaskFactory.instantiate_task(None, id, name)
+        category = self._extract_category(raw_task)
+        task = TaskFactory.instantiate_task(category, id, name)
         self._add_additional_fields(task, raw_task)
 
         # check to make sure spec is ready
@@ -164,6 +165,19 @@ class ServiceWorker(object):
 
         Return:
         tuple (id, str) - return the the (id, name) tuple.
+
+        """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    @staticmethod
+    def _extract_category(raw_task):
+        """ Extract the category from the raw task and return it.
+
+        Required:
+        dict raw_task       The raw task dictionary.
+
+        Return: str
 
         """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)

@@ -47,6 +47,10 @@ class _Field(object):
     def RECIPROCAL_ID(self):
         return "reciprocal_id"
 
+    @constant
+    def CATEGORY(self):
+        return "tag"
+
 FIELD = _Field()
 
 
@@ -89,7 +93,7 @@ class AsanaEmployer(Employer):
         dict    all the Tasks keyed on id
 
         """
-        test_workspace_id = AsanaEmployer._retrieve_id(
+        test_workspace_id = self._retrieve_id(
                 self._workspaces.get(settings.TEST_WORKSPACE_ID))
 
         # FIXME: should be polling for tasks assigned to Jack, not tagged
@@ -117,7 +121,8 @@ class AsanaEmployer(Employer):
                 FIELD.DESCRIPTION,
                 FIELD.PRICE,
                 FIELD.EMAIL,
-                FIELD.RECIPROCAL_ID
+                FIELD.RECIPROCAL_ID,
+                FIELD.CATEGORY
                 ]
 
 
@@ -157,6 +162,19 @@ class AsanaEmployer(Employer):
 
         """
         return (raw_task[FIELD.ID], raw_task[FIELD.NAME])
+
+
+    @staticmethod
+    def _extract_category(raw_task):
+        """ Extract the category from the raw task and return it.
+
+        Required:
+        dict raw_task       The raw task dictionary.
+
+        Return: str
+
+        """
+        return raw_task[FIELD.CATEGORY]
 
 
     def request_fields(self, task):
@@ -233,5 +251,5 @@ class AsanaEmployer(Employer):
     @staticmethod
     def _retrieve_id(raw_task):
         """ Get the 'id' from the raw task. """
-        asana_task = raw_task  # need to access asana fields.
+        asana_task = raw_task  # need to access asana fields
         return asana_task[FIELD.ID]

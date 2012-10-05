@@ -6,7 +6,7 @@ This module handles all coordination between Employer and Employee workers.
 from worker.asana_employer import AsanaEmployer
 from worker.task_rabbit_employee import TaskRabbitEmployee
 
-from job import Job
+from job import JobFactory
 
 
 class Foreman(object):
@@ -33,7 +33,7 @@ class Foreman(object):
 
     def send_jack(self):
         """ Poll workers for Tasks and respond to them. """
-        tr = self._employees[0]
+        employee = self._employees[0]
 
         employer_tasks = {}
         for employer in self._employers:
@@ -44,17 +44,9 @@ class Foreman(object):
                 if employer_task:
                     employer_task._print_task()
 
-                    employee_task = None
-
-                    # if task has a complement, go get it, else create it.
-                    reciprocal_id = employer_task.reciprocal_id
-                    if reciprocal_id:
-                        employee_task = tr.read_task(reciprocal_id)
-                        print employee_task.name
-                    else:
-                        employee_task = tr.create_task(employer_task)
-                        print "TASK CREATED: {}".format(employee_task)
-
                     # hand the Tasks over to a Job and evaluate the statuses.
-                    job = Job(employer_task, employee_task)
-                    job.process(employer, tr)
+                    job = JobFactory.instantiate_job(
+                            employer,
+                            employee,
+                            employer_task)
+                    job.process()
