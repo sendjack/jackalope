@@ -115,6 +115,44 @@ class AsanaEmployer(Employer):
         return tasks
 
 
+    def request_fields(self, task):
+        # update descr with needed fields
+        # comment back to employer with explanation
+        # TODO: assign back to assigner
+
+        # from the tag[s], get the [required] fields
+        # FIXME: we can only use this hack because there is one field and we
+        # won't get here unless that exact field is not present.
+        fields = [FIELD.EMAIL]
+
+        # FIXME: need to dedup templates+task.description
+        # FIXME: need to append templates to task.description
+        templates = [self._template_field(f) for f in fields]
+        notes = "{}\n{}".format(task.description, "\n".join(templates))
+
+        preface = "Please include the following fields in the Notes: "
+        comment = "{}{}".format(preface, "; ".join(fields))
+
+        return all([
+                self._asana_api.update_task(task.id, notes=notes),
+                self._add_comment(task.id, comment),
+                ])
+
+
+    def update_task_to_completed(self, task):
+        """ Set the Task's status as COMPLETED. """
+        # mark as complete
+        # comment back to employer with a thank you note.
+        # TODO: assign back to assigner
+        return all([
+                self._asana_api.update_task(
+                    task.id,
+                    assignee=None,
+                    completed=True),
+                self._add_comment(task.id, "All done!"),
+                ])
+
+
     def _embedded_fields(self):
         """ A list of embedded fields for this service. """
         return [
@@ -175,43 +213,6 @@ class AsanaEmployer(Employer):
 
         """
         return raw_task[FIELD.CATEGORY]
-
-
-    def request_fields(self, task):
-        # update descr with needed fields
-        # comment back to employer with explanation
-        # TODO: assign back to assigner
-
-        # from the tag[s], get the [required] fields
-        # FIXME: we can only use this hack because there is one field and we
-        # won't get here unless that exact field is not present.
-        fields = [FIELD.EMAIL]
-
-        # FIXME: need to dedup templates+task.description
-        # FIXME: need to append templates to task.description
-        templates = [self._template_field(f) for f in fields]
-        notes = "{}\n{}".format(task.description, "\n".join(templates))
-
-        preface = "Please include the following fields in the Notes: "
-        comment = "{}{}".format(preface, "; ".join(fields))
-
-        return all([
-                self._asana_api.update_task(task.id, notes=notes),
-                self._add_comment(task.id, comment),
-                ])
-
-
-    def finish_task(self, task):
-        # mark as complete
-        # comment back to employer with a thank you note.
-        # TODO: assign back to assigner
-        return all([
-                self._asana_api.update_task(
-                    task.id,
-                    assignee=None,
-                    completed=True),
-                self._add_comment(task.id, "All done!"),
-                ])
 
 
     def _template_field(self, field, example=""):

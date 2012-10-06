@@ -54,7 +54,7 @@ class SoloJob(Job):
         """ Evaluate the tasks and then use the Workers to process the
         Tasks. """
         if self._employer_task.is_posted():
-            self._employer.finish_task(self._employer_task)
+            self._employer.update_task_to_completed(self._employer_task)
             print "spec complete and taskrabbit task exists"
 
 

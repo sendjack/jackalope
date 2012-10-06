@@ -41,6 +41,31 @@ class ServiceWorker(object):
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
+    def request_fields(self, task):
+        """ Request from the service additional fields. """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def update_task_to_posted(self, task):
+        """ Set the Task's status as POSTED. """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def update_task_to_assigned(self, task):
+        """ Set the Task's status as ASSIGNED. """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def update_task_to_completed(self, task):
+        """ Set the Task's status as COMPLETED. """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def update_task_to_approved(self, task):
+        """ Set the Task's status as APPROVED. """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
     def _get(self, path):
         """ Connect to Worker's service with a GET request.
 
