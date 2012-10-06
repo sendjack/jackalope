@@ -45,6 +45,7 @@ class Task(object):
     """ A specification for a task.
 
     Required:
+    str _task_type      The type of task.
     id _id              The id of the Task, pulled from the source.
     ServiceWorker _worker The ServiceWorker associated with this Task.
     str _status         The STATUS of the Task.
@@ -55,18 +56,21 @@ class Task(object):
     str _description    The description of the Task.
     str _email          The email of attached to the Task.
     int _price          The price of the Task in US Dollars.
+    int _location       The location of the Task by id.
 
     """
 
 
-    def __init__(self, id, name):
+    def __init__(self, task_type, id, name):
         """ Construct Task.
 
         Required:
+        str task_type               The type of Task.
         id id                       The id of the Task.
         str name                    The name field of the Task.
 
         """
+        self._task_type = task_type
         self._id = id
         self._status = STATUS.POSTED
         self._name = name
@@ -75,10 +79,14 @@ class Task(object):
         self._description = None
         self._email = None
         self._price = None
+        self._location = None
 
 
+    def category(self):
+        """ Return task type. """
+        return self._task_type
 
-    @property
+
     def id(self):
         """ Return id. """
         return self._id
@@ -104,13 +112,11 @@ class Task(object):
         return self._status == STATUS.APPROVED
 
 
-    @property
     def name(self):
         """ Return name. """
         return self._name
 
 
-    @property
     def price(self):
         """ Return price. """
         return self._price
@@ -118,10 +124,10 @@ class Task(object):
 
     def set_price(self, price):
         """ Set the price. """
-        self._price = price
+        if price:
+            self._price = int(price)
 
 
-    @property
     def email(self):
         """ Return email. """
         return self._email
@@ -132,7 +138,6 @@ class Task(object):
         self._email = email
 
 
-    @property
     def reciprocal_id(self):
         """ Return reciprocal id. """
         return self._reciprocal_id
@@ -143,7 +148,6 @@ class Task(object):
         self._reciprocal_id = id
 
 
-    @property
     def description(self):
         """ Return description. """
         return self._description
@@ -154,28 +158,39 @@ class Task(object):
         self._description = description
 
 
+    def location(self):
+        """ Return the location. """
+        return self._location
+
+
+    def set_location(self, location_id):
+        """ Set the location. """
+        if location_id:
+            self._location = int(location_id)
+
+
     def is_spec_ready(self):
         """ Return True if all the required fields have values. """
-        return all(self._get_required_fields())
+        required_fields = [a() for a in self.get_required_accessors()]
+        return all(required_fields)
 
 
-    def _get_required_fields(self):
+    def get_required_accessors(self):
         """ Return a list of the required fields. """
         return [
-                self._status,
-                self._id,
-                self._name,
+                self.id,
+                self.name,
                 ]
 
 
     def _print_task(self):
         """ Print all tasks. """
         print "\nTASK\n--------"
-        print "id:", self.id
-        print "name:", self.name
-        print "price:", self.price
-        print "email:", self.email
-        print "description:", self.description
+        print "id:", self.id()
+        print "name:", self.name()
+        print "price:", self.price()
+        print "email:", self.email()
+        print "description:", self.description()
         print "spec ready?:", self.is_spec_ready()
         print ""
 
@@ -190,12 +205,14 @@ class RegistrationTask(Task):
     """
 
 
-    def _get_required_fields(self):
+    def get_required_accessors(self):
         """ Return a list of the required fields. """
-        required_fields = super(RegistrationTask, self)._get_required_fields()
-        required_fields.extend([
-                self._email])
-        return required_fields
+        required_accessors = super(
+                RegistrationTask,
+                self).get_required_accessors()
+        required_accessors.extend([
+                self.email])
+        return required_accessors
 
 
 class PricedTask(Task):
@@ -208,12 +225,12 @@ class PricedTask(Task):
     """
 
 
-    def _get_required_fields(self):
+    def get_required_accessors(self):
         """ Return a list of the required fields. """
-        required_fields = super(PricedTask, self)._get_required_fields()
-        required_fields.extend([
-                self._price])
-        return required_fields
+        required_accessors = super(PricedTask, self).get_required_accessors()
+        required_accessors.extend([
+                self.price])
+        return required_accessors
 
 
 class TaskFactory(object):
@@ -247,4 +264,4 @@ class TaskFactory(object):
         if type(task_constructor) == Task:
             print "oh yeah, we got one of them tasks"
 
-        return task_constructor(task_id, name)
+        return task_constructor(task_type, task_id, name)

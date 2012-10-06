@@ -115,12 +115,16 @@ class PairedJob(Job):
 
         """
         employee_task = None
-        reciprocal_id = employer_task.reciprocal_id
+        reciprocal_id = employer_task.reciprocal_id()
         if reciprocal_id:
             employee_task = self._employee.read_task(reciprocal_id)
+            print "RECIPROCAL exists"
             print employee_task.name
         else:
             employee_task = self._employee.create_task(employer_task)
+            self._employer.add_comment(
+                    employer_task,
+                    "We posted to TaskRabbit!")
             print "TASK CREATED: {}".format(employee_task)
 
         return employee_task
@@ -168,9 +172,6 @@ class JobFactory(object):
         task_class = type(employer_task)
         job_constructor = class_.JOB_TASK_MAPPING.get(task_class)
 
-        print "EVAN"
-        print task_class
-        print job_constructor
         return job_constructor(employer, employee, employer_task)
 
 

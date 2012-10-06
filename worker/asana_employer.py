@@ -4,54 +4,28 @@ AsanaEmployer subclasses Employer and handles all interaction between Jackalope
 and Asana.
 
 """
-# ran ./setup.py on pandemicsyn / asana
-import xml.etree.cElementTree as ET
 from asana import asana
 
 from util.decorators import constant
 import settings
 
-from base import Employer
+from base import Employer, Transformer, FIELD
 
 
-class _Field(object):
+class _AsanaField(object):
 
-    """ The ServiceWorker's field constants for interacting with the
-    services. """
-
-    @constant
-    def ID(self):
-        return "id"
-
-    @constant
-    def NAME(self):
-        return "name"
-
-    @constant
-    def PRICE(self):
-        return "price"
-
-    @constant
-    def EMAIL(self):
-        return "email"
-
-    @constant
-    def DESCRIPTION(self):
-        return "description"
+    """ These constants contain special values for interacting with the Asana
+    task. """
 
     @constant
     def NOTES(self):
         return "notes"
 
     @constant
-    def RECIPROCAL_ID(self):
-        return "reciprocal_id"
-
-    @constant
-    def CATEGORY(self):
+    def TAG(self):
         return "tag"
 
-FIELD = _Field()
+ASANA_FIELD = _AsanaField()
 
 
 class AsanaEmployer(Employer):
@@ -59,19 +33,14 @@ class AsanaEmployer(Employer):
     """ Connect with Asana to allow requests.
 
     Required:
-    str _embedding_field        The field to use to embed other fields.
     AsanaAPI _asana_api     a connection to the asana api
     dict _workspaces        all the user's workspaces, keyed on id
 
     """
 
-    SERVICE = "asana"
-
 
     def __init__(self):
         """ Construct AsanaEmployer. """
-        self._embedding_field = FIELD.NOTES
-
         self._asana_api = asana.AsanaAPI(
                 settings.ASANA_API_KEY,
                 debug=True)
@@ -83,7 +52,9 @@ class AsanaEmployer(Employer):
         """ Connect to Worker's service and return the requested Task."""
         raw_task = self._asana_api.get_task(task_id)
 
-        return self._construct_task(raw_task)
+        transformer = AsanaTransformer()
+        transformer.set_raw_task(raw_task)
+        return self._ready_spec(transformer.get_task())
 
 
     def read_tasks(self):
@@ -100,7 +71,7 @@ class AsanaEmployer(Employer):
         tags = self._produce_dict(
                 self._asana_api.get_tags(test_workspace_id))
 
-        test_tag_id = AsanaEmployer._retrieve_id(
+        test_tag_id = self._retrieve_id(
                 tags.get(settings.JACKALOPE_TAG_ID))
 
         short_asana_tasks = self._produce_dict(
@@ -109,148 +80,123 @@ class AsanaEmployer(Employer):
         tasks = {}
         for asana_task_id in short_asana_tasks.keys():
             raw_task = self._asana_api.get_task(asana_task_id)
-            task = self._construct_task(raw_task)
-            tasks[asana_task_id] = task
+            transformer = AsanaTransformer()
+            transformer.set_raw_task(raw_task)
+            tasks[asana_task_id] = self._ready_spec(transformer.get_task())
 
         return tasks
 
 
-    def request_fields(self, task):
-        # update descr with needed fields
-        # comment back to employer with explanation
+    def update_task(self, task):
+        """ Connect to Worker's service and update the task.
+
+        Required:
+        Task task   The Task to update.
+
+        """
+        transformer = AsanaTransformer()
+        transformer.set_task(task)
+
+        new_raw_task_dict = self._asana_api.update_task(
+                task.id(),
+                task.name(),
+                None,
+                None,
+                False,
+                None,
+                transformer.embedded_field_value)
+
+        new_transformer = AsanaTransformer()
+        new_transformer.set_raw_task(new_raw_task_dict)
+        return self._ready_spec(new_transformer.get_task())
+
+
+    def request_required_fields(self, task):
+        """ Request unfilled but required fields. """
         # TODO: assign back to assigner
+        accessors_to_request = []
+        for accessor in task.get_required_accessors():
+            if accessor() is None:
+                accessors_to_request.append(accessor)
 
-        # from the tag[s], get the [required] fields
-        # FIXME: we can only use this hack because there is one field and we
-        # won't get here unless that exact field is not present.
-        fields = [FIELD.EMAIL]
+        transformer = AsanaTransformer()
+        transformer.set_task(task)
+        fields_to_request = transformer.transform_accessors_to_fields(
+                task,
+                accessors_to_request)
 
-        # FIXME: need to dedup templates+task.description
-        # FIXME: need to append templates to task.description
-        templates = [self._template_field(f) for f in fields]
-        notes = "{}\n{}".format(task.description, "\n".join(templates))
+        # task.set_email("")
 
         preface = "Please include the following fields in the Notes: "
-        comment = "{}{}".format(preface, "; ".join(fields))
+        comment = "{}{}".format(preface, "; ".join(fields_to_request))
 
         return all([
-                self._asana_api.update_task(task.id, notes=notes),
-                self._add_comment(task.id, comment),
+                # self.update_task(task),
+                self.add_comment(task, comment),
                 ])
 
 
     def update_task_to_completed(self, task):
         """ Set the Task's status as COMPLETED. """
-        # mark as complete
-        # comment back to employer with a thank you note.
         # TODO: assign back to assigner
-        return all([
-                self._asana_api.update_task(
-                    task.id,
-                    assignee=None,
-                    completed=True),
-                self._add_comment(task.id, "All done!"),
-                ])
+        updated_raw_task = self._asana_api.update_task(
+                task.id(),
+                assignee=None,
+                completed=True)
+        self.add_comment(task, "All done!")
+
+        transformer = AsanaTransformer()
+        transformer.set_raw_task(updated_raw_task)
+        return self._ready_spec(transformer.get_task())
+
+
+    def add_comment(self, task, message):
+        """ Add a comment to Provide an internal convenience wrapper. """
+        return self._asana_api.add_story(task.id(), message)
+
+
+class AsanaTransformer(Transformer):
+
+    """ Handle parsing the service's response dictionary to construct a Task
+    and deconstructing a Task into a raw task dictionary for the service.
+
+    Required:
+    str _embedding_field        The field to use to embed other fields.
+
+    """
+
+
+    def __init__(self):
+        """ Construct an AsanaTransformer. """
+        super(AsanaTransformer, self).__init__(ASANA_FIELD.NOTES)
+
+
+    @property
+    def embedded_field_value(self):
+        """ Return the value representing a Task's embedded fields.
+
+        Note: similar to deconstruct_task.
+
+        """
+        print "TODO: embedded field value"
+        pass
+
+
+    def _get_field_name_map(self):
+        """ Return a mapping of our field names to Asana's field names. """
+        field_name_map = super(AsanaTransformer, self)._get_field_name_map()
+        field_name_map[FIELD.CATEGORY] = ASANA_FIELD.TAG
+
+        return field_name_map
 
 
     def _embedded_fields(self):
-        """ A list of embedded fields for this service. """
+        """ Return a list of embedded fields as Jackalope field names. """
         return [
                 FIELD.DESCRIPTION,
                 FIELD.PRICE,
                 FIELD.EMAIL,
                 FIELD.RECIPROCAL_ID,
-                FIELD.CATEGORY
+                FIELD.CATEGORY,
+                FIELD.LOCATION
                 ]
-
-
-    def _extract_field(self, asana_task, field=None):
-        """ Extract the embedded field and return it. """
-        notes = asana_task.get(self._embedding_field)
-        elem = AsanaEmployer._convert_field_to_xml(notes)
-
-        # when a field is specified, search the blob for a child
-        if field is not None:
-            elem = elem.find(field)
-
-        text = ""
-        if elem is not None:
-            if elem.text is not None:
-                text = elem.text
-
-        return text.strip()
-
-
-    def _embed_field(self, embedding_value, field, value):
-        """ Embed the field, value in the embedding value. """
-        return "{}\n{}".format(
-                embedding_value,
-                self._template_field(field, value))
-
-
-    @staticmethod
-    def _extract_required_fields(raw_task):
-        """ Extract the required fields from the raw_task dict and return them.
-
-        Required:
-        dict raw_task       The raw task dictionary.
-
-        Return:
-        tuple (id, str) - return the the (id, name) tuple.
-
-        """
-        return (raw_task[FIELD.ID], raw_task[FIELD.NAME])
-
-
-    @staticmethod
-    def _extract_category(raw_task):
-        """ Extract the category from the raw task and return it.
-
-        Required:
-        dict raw_task       The raw task dictionary.
-
-        Return: str
-
-        """
-        return raw_task[FIELD.CATEGORY]
-
-
-    def _template_field(self, field, example=""):
-        """ Return a templated field string, sometimes with an example. """
-        #return "{}: {}".format(field, example)
-        return "<{}>{}</{}>".format(field, example, field)
-
-
-    def _add_comment(self, task_id, message):
-        """ Add a comment to Provide an internal convenience wrapper. """
-        return self._asana_api.add_story(task_id, message)
-
-
-    @staticmethod
-    def _add_additional_fields(task, raw_task):
-        """ Add the rest of the fields form the raw task to the Task.
-
-        Required:
-        Task task           The Task to finish constructing.
-        dict raw_task       The raw task from the data source.
-
-        Return:
-        Task The Task built from the raw task.
-
-        """
-        task.set_description(raw_task[FIELD.DESCRIPTION])
-        task.set_price(raw_task[FIELD.PRICE])
-        task.set_email(raw_task[FIELD.EMAIL])
-
-
-    @staticmethod
-    def _convert_field_to_xml(field):
-        """ Converts a field to xml by wrapping it in xml tags. """
-        return ET.XML("<blob>{}</blob>".format(field))
-
-
-    @staticmethod
-    def _retrieve_id(raw_task):
-        """ Get the 'id' from the raw task. """
-        asana_task = raw_task  # need to access asana fields
-        return asana_task[FIELD.ID]
