@@ -45,7 +45,7 @@ class Task(object):
     """ A specification for a task.
 
     Required:
-    str _task_type      The type of task.
+    str _category       The category of task.
     id _id              The id of the Task, pulled from the source.
     ServiceWorker _worker The ServiceWorker associated with this Task.
     str _status         The STATUS of the Task.
@@ -61,16 +61,16 @@ class Task(object):
     """
 
 
-    def __init__(self, task_type, id, name):
+    def __init__(self, category, id, name):
         """ Construct Task.
 
         Required:
-        str task_type               The type of Task.
+        str category                The category of Task.
         id id                       The id of the Task.
         str name                    The name field of the Task.
 
         """
-        self._task_type = task_type
+        self._category = category
         self._id = id
         self._status = STATUS.POSTED
         self._name = name
@@ -83,8 +83,8 @@ class Task(object):
 
 
     def category(self):
-        """ Return task type. """
-        return self._task_type
+        """ Return task category. """
+        return self._category
 
 
     def id(self):
@@ -97,9 +97,19 @@ class Task(object):
         return self._status == STATUS.POSTED
 
 
+    def set_status_to_posted(self):
+        """ Set Status to POSTED. """
+        self._status = STATUS.POSTED
+
+
     def is_assigned(self):
         """ Return True if the Task is ASSIGNED. """
         return self._status == STATUS.ASSIGNED
+
+
+    def set_status_to_assigned(self):
+        """ Set Status to ASSIGNED. """
+        self._status = STATUS.ASSIGNED
 
 
     def is_completed(self):
@@ -107,9 +117,19 @@ class Task(object):
         return self._status == STATUS.COMPLETED
 
 
+    def set_status_to_completed(self):
+        """ Set Status to COMPLETED. """
+        self._status = STATUS.COMPLETED
+
+
     def is_approved(self):
         """ Return True if the Task is APPROVED. """
         return self._status == STATUS.APPROVED
+
+
+    def set_status_to_approved(self):
+        """ Set Status to APPROVED. """
+        self._status = STATUS.APPROVED
 
 
     def name(self):
@@ -186,10 +206,11 @@ class Task(object):
     def _print_task(self):
         """ Print all tasks. """
         print "\nTASK\n--------"
-        print "id:", self.id()
-        print "name:", self.name()
-        print "price:", self.price()
-        print "email:", self.email()
+        print "id:", self._id
+        print "name:", self._name
+        print "price:", self._price
+        print "email:", self._email
+        print "status:", self._status
         print "description:", self.description()
         print "spec ready?:", self.is_spec_ready()
         print ""
@@ -235,33 +256,33 @@ class PricedTask(Task):
 
 class TaskFactory(object):
 
-    """ Use the type of task key to map to a specfic subclass of Task. """
+    """ Use the category of task key to map to a specfic subclass of Task. """
 
     REGISTRATION = "registration"  # RegistrationTask
     PRICED = "priced"  # PricedTask
 
 
-    # Used to map string task types with Task constructor functions.
-    TASK_TYPE_MAPPING = {
+    # Used to map string task categories with Task constructor functions.
+    TASK_CATEGORY_MAPPING = {
             REGISTRATION: RegistrationTask,
             PRICED: PricedTask
             }
 
 
     @classmethod
-    def instantiate_task(class_, task_type, task_id, name):
-        """ Use the task type to construct a Task.
+    def instantiate_task(class_, category, task_id, name):
+        """ Use the task category to construct a Task.
 
         Required:
-        str task_type       The specific type of Task.
+        str category        The specific category of Task.
         id  task_id         The service id of the Task.
         str name            The name of the Task.
 
         Return: Task
 
         """
-        task_constructor = class_.TASK_TYPE_MAPPING.get(task_type, Task)
+        task_constructor = class_.TASK_CATEGORY_MAPPING.get(category, Task)
         if type(task_constructor) == Task:
             print "oh yeah, we got one of them tasks"
 
-        return task_constructor(task_type, task_id, name)
+        return task_constructor(category, task_id, name)

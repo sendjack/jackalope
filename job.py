@@ -9,6 +9,7 @@ combinations in the future.
 
 """
 import settings
+from phrase import Phrase
 from task import Task, PricedTask, RegistrationTask
 
 
@@ -17,45 +18,81 @@ class Job(object):
     """ A combination of Tasks.
 
     Required:
-    Employer _employer       The Employer.
-    Employee _employee       The Employee.
-    Task _employer_task     The Employer half of the package.
+    ServiceWorker _worker   The Job's main Worker.
+    Task _task              The Job's main Task.
+    Foreman _foreman        The Foreman in charge of the Job.
+    bool _is_employer_job   If True then an Employer Task initiated this Job.
+    bool _task_changed      True if the task has been updated by the Job.
 
     """
 
 
-    def __init__(self, employer, employee, employer_task):
+    def __init__(self, worker, task, foreman, is_employer_job=True):
         """ Construct a Job.
 
         Required:
-        Employer employer       The Employer.
-        Employee employee       The Employee.
-        Task employer_task      The Employer half of the package.
+        SerivceWorker worker
+        Task task
+        Foreman foreman
+
+        Optional:
+        bool is_employer_job
 
         """
-        self._employer = employer
-        self._employee = employee
-        self._employer_task = employer_task
+        self._worker = worker
+        self._task = task
+        self._foreman = foreman
+        self._is_employer_job = is_employer_job
+        self._task_changed = False
 
 
     def process(self):
         """ Evaluate the tasks and then use the Workers to process the
-        Tasks. """
+        Tasks.
+
+        Return: bool indicating if the main Task was changed.
+
+        """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
 class SoloJob(Job):
 
-    """ Evaluate a task from an Employer and take appropriate action but only
+    """ Evaluate a task from a Employer and take appropriate action but only
     on Tasks that won't have a paired Employee Task. """
 
 
     def process(self):
         """ Evaluate the tasks and then use the Workers to process the
-        Tasks. """
-        if self._employer_task.is_posted():
-            self._employer.update_task_to_completed(self._employer_task)
-            print "spec complete and taskrabbit task exists"
+        Tasks.
+
+        Return: bool indicating if the main Task was changed.
+
+        """
+        # only process SoloJobs from Employers.
+        if not self._is_employer_job:
+            raise JobError()
+
+        print "getting here"
+
+        # if posted, then complete.
+        if self._task.is_posted():
+            self._task = self._worker.update_task_to_completed(self._task)
+            self._worker.add_comment(
+                    self._task,
+                    Phrase.registration_confirmation)
+            self._task_changed = True
+        # if completed, then do nothing.
+        elif self._task.is_completed():
+            self._task_changed = False
+        # any other case is an error.
+        else:
+            raise JobError()
+
+        updated_task = None
+        if self._task_changed:
+            updated_task = self._task
+        return updated_task
 
 
 class PairedJob(Job):
@@ -63,71 +100,166 @@ class PairedJob(Job):
     """ Evaluate the tasks and then use the Workers to process the Tasks. There
     will be one Employer and one Employee Task.
 
-    Task _employee_task     The Employee half of the package.
+    Required:
+    ServiceWorker _reciprocal_worker
+    Task _reciprocal_task
 
     """
 
 
-    def __init__(self, employer, employee, employer_task):
+    def __init__(self, worker, task, foreman, is_employer_job=True):
         """ Construct a Job.
 
         Required:
-        Employer employer       The Employer.
-        Employee Employee       The Employee.
-        Task employer_task      The Employer half of the package.
+        ServiceWorker worker
+        Task task
+        Foreman foreman
+        bool is_employer_job
 
         """
-        super(PairedJob, self).__init__(employer, employee, employer_task)
-        self._employee_task = self._read_or_create_employee_task(employer_task)
+        super(PairedJob, self).__init__(worker, task, foreman, is_employer_job)
+        self._set_smart_reciprocal_worker()
+        self._set_reciprocal_task()
 
 
     def process(self):
         """ Evaluate the tasks and then use the Workers to process the
-        Tasks. """
+        Tasks.
+
+        Return: bool indicating if the main Task was changed.
+
+        """
         # check to see if Status is in sync and act.
-        if self._are_same_states(self._employer_task, self._employee_task):
-            # both states are the same. do nothing.
-            print "both states are the same."
-        elif self._employee_task.is_assigned():
-            # employee task is assigned. update employer task.
-            print "update employer task to assigned."
-        elif self._employee_task.is_completed():
-            # employee task is completed. update employer task.
-            print "update employer task to completed."
-        elif self._employer_task.is_approved():
-            # employer task is approved. update employee task.
-            print "update employee task to appoved"
+        # both states are the same. do nothing.
+        if self._are_same_states(
+                self._get_employer_task(),
+                self._get_employee_task()):
+            print "same state"
+        # employee task is assigned. update employer task.
+        elif self._get_employee_task().is_assigned():
+            print "assigned update"
+            updated_task = self._get_employer().update_task_to_assigned(
+                    self._get_employer_task())
+            self._update_employer_task(updated_task)
+        # employee task is completed. update employer task.
+        elif self._get_employee_task().is_completed():
+            print "completed update"
+            updated_task = self._get_employer().update_task_to_completed(
+                    self._get_employer_task())
+            self._update_employer_task(updated_task)
+        # employer task is approved. update employee task.
+        elif self._get_employer_task().is_approved():
+            print "approved update"
+            updated_task = self._get_employee().update_task_to_completed(
+                    self._get_employee_task())
+            self._update_employee_task(updated_task)
+        # error state.
         else:
-            # error state.
-            # TODO: Throw error
-            print "ERROR IN STATE COMPARISON."
+            raise JobError()
 
         # check to see if Content is in sync and act.
 
+        updated_task = None
+        if self._task_changed:
+            updated_task = self._task
+        return updated_task
 
-    def _read_or_create_employee_task(self, employer_task):
-        """ If the employee task exists then grab it, otherwise create it.
 
-        Required:
-        Task employer_task  The Task to use as starter.
-
-        Return: Complementary Task
-
-        """
-        employee_task = None
-        reciprocal_id = employer_task.reciprocal_id()
-        if reciprocal_id:
-            employee_task = self._employee.read_task(reciprocal_id)
-            print "RECIPROCAL exists"
-            print employee_task.name
+    def _get_employer(self):
+        """ Return the Employer's worker. """
+        employer = None
+        if self._is_employer_job:
+            employer = self._worker
         else:
-            employee_task = self._employee.create_task(employer_task)
-            self._employer.add_comment(
-                    employer_task,
-                    "We posted to TaskRabbit!")
-            print "TASK CREATED: {}".format(employee_task)
+            employer = self._reciprocal_worker
+        return employer
 
+
+    def _get_employee(self):
+        """ Return the Employee's worker. """
+        employee = None
+        if self._is_employer_job:
+            employee = self._reciprocal_worker
+        else:
+            employee = self._worker
+        return employee
+
+
+    def _get_employer_task(self):
+        """ Return the Employer's Task. """
+        employer_task = None
+        if self._is_employer_job:
+            employer_task = self._task
+        else:
+            employer_task = self._reciprocal_task
+        return employer_task
+
+
+    def _update_employer_task(self, updated_task):
+        """ Set a new Employer Task. """
+        if self._is_employer_job:
+            self._task = updated_task
+        else:
+            self._reciprocal_task = updated_task
+        self._task_changed = True
+
+
+    def _get_employee_task(self):
+        """ Return the Employee's Task. """
+        employee_task = None
+        if self._is_employer_job:
+            employee_task = self._reciprocal_task
+        else:
+            employee_task = self._task
         return employee_task
+
+
+    def _update_employee_task(self, updated_task):
+        """ Set a new Employee Task. """
+        if self._is_employer_job:
+            self._reciprocal_task = updated_task
+        else:
+            self._task = updated_task
+        self._task_changed = True
+
+
+    def _set_smart_reciprocal_worker(self):
+        """ Return the right Employer for an employee Task. """
+        # TODO make this function pull from a dictionary or database
+        if self._is_employer_job:
+            self._reciprocal_worker = self._foreman.get_task_rabbit_worker()
+        else:
+            self._reciprocal_worker = self._foreman.get_asana_worker()
+
+
+    def _set_reciprocal_task(self):
+        """ Set the reciprocal task by fetching it or by creating it. """
+        reciprocal_id = self._task.reciprocal_id()
+        # if it exists, just store it.
+        if reciprocal_id:
+            self._reciprocal_task = self._reciprocal_worker.read_task(
+                    reciprocal_id)
+        else:
+            # if it doesn't exist and the Job was started by an employer, then
+            # create it.
+            if self._is_employer_job:
+                self._reciprocal_task = self._create_reciprocal_task()
+            # Employee initiated Jobs cannot create reciprocal tasks.
+            else:
+                raise JobError()
+
+
+    def _create_reciprocal_task(self):
+        """ Create a reciprocal task and return it. """
+        reciprocal_task = self._reciprocal_worker.create_task(self._task)
+        self._task.set_reciprocal_id(reciprocal_task.id())
+        self._task = self._worker.update_task(self._task)
+        self._worker.add_comment(
+                self._task,
+                Phrase.task_posted_note)
+        self._task_changed = True
+
+        return reciprocal_task
 
 
     @staticmethod
@@ -160,19 +292,26 @@ class JobFactory(object):
 
 
     @classmethod
-    def instantiate_job(class_, employer, employee, employer_task):
+    def instantiate_job_from_employer(
+            class_,
+            employer,
+            employer_task,
+            foreman):
         """ Use the Task's Class to constructa Job.
 
         Required:
-        Employer employer       The Employer.
-        Employee employee       The Employee.
+        Employer employer
         Task employer_task      The Employer half of the package.
+        Foreman foreman
 
         """
+        print ""
+        print "jobfactory instantiating..."
         task_class = type(employer_task)
         job_constructor = class_.JOB_TASK_MAPPING.get(task_class)
+        job = job_constructor(employer, employer_task, foreman)
 
-        return job_constructor(employer, employee, employer_task)
+        return job
 
 
 class JobError(Exception):

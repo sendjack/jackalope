@@ -8,8 +8,9 @@ from asana import asana
 
 from util.decorators import constant
 import settings
+from phrase import Phrase
 
-from base import Employer, Transformer, FIELD
+from base import Employer, Transformer, FIELD, VALUE
 
 
 class _AsanaField(object):
@@ -24,6 +25,10 @@ class _AsanaField(object):
     @constant
     def TAG(self):
         return "tag"
+
+    @constant
+    def COMPLETED(self):
+        return "completed"
 
 ASANA_FIELD = _AsanaField()
 
@@ -88,23 +93,30 @@ class AsanaEmployer(Employer):
 
 
     def update_task(self, task):
-        """ Connect to Worker's service and update the task.
+        """ Connect to Worker's service and udpate the task.
 
         Required:
         Task task   The Task to update.
 
+        Return:
+        Task - updated Task.
+
         """
+        print ""
+        print "about to update:"
+        task._print_task()
+
         transformer = AsanaTransformer()
         transformer.set_task(task)
 
         new_raw_task_dict = self._asana_api.update_task(
-                task.id(),
-                task.name(),
-                None,
-                None,
-                False,
-                None,
-                transformer.embedded_field_value)
+                task.id(),  # task id
+                task.name(),  # task name
+                None,  # updated assignee
+                None,  # assignee status
+                transformer.is_asana_completed(),  # update completed status
+                None,  # updated due date
+                transformer.get_embedded_field_value())  # update notes
 
         new_transformer = AsanaTransformer()
         new_transformer.set_raw_task(new_raw_task_dict)
@@ -136,18 +148,70 @@ class AsanaEmployer(Employer):
                 ])
 
 
+    def update_task_to_posted(self, task):
+        """ Update the service's task's status to POSTED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - updated Task.
+
+        """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def update_task_to_assigned(self, task):
+        """ Update the service's task's status to ASSIGNED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - updated Task.
+
+        """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
     def update_task_to_completed(self, task):
-        """ Set the Task's status as COMPLETED. """
+        """ Update the service's task's status to COMPLETED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - updated Task.
+
+        """
         # TODO: assign back to assigner
         updated_raw_task = self._asana_api.update_task(
                 task.id(),
                 assignee=None,
                 completed=True)
-        self.add_comment(task, "All done!")
+        print "task should now be complete"
+        self.add_comment(task, Phrase.task_completed_note)
 
         transformer = AsanaTransformer()
         transformer.set_raw_task(updated_raw_task)
         return self._ready_spec(transformer.get_task())
+
+
+    def update_task_to_approved(self, task):
+        """ Update the service's task's status to APPROVED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - updated Task.
+
+        """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
     def add_comment(self, task, message):
@@ -171,15 +235,42 @@ class AsanaTransformer(Transformer):
         super(AsanaTransformer, self).__init__(ASANA_FIELD.NOTES)
 
 
-    @property
-    def embedded_field_value(self):
-        """ Return the value representing a Task's embedded fields.
+    def is_asana_completed(self):
+        """ Return True if Asana's completed status is True. This corresponds
+        to states VALUE.COMPLETED and VALUE.APPROVED. """
+        is_completed = self.get_raw_task().get(ASANA_FIELD.COMPLETED)
+        return is_completed
 
-        Note: similar to deconstruct_task.
 
-        """
-        print "TODO: embedded field value"
-        pass
+    def _pull_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to pull
+        additional fields into the raw task. """
+        # if the completed field doesn't match the status then update it.
+        is_asana_completed = raw_task.get(ASANA_FIELD.COMPLETED)
+        status = raw_task.get(FIELD.STATUS)
+        if status == VALUE.POSTED or status == VALUE.ASSIGNED:
+            if is_asana_completed:
+                raw_task[FIELD.STATUS] = VALUE.COMPLETED
+        elif status == VALUE.COMPLETED or status == VALUE.APPROVED:
+            if not is_asana_completed:
+                print "this is an error in pull_service_quirks"
+        else:
+            raw_task[FIELD.STATUS] = VALUE.POSTED
+        return raw_task
+
+
+
+    def _push_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to push
+        fields back into their proper spot. """
+        # make sure that the completed field matches the status
+        status = raw_task.get(FIELD.STATUS)
+        if status == VALUE.COMPLETED or status == VALUE.APPROVED:
+            raw_task[ASANA_FIELD.COMPLETED] = True
+        else:
+            raw_task[ASANA_FIELD.COMPLETED] = False
+
+        return raw_task
 
 
     def _get_field_name_map(self):
@@ -198,5 +289,6 @@ class AsanaTransformer(Transformer):
                 FIELD.EMAIL,
                 FIELD.RECIPROCAL_ID,
                 FIELD.CATEGORY,
-                FIELD.LOCATION
+                FIELD.LOCATION,
+                FIELD.STATUS
                 ]

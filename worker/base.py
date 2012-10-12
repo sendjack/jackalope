@@ -16,6 +16,7 @@ import xml.etree.cElementTree as ET
 from copy import deepcopy
 
 from util.decorators import constant
+from util import string
 import settings
 from task import TaskFactory
 
@@ -56,7 +57,34 @@ class _Field(object):
     def LOCATION(self):
         return "location"
 
+    @constant
+    def STATUS(self):
+        return "status"
+
 FIELD = _Field()
+
+
+class _Value(object):
+
+    """ Constants for setting task dictionary values. """
+
+    @constant
+    def POSTED(self):
+        return "posted"
+
+    @constant
+    def ASSIGNED(self):
+        return "assigned"
+
+    @constant
+    def COMPLETED(self):
+        return "completed"
+
+    @constant
+    def APPROVED(self):
+        return "approved"
+
+VALUE = _Value()
 
 
 class ServiceWorker(object):
@@ -116,22 +144,58 @@ class ServiceWorker(object):
 
 
     def update_task_to_posted(self, task):
-        """ Set the Task's status as POSTED. """
+        """ Update the service's task's status to POSTED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - udpated Task.
+
+        """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
     def update_task_to_assigned(self, task):
-        """ Set the Task's status as ASSIGNED. """
+        """ Update the service's task's status to ASSIGNED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - udpated Task.
+
+        """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
     def update_task_to_completed(self, task):
-        """ Set the Task's status as COMPLETED. """
+        """ Update the service's task's status to COMPLETED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - udpated Task.
+
+        """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
     def update_task_to_approved(self, task):
-        """ Set the Task's status as APPROVED. """
+        """ Update the service's task's status to APPROVED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - udpated Task.
+
+        """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
@@ -277,10 +341,17 @@ class Transformer(object):
             self._raw_task = raw_task
 
 
-    @property
-    def embedded_field_value(self):
+    def get_embedded_field_value(self):
         """ Return the value of the Task's embedded field. """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        return self.get_raw_task().get(self._embedding_field)
+
+
+    def transform_accessors_to_fields(self, task, accessors):
+        """ Transform a list of accessors to a list of fields (str). """
+        return [
+                self._get_service_field_name_from_accessor(task, a)
+                for a in accessors
+                ]
 
 
     def _construct_task_from_dict(self):
@@ -296,6 +367,8 @@ class Transformer(object):
         raw_task = self._flatten_raw_task(raw_task)
 
         # build task
+        if not raw_task.get(self._get_service_field_name(FIELD.ID)):
+            print raw_task
         id = raw_task[self._get_service_field_name(FIELD.ID)]
         name = raw_task[self._get_service_field_name(FIELD.NAME)]
         # TODO: and what will happen if Cateogry is None?
@@ -320,14 +393,6 @@ class Transformer(object):
         return raw_task
 
 
-    def transform_accessors_to_fields(self, task, accessors):
-        """ Transform a list of accessors to a list of fields (str). """
-        return [
-                self._get_service_field_name_from_accessor(task, a)
-                for a in accessors
-                ]
-
-
     def _flatten_raw_task(self, raw_task):
         """ Pop embedding field, extract embedded fields, and update raw task
         dict. """
@@ -341,6 +406,9 @@ class Transformer(object):
         # remove embedding field and update
         raw_task.pop(self._embedding_field, None)
         raw_task.update(embedded_fields_dict)
+
+        # interact with service in quircky ways to generate additional fields
+        raw_task = self._pull_service_quirks(raw_task)
 
         return raw_task
 
@@ -362,6 +430,21 @@ class Transformer(object):
             # add embedding field, remove embedded fields
             raw_task[self._embedding_field] = embedding_value
 
+        # interact with service in quirky ways to generate additional fields
+        raw_task = self._push_service_quirks(raw_task)
+
+        return raw_task
+
+
+    def _pull_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to pull
+        additional fields into the raw task. """
+        return raw_task
+
+
+    def _push_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to push
+        fields back into their proper spot. """
         return raw_task
 
 
@@ -380,7 +463,8 @@ class Transformer(object):
             id_cond = field_name != FIELD.ID
             name_cond = field_name != FIELD.NAME
             category_cond = field_name != FIELD.CATEGORY
-            if id_cond and name_cond and category_cond:
+            status_cond = field_name != FIELD.STATUS
+            if id_cond and name_cond and category_cond and status_cond:
                 service_field_name = self._get_service_field_name(field_name)
                 mutator = self._get_mutator_from_jack_field_name(
                         task,
@@ -388,17 +472,46 @@ class Transformer(object):
 
                 mutator(raw_task.get(service_field_name))
 
+        # add status info to task
+        print "status processing in populate task"
+        print self._get_service_field_name(FIELD.STATUS)
+        status = raw_task.get(self._get_service_field_name(FIELD.STATUS))
+        if status == VALUE.POSTED:
+            task.set_status_to_posted()
+        elif status == VALUE.ASSIGNED:
+            task.set_status_to_assigned()
+        elif status == VALUE.COMPLETED:
+            task.set_status_to_completed()
+        elif status == VALUE.APPROVED:
+            task.set_status_to_approved()
+        else:
+            print "odd status"
+            print "status", status
+
         return task
 
 
     def _populate_raw_task(self, raw_task, task):
         """ Grabs fields from the Task and updates the raw task dict. """
         for field_name in self._get_field_names():
-            service_field_name = self._get_service_field_name(field_name)
-            accessor = self._get_accessor_from_jack_field_name(
-                    task,
-                    field_name)
-            raw_task[service_field_name] = accessor()
+            if field_name != FIELD.STATUS:
+                service_field_name = self._get_service_field_name(field_name)
+                accessor = self._get_accessor_from_jack_field_name(
+                        task,
+                        field_name)
+                raw_task[service_field_name] = accessor()
+
+        # add status info to raw task
+        status = None
+        if task.is_posted():
+            status = VALUE.POSTED
+        elif task.is_assigned():
+            status = VALUE.ASSIGNED
+        elif task.is_completed():
+            status = VALUE.COMPLETED
+        elif task.is_approved():
+            status = VALUE.APPROVED
+        raw_task[self._get_service_field_name(FIELD.STATUS)] = status
 
         return raw_task
 
@@ -422,12 +535,15 @@ class Transformer(object):
         return text
 
 
-    def _insert_embedded_field(self, raw_task, service_field, value):
+    def _insert_embedded_field(
+            self,
+            embedding_field_value,
+            service_field,
+            value):
         """ Embed the field, value in to the raw_task's embedding value. """
-        embedding_field_value = raw_task.get(self._embedding_field)
         et_elem = ET.Element(service_field)
-        et_elem.text = value
-        embedded_field_value = ET.tostring(et_elem, "utf-8")
+        et_elem.text = string.to_string(value)
+        embedded_field_value = ET.tostring(et_elem, "utf-8", "html")
 
         return "{}\n{}".format(
                 embedding_field_value,
@@ -516,7 +632,8 @@ class Transformer(object):
                 FIELD.EMAIL: FIELD.EMAIL,
                 FIELD.DESCRIPTION: FIELD.DESCRIPTION,
                 FIELD.RECIPROCAL_ID: FIELD.RECIPROCAL_ID,
-                FIELD.LOCATION: FIELD.LOCATION
+                FIELD.LOCATION: FIELD.LOCATION,
+                FIELD.STATUS: FIELD.STATUS
                 }
 
 
