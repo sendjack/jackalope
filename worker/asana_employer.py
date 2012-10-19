@@ -33,6 +33,17 @@ class _AsanaField(object):
 ASANA_FIELD = _AsanaField()
 
 
+class _Asana(object):
+
+    """ These constants contain miscellaneous special Asana values. """
+
+    @constant
+    def ME(self):
+        return "me"
+
+ASANA = _Asana()
+
+
 class AsanaEmployer(Employer):
 
     """ Connect with Asana to allow requests.
@@ -72,15 +83,8 @@ class AsanaEmployer(Employer):
         test_workspace_id = self._retrieve_id(
                 self._workspaces.get(settings.TEST_WORKSPACE_ID))
 
-        # FIXME: should be polling for tasks assigned to Jack, not tagged
-        tags = self._produce_dict(
-                self._asana_api.get_tags(test_workspace_id))
-
-        test_tag_id = self._retrieve_id(
-                tags.get(settings.JACKALOPE_TAG_ID))
-
         short_asana_tasks = self._produce_dict(
-                self._asana_api.get_tag_tasks(test_tag_id))
+                self._asana_api.list_tasks(test_workspace_id, ASANA.ME))
 
         tasks = {}
         for asana_task_id in short_asana_tasks.keys():
