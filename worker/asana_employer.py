@@ -141,15 +141,35 @@ class AsanaEmployer(Employer):
                 task,
                 accessors_to_request)
 
+        # FIXME update all the fields instead of just status
         # task.set_email("")
 
         preface = "Please include the following fields in the Notes: "
         comment = "{}{}".format(preface, "; ".join(fields_to_request))
 
         return all([
-                # self.update_task(task),
+                self.update_task(task),
                 self.add_comment(task, comment),
                 ])
+
+
+    def update_task_to_created(self, task):
+        """ Update the service's task's status to CREATED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - updated Task.
+
+        """
+        print "here!"
+        task.set_status_to_created()
+        updated_task = self.update_task(task)
+        # no add_comment with created
+
+        return updated_task
 
 
     def update_task_to_posted(self, task):
@@ -257,14 +277,16 @@ class AsanaTransformer(Transformer):
         # if the completed field doesn't match the status then update it.
         is_asana_completed = raw_task.get(ASANA_FIELD.COMPLETED)
         status = raw_task.get(status_service_field)
-        if status == VALUE.POSTED or status == VALUE.ASSIGNED:
+        if (
+                status == VALUE.CREATED or
+                status == VALUE.POSTED or
+                status == VALUE.ASSIGNED
+                ):
             if is_asana_completed:
                 raw_task[status_service_field] = VALUE.COMPLETED
         elif status == VALUE.COMPLETED or status == VALUE.APPROVED:
             if not is_asana_completed:
                 print "this is an error in pull_service_quirks"
-        else:
-            raw_task[status_service_field] = VALUE.POSTED
         return raw_task
 
 

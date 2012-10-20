@@ -16,6 +16,11 @@ class _Status(object):
     """ Task Status Constants. """
 
     @constant
+    def CREATED(self):
+        """ Task has been created but not yet posted. """
+        return "created"
+
+    @constant
     def POSTED(self):
         """ Task has been posted to/from Foreman/Worker. """
         return "posted"
@@ -72,7 +77,7 @@ class Task(object):
         """
         self._category = category
         self._id = id
-        self._status = STATUS.POSTED
+        self._status = None  # doesn't get created until it's in the DB
         self._name = name
 
         self._reciprocal_id = None
@@ -90,6 +95,16 @@ class Task(object):
     def id(self):
         """ Return id. """
         return self._id
+
+
+    def is_created(self):
+        """ Return True if the Task is CREATED. """
+        return self._status == STATUS.CREATED
+
+
+    def set_status_to_created(self):
+        """ Set Status to CREATED. """
+        self._status = STATUS.CREATED
 
 
     def is_posted(self):

@@ -255,7 +255,11 @@ class TaskRabbitTransformer(Transformer):
 
     def _pull_service_quirks(self, raw_task):
         """ Interact with the service in very service specific ways to pull
-        additional fields into the raw task. """
+        additional fields into the raw task.
+
+        Note: Task Rabbit doesn't have a created state.
+
+        """
         status_service_field = self._get_service_field_name(FIELD.STATUS)
 
         # pull the status value and translate to raw task.
@@ -283,11 +287,16 @@ class TaskRabbitTransformer(Transformer):
 
     def _push_service_quirks(self, raw_task):
         """ Interact with the service in very service specific ways to push
-        fields back into their proper spot. """
+        fields back into their proper spot.
+
+        Note: Task Rabbit doesn't have a created state.
+
+        """
         status_service_field = self._get_service_field_name(FIELD.STATUS)
 
         # convert our status value's to task rabbit's
         status = raw_task.get(status_service_field)
+        created_cond = status == VALUE.CREATED
         posted_cond = status == VALUE.POSTED
         assigned_cond = status == VALUE.ASSIGNED
         completed_cond = status == VALUE.COMPLETED
@@ -301,6 +310,8 @@ class TaskRabbitTransformer(Transformer):
             raw_task[status_service_field] = TASK_RABBIT_VALUE.COMPLETED
         elif approved_cond:
             raw_task[status_service_field] = TASK_RABBIT_VALUE.CLOSED
+        elif created_cond:
+            print "there shouldn't be a created status state but there is."
         else:
             print "status push error"
             raw_task[status_service_field] = TASK_RABBIT_VALUE.OPENED

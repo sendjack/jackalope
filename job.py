@@ -261,9 +261,9 @@ class PairedJob(Job):
         reciprocal_task = self._reciprocal_worker.create_task(self._task)
         self._task.set_reciprocal_id(reciprocal_task.id())
         self._task = self._worker.update_task(self._task)
-        self._worker.add_comment(
-                self._task,
-                Phrase.task_posted_note)
+        #self._worker.add_comment(
+        #        self._task,
+        #        Phrase.task_posted_note)
         self._task_changed = True
 
         return reciprocal_task

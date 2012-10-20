@@ -69,6 +69,10 @@ class _Value(object):
     """ Constants for setting task dictionary values. """
 
     @constant
+    def CREATED(self):
+        return "created"
+
+    @constant
     def POSTED(self):
         return "posted"
 
@@ -140,6 +144,20 @@ class ServiceWorker(object):
 
     def request_fields(self, task):
         """ Request from the service additional fields. """
+        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def update_task_to_created(self, task):
+        """ Update the service's task's status to CREATED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - udpated Task.
+
+        """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
@@ -229,8 +247,17 @@ class ServiceWorker(object):
     def _ready_spec(self, task):
         """ Check to make sure task has a ready spec before handing it over to
         the Foreman. """
-        if not task.is_spec_ready():
-            self.request_required_fields(task)
+        if task.is_spec_ready():
+            if task.is_created():
+                task.set_status_to_posted()
+                self.update_task_to_posted(task)
+        else:
+            if task.is_created():
+                # TODO: some diff here to see if things have changed
+                print "is created already"
+            else:
+                task.set_status_to_created()
+                self.request_required_fields(task)
             task = None
             print "spec incomplete"
 
@@ -473,10 +500,10 @@ class Transformer(object):
                 mutator(raw_task.get(service_field_name))
 
         # add status info to task
-        print "status processing in populate task"
-        print self._get_service_field_name(FIELD.STATUS)
         status = raw_task.get(self._get_service_field_name(FIELD.STATUS))
-        if status == VALUE.POSTED:
+        if status == VALUE.CREATED:
+            task.set_status_to_created()
+        elif status == VALUE.POSTED:
             task.set_status_to_posted()
         elif status == VALUE.ASSIGNED:
             task.set_status_to_assigned()
@@ -485,8 +512,7 @@ class Transformer(object):
         elif status == VALUE.APPROVED:
             task.set_status_to_approved()
         else:
-            print "odd status"
-            print "status", status
+            print "No status yet"
 
         return task
 
@@ -503,7 +529,9 @@ class Transformer(object):
 
         # add status info to raw task
         status = None
-        if task.is_posted():
+        if task.is_created():
+            status = VALUE.CREATED
+        elif task.is_posted():
             status = VALUE.POSTED
         elif task.is_assigned():
             status = VALUE.ASSIGNED
