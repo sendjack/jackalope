@@ -97,6 +97,11 @@ class Task(object):
         return self._id
 
 
+    def has_status(self):
+        """ Return True if status isn't None. """
+        return self._status is not None
+
+
     def is_created(self):
         """ Return True if the Task is CREATED. """
         return self._status == STATUS.CREATED

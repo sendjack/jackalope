@@ -106,10 +106,6 @@ class AsanaEmployer(Employer):
         Task - updated Task.
 
         """
-        print ""
-        print "about to update:------"
-        task._print_task()
-
         transformer = AsanaTransformer()
         transformer.set_task(task)
 
@@ -164,7 +160,6 @@ class AsanaEmployer(Employer):
         Task - updated Task.
 
         """
-        print "here!"
         task.set_status_to_created()
         updated_task = self.update_task(task)
         # no add_comment with created

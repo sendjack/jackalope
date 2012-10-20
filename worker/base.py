@@ -1,4 +1,5 @@
 """ Module: base
+        irint "here!"
 
 ServiceWorker is the base class for all interactions with external service's
 APIs. Employer (ServiceWorker) handles interactions with task doer type
@@ -12,7 +13,7 @@ ServiceWorker also provides the public facing API that the Foreman/Job can use
 to interact with external services.
 
 """
-import xml.etree.cElementTree as ET
+import re
 from copy import deepcopy
 
 from util.decorators import constant
@@ -248,7 +249,10 @@ class ServiceWorker(object):
         """ Check to make sure task has a ready spec before handing it over to
         the Foreman. """
         if task.is_spec_ready():
-            if task.is_created():
+            if not task.has_status():
+                task.set_status_to_created()
+                self.update_task_to_created(task)
+            elif task.is_created():
                 task.set_status_to_posted()
                 self.update_task_to_posted(task)
         else:
@@ -423,18 +427,21 @@ class Transformer(object):
     def _flatten_raw_task(self, raw_task):
         """ Pop embedding field, extract embedded fields, and update raw task
         dict. """
-        # extract embedded
-        embedded_fields_dict = {}
-        for jack_field_name in self._embedded_fields():
-            service_field = self._get_service_field_name(jack_field_name)
-            embedded = self._extract_embedded_field(raw_task, service_field)
-            embedded_fields_dict[service_field] = embedded
+        if self._embedding_field:
 
-        # remove embedding field and update
-        raw_task.pop(self._embedding_field, None)
-        raw_task.update(embedded_fields_dict)
+            # pop embedding fields and extract embedded fields to dict
+            embedding_field_value = raw_task.pop(self._embedding_field, None)
+            embedded_fields_dict = Tokenizer.convert_blob_to_dict(
+                    embedding_field_value)
 
-        # interact with service in quircky ways to generate additional fields
+            # update raw_task with the embedded fields we can handle
+            for jack_field_name in self._embedded_fields():
+                service_field = self._get_service_field_name(jack_field_name)
+                raw_task[service_field] = embedded_fields_dict.get(
+                        service_field)
+
+        # take a service specific raw task and pull additional fields from it
+        # based on its special fields (e.g., grabbing "completed" from asasna)
         raw_task = self._pull_service_quirks(raw_task)
 
         return raw_task
@@ -443,22 +450,24 @@ class Transformer(object):
     def _unflatten_raw_task(self, raw_task):
         """ Insert embedded fields into embedding field, remove those fields
         from the dict, and add the new embedding field to the dict. """
-        # interact with service in quirky ways to generate additional fields
+        # take a jackalope raw task and use service specific knowledge to
+        # create service specific fields (e.g., pushing "completed" to asana)
         raw_task = self._push_service_quirks(raw_task)
 
-        # pop embedded fields and insert them into embedding value
         if self._embedding_field:
-            embedding_value = ""
+
+            # pop embedded fields and insert them into embedding value
+            embedded_fields_dict = {}
             for jack_field_name in self._embedded_fields():
                 service_field = self._get_service_field_name(jack_field_name)
-                value = raw_task.pop(service_field, None)
-                embedding_value = self._insert_embedded_field(
-                        embedding_value,
+                embedded_fields_dict[service_field] = raw_task.pop(
                         service_field,
-                        value)
+                        None)
+            embedding_field_value = Tokenizer.convert_dict_to_blob(
+                    embedded_fields_dict)
 
-            # add embedding field, remove embedded fields
-            raw_task[self._embedding_field] = embedding_value
+            # update raw_task with the embedding field
+            raw_task[self._embedding_field] = embedding_field_value
 
         return raw_task
 
@@ -547,35 +556,6 @@ class Transformer(object):
     def _embedded_fields(self):
         """ A list of embedded fields for this service. """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
-
-
-    def _extract_embedded_field(self, raw_task, service_field):
-        """ Extract the embedded field and return it. """
-        embedding_field_value = raw_task.get(self._embedding_field)
-        et_elem = self._convert_blob_to_xml(embedding_field_value)
-        et_elem = et_elem.find(service_field)
-
-        text = None
-        if et_elem is not None:
-            if et_elem.text is not None:
-                text = et_elem.text.strip()
-
-        return text
-
-
-    def _insert_embedded_field(
-            self,
-            embedding_field_value,
-            service_field,
-            value):
-        """ Embed the field, value in to the raw_task's embedding value. """
-        et_elem = ET.Element(service_field)
-        et_elem.text = string.to_string(value)
-        embedded_field_value = ET.tostring(et_elem, "utf-8", "html")
-
-        return "{}\n{}".format(
-                embedding_field_value,
-                embedded_field_value)
 
 
     def _get_field_names(self):
@@ -682,10 +662,39 @@ class Transformer(object):
                 }
 
 
-    @staticmethod
-    def _convert_blob_to_xml(field):
-        """ Converts a field to xml by wrapping it in xml tags. """
-        return ET.XML("<blob>{}</blob>".format(field))
+class Tokenizer(object):
+
+    """ Tokenize a text blob into key value pairs and reconstruct that blob.
+    """
+
+    delimiter = ":"
+    regex = r"^(\w+?){}\s?(.*?)(?=^\w+?{}|\Z)".format(delimiter, delimiter)
+    key_pattern = re.compile(regex, re.DOTALL + re.MULTILINE)
+
+
+    @classmethod
+    def convert_blob_to_dict(class_, text_blob):
+        """ Convert text blob into dictionary of fields. """
+        return {
+                m[0].lower(): m[1].strip()
+                for m in class_.key_pattern.findall(text_blob)
+                }
+
+
+    @classmethod
+    def convert_dict_to_blob(class_, field_dict):
+        """ Convert a field dict to a text blob. """
+        # convert field dict into a list of entries for sorting
+        new_entries = [
+                "{}{} {}".format(
+                        string.to_string(k),
+                        class_.delimiter,
+                        string.to_string(v))
+                for k, v in field_dict.items()
+                ]
+        new_entries.sort()
+
+        return "\n".join(new_entries)
 
 
 class BadTransformationError(Exception):

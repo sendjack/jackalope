@@ -45,12 +45,16 @@ class Job(object):
         self._is_employer_job = is_employer_job
         self._task_changed = False
 
+        # a Task must have a status before it gets handed to a Job.
+        if not self._task.has_status():
+            raise JobError()
+
 
     def process(self):
         """ Evaluate the tasks and then use the Workers to process the
         Tasks.
 
-        Return: bool indicating if the main Task was changed.
+        Return: Task if has been updated or None if it hasn't.
 
         """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
@@ -66,7 +70,7 @@ class SoloJob(Job):
         """ Evaluate the tasks and then use the Workers to process the
         Tasks.
 
-        Return: bool indicating if the main Task was changed.
+        Return: Task if has been updated or None if it hasn't.
 
         """
         # only process SoloJobs from Employers.
@@ -126,7 +130,7 @@ class PairedJob(Job):
         """ Evaluate the tasks and then use the Workers to process the
         Tasks.
 
-        Return: bool indicating if the main Task was changed.
+        Return: Task if has been updated or None if it hasn't.
 
         """
         print "PROCESS THE JOB"
