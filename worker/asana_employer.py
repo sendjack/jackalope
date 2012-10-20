@@ -15,7 +15,7 @@ from base import Employer, Transformer, FIELD, VALUE
 
 class _AsanaField(object):
 
-    """ These constants contain special values for interacting with the Asana
+    """ These constants contain special fields for interacting with the Asana
     task. """
 
     @constant
@@ -107,7 +107,7 @@ class AsanaEmployer(Employer):
 
         """
         print ""
-        print "about to update:"
+        print "about to update:------"
         task._print_task()
 
         transformer = AsanaTransformer()
@@ -163,7 +163,11 @@ class AsanaEmployer(Employer):
         Task - updated Task.
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        task.set_status_to_posted()
+        updated_task = self.update_task(task)
+        self.add_comment(task, Phrase.task_posted_note)
+
+        return updated_task
 
 
     def update_task_to_assigned(self, task):
@@ -177,7 +181,11 @@ class AsanaEmployer(Employer):
         Task - updated Task.
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        task.set_status_to_assigned()
+        updated_task = self.update_task(task)
+        self.add_comment(task, Phrase.task_assigned_note)
+
+        return updated_task
 
 
     def update_task_to_completed(self, task):
@@ -191,17 +199,11 @@ class AsanaEmployer(Employer):
         Task - updated Task.
 
         """
-        # TODO: assign back to assigner
-        updated_raw_task = self._asana_api.update_task(
-                task.id(),
-                assignee=None,
-                completed=True)
-        print "task should now be complete"
+        task.set_status_to_completed()
+        updated_task = self.update_task(task)
         self.add_comment(task, Phrase.task_completed_note)
 
-        transformer = AsanaTransformer()
-        transformer.set_raw_task(updated_raw_task)
-        return self._ready_spec(transformer.get_task())
+        return updated_task
 
 
     def update_task_to_approved(self, task):
@@ -215,6 +217,7 @@ class AsanaEmployer(Employer):
         Task - updated Task.
 
         """
+        # Asana shouldn't be getting approved notices but sending them.
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
 
 
@@ -249,26 +252,29 @@ class AsanaTransformer(Transformer):
     def _pull_service_quirks(self, raw_task):
         """ Interact with the service in very service specific ways to pull
         additional fields into the raw task. """
+        status_service_field = self._get_service_field_name(FIELD.STATUS)
+
         # if the completed field doesn't match the status then update it.
         is_asana_completed = raw_task.get(ASANA_FIELD.COMPLETED)
-        status = raw_task.get(FIELD.STATUS)
+        status = raw_task.get(status_service_field)
         if status == VALUE.POSTED or status == VALUE.ASSIGNED:
             if is_asana_completed:
-                raw_task[FIELD.STATUS] = VALUE.COMPLETED
+                raw_task[status_service_field] = VALUE.COMPLETED
         elif status == VALUE.COMPLETED or status == VALUE.APPROVED:
             if not is_asana_completed:
                 print "this is an error in pull_service_quirks"
         else:
-            raw_task[FIELD.STATUS] = VALUE.POSTED
+            raw_task[status_service_field] = VALUE.POSTED
         return raw_task
-
 
 
     def _push_service_quirks(self, raw_task):
         """ Interact with the service in very service specific ways to push
         fields back into their proper spot. """
+        status_service_field = self._get_service_field_name(FIELD.STATUS)
+
         # make sure that the completed field matches the status
-        status = raw_task.get(FIELD.STATUS)
+        status = raw_task.get(status_service_field)
         if status == VALUE.COMPLETED or status == VALUE.APPROVED:
             raw_task[ASANA_FIELD.COMPLETED] = True
         else:

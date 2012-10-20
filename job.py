@@ -129,20 +129,27 @@ class PairedJob(Job):
         Return: bool indicating if the main Task was changed.
 
         """
+        print "PROCESS THE JOB"
         # check to see if Status is in sync and act.
         # both states are the same. do nothing.
         if self._are_same_states(
                 self._get_employer_task(),
                 self._get_employee_task()):
             print "same state"
-        # employee task is assigned. update employer task.
-        elif self._get_employee_task().is_assigned():
+        # employee task is assigned and employer task is posted, then update
+        elif (
+                self._get_employee_task().is_assigned() and
+                self._get_employer_task().is_posted()
+                ):
             print "assigned update"
             updated_task = self._get_employer().update_task_to_assigned(
                     self._get_employer_task())
             self._update_employer_task(updated_task)
-        # employee task is completed. update employer task.
-        elif self._get_employee_task().is_completed():
+        # employee task is completed and employer task is assigned, then update
+        elif (
+                self._get_employee_task().is_completed() and
+                self._get_employer_task().is_assigned()
+                ):
             print "completed update"
             updated_task = self._get_employer().update_task_to_completed(
                     self._get_employer_task())
@@ -150,7 +157,7 @@ class PairedJob(Job):
         # employer task is approved. update employee task.
         elif self._get_employer_task().is_approved():
             print "approved update"
-            updated_task = self._get_employee().update_task_to_completed(
+            updated_task = self._get_employee().update_task_to_approved(
                     self._get_employee_task())
             self._update_employee_task(updated_task)
         # error state.

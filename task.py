@@ -210,6 +210,7 @@ class Task(object):
         print "name:", self._name
         print "price:", self._price
         print "email:", self._email
+        print "reciprocal_id", self._reciprocal_id
         print "status:", self._status
         print "description:", self.description()
         print "spec ready?:", self.is_spec_ready()

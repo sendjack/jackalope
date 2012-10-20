@@ -11,7 +11,7 @@ import requests
 from util.decorators import constant
 import settings
 
-from base import Employee, Transformer, FIELD
+from base import Employee, Transformer, FIELD, VALUE
 
 
 SITE = "https://taskrabbitdev.com"
@@ -25,11 +25,12 @@ AUTHORIZE_URL = "https://taskrabbitdev.com/api/authorize"
 TOKEN_URL = "https://taskrabbitdev.com/api/oauth/token"
 
 TASKS_PATH = "/api/v1/tasks"
+CLOSE_TASK_SUFFIX = "/close"
 
 
 class _TaskRabbitField(object):
 
-    """ These constants contain special values for interacting with the
+    """ These constants contain special fields for interacting with the
     Task Rabbit tasks. """
 
     @constant
@@ -48,7 +49,35 @@ class _TaskRabbitField(object):
     def TASK(self):
         return "task"
 
+    @constant
+    def STATE(self):
+        return "state"
+
 TASK_RABBIT_FIELD = _TaskRabbitField()
+
+
+class _TaskRabbitValue(object):
+
+    """ These constants contain special values for interacting with the Task
+    Rabbit tasks. """
+
+    @constant
+    def OPENED(self):
+        return "opened"
+
+    @constant
+    def ASSIGNED(self):
+        return "assigned"
+
+    @constant
+    def COMPLETED(self):
+        return "completed"
+
+    @constant
+    def CLOSED(self):
+        return "closed"
+
+TASK_RABBIT_VALUE = _TaskRabbitValue()
 
 
 class TaskRabbitEmployee(Employee):
@@ -119,7 +148,32 @@ class TaskRabbitEmployee(Employee):
         new_raw_task_dict = self._post(TASKS_PATH, raw_task_dict)
         new_transformer = TaskRabbitTransformer()
         new_transformer.set_raw_task(new_raw_task_dict)
+
         return self._ready_spec(new_transformer.get_task())
+
+
+    def update_task_to_approved(self, task):
+        """ Update the service's task's status to APPROVED and return this
+        updated Task.
+
+        Required:
+        Task task   The Task to update.
+
+        Return:
+        Task - updated Task.
+
+        """
+        id = task.id()
+        close_path = "{}/{}{}".format(
+                TASKS_PATH,
+                str(id),
+                CLOSE_TASK_SUFFIX)
+
+        closed_task_dict = self._post(close_path, {})
+        closed_transformer = TaskRabbitTransformer()
+        closed_transformer.set_raw_task(closed_task_dict)
+
+        return self._ready_spec(closed_transformer.get_task())
 
 
     def _get(self, path):
@@ -199,6 +253,61 @@ class TaskRabbitTransformer(Transformer):
         return task_wrapper
 
 
+    def _pull_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to pull
+        additional fields into the raw task. """
+        status_service_field = self._get_service_field_name(FIELD.STATUS)
+
+        # pull the status value and translate to raw task.
+        status = raw_task.get(status_service_field)
+        posted_cond = status == TASK_RABBIT_VALUE.OPENED
+        assigned_cond = status == TASK_RABBIT_VALUE.ASSIGNED
+        completed_cond = status == TASK_RABBIT_VALUE.COMPLETED
+        approved_cond = status == TASK_RABBIT_VALUE.CLOSED
+
+        if posted_cond:
+            raw_task[status_service_field] = VALUE.POSTED
+        elif assigned_cond:
+            raw_task[status_service_field] = VALUE.ASSIGNED
+        elif completed_cond:
+            raw_task[status_service_field] = VALUE.COMPLETED
+        elif approved_cond:
+            raw_task[status_service_field] = VALUE.APPROVED
+        else:
+            # todo handle State = "expired"
+            print "error in pull service quirks"
+            raw_task[status_service_field] = VALUE.POSTED
+
+        return raw_task
+
+
+    def _push_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to push
+        fields back into their proper spot. """
+        status_service_field = self._get_service_field_name(FIELD.STATUS)
+
+        # convert our status value's to task rabbit's
+        status = raw_task.get(status_service_field)
+        posted_cond = status == VALUE.POSTED
+        assigned_cond = status == VALUE.ASSIGNED
+        completed_cond = status == VALUE.COMPLETED
+        approved_cond = status == VALUE.APPROVED
+
+        if posted_cond:
+            raw_task[status_service_field] = TASK_RABBIT_VALUE.OPENED
+        elif assigned_cond:
+            raw_task[status_service_field] = TASK_RABBIT_VALUE.ASSIGNED
+        elif completed_cond:
+            raw_task[status_service_field] = TASK_RABBIT_VALUE.COMPLETED
+        elif approved_cond:
+            raw_task[status_service_field] = TASK_RABBIT_VALUE.CLOSED
+        else:
+            print "status push error"
+            raw_task[status_service_field] = TASK_RABBIT_VALUE.OPENED
+
+        return raw_task
+
+
     def _get_field_name_map(self):
         """ Return a mapping of our field names to Asana's field names. """
         field_name_map = super(
@@ -206,6 +315,7 @@ class TaskRabbitTransformer(Transformer):
                 self)._get_field_name_map()
         field_name_map[FIELD.PRICE] = TASK_RABBIT_FIELD.PRICE
         field_name_map[FIELD.LOCATION] = TASK_RABBIT_FIELD.LOCATION
+        field_name_map[FIELD.STATUS] = TASK_RABBIT_FIELD.STATE
 
         return field_name_map
 

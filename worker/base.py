@@ -416,8 +416,11 @@ class Transformer(object):
     def _unflatten_raw_task(self, raw_task):
         """ Insert embedded fields into embedding field, remove those fields
         from the dict, and add the new embedding field to the dict. """
+        # interact with service in quirky ways to generate additional fields
+        raw_task = self._push_service_quirks(raw_task)
+
+        # pop embedded fields and insert them into embedding value
         if self._embedding_field:
-            # pop embedded fields and insert them into embedding value
             embedding_value = ""
             for jack_field_name in self._embedded_fields():
                 service_field = self._get_service_field_name(jack_field_name)
@@ -429,9 +432,6 @@ class Transformer(object):
 
             # add embedding field, remove embedded fields
             raw_task[self._embedding_field] = embedding_value
-
-        # interact with service in quirky ways to generate additional fields
-        raw_task = self._push_service_quirks(raw_task)
 
         return raw_task
 
