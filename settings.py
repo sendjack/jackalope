@@ -13,7 +13,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 # Generic Error messages
 NOT_IMPLEMENTED_ERROR = "Subclass and override."
 INIT_INTERFACE_ERROR = "Do not try to instantiate an interface."
-
+DO_NOT_OVERRIDE = "Do not override this method."
 
 # Asana
 ASANA_API_KEY = os.environ.get("ASANA_API_KEY")

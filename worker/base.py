@@ -1,5 +1,4 @@
 """ Module: base
-        irint "here!"
 
 ServiceWorker is the base class for all interactions with external service's
 APIs. Employer (ServiceWorker) handles interactions with task doer type
@@ -290,6 +289,12 @@ class Employer(ServiceWorker):
     def __init__(self):
         """ Construct Employer. """
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+
+
+    def create_task(self, worker_task):
+        """ Employers do not create tasks, their external services do. """
+        raise NotImplementedError(settings.DO_NOT_OVERRIDE)
+
 
 
 class Employee(ServiceWorker):
