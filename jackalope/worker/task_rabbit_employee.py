@@ -10,8 +10,10 @@ import requests
 
 from jackalope.util.decorators import constant
 from jackalope import settings
+from jackalope.comment import Comment  # remove this after TR has messaging.
 
-from base import Employee, Transformer, FIELD, VALUE
+from worker import Employee
+from transformer import TaskTransformer, FIELD, VALUE
 
 
 SITE = "https://taskrabbitdev.com"
@@ -26,6 +28,7 @@ TOKEN_URL = "https://taskrabbitdev.com/api/oauth/token"
 
 TASKS_PATH = "/api/v1/tasks"
 CLOSE_TASK_SUFFIX = "/close"
+#COMMENTS_TASK_SUFFIX = "/comments"
 
 
 class _TaskRabbitField(object):
@@ -52,6 +55,14 @@ class _TaskRabbitField(object):
     @constant
     def STATE(self):
         return "state"
+
+    @constant
+    def COMMENT(self):
+        return "comment"
+
+    @constant
+    def CONTENT(self):
+        return "content"
 
 TASK_RABBIT_FIELD = _TaskRabbitField()
 
@@ -91,7 +102,6 @@ class TaskRabbitEmployee(Employee):
 
 
     def __init__(self):
-        """ Construct TaskRabbitEmployee. """
         access_token = settings.TASK_RABBIT_ACCESS_TOKEN
         self._headers = {
                 APPLICATION_HEADER: settings.TASK_RABBIT_SECRET,
@@ -99,10 +109,10 @@ class TaskRabbitEmployee(Employee):
 
 
     def read_task(self, task_id):
-        """ Connect to Worker's service and return the requested Task."""
+        """Connect to the ServiceWorker's service and return a Task."""
         raw_task = self._get("{}/{}".format(TASKS_PATH, str(task_id)))
 
-        transformer = TaskRabbitTransformer()
+        transformer = TaskRabbitTaskTransformer()
         transformer.set_raw_task(raw_task)
         return self._ready_spec(transformer.get_task())
 
@@ -120,7 +130,7 @@ class TaskRabbitEmployee(Employee):
 
         tasks = {}
         for task_rabbit_task_id in task_rabbit_tasks.keys():
-            transformer = TaskRabbitTransformer()
+            transformer = TaskRabbitTaskTransformer()
             transformer.set_raw_task(task_rabbit_tasks[task_rabbit_task_id])
             tasks[task_rabbit_task_id] = self._ready_spec(
                     transformer.get_task())
@@ -129,16 +139,9 @@ class TaskRabbitEmployee(Employee):
 
 
     def create_task(self, task):
-        """ Use a Employee's Task to create a task in the Employee's Service.
-
-        Required:
-        Task task      the Employee's Task.
-
-        Return:
-        Task the new Task.
-
-        """
-        transformer = TaskRabbitTransformer()
+        """Use Task to create a task in the Worker's service and then return
+        the new Task."""
+        transformer = TaskRabbitTaskTransformer()
         transformer.set_task(task)
         raw_task_dict = transformer.get_raw_task()
 
@@ -146,7 +149,7 @@ class TaskRabbitEmployee(Employee):
         raw_task_dict.get('task').pop("id")
 
         new_raw_task_dict = self._post(TASKS_PATH, raw_task_dict)
-        new_transformer = TaskRabbitTransformer()
+        new_transformer = TaskRabbitTaskTransformer()
         new_transformer.set_raw_task(new_raw_task_dict)
 
         return self._ready_spec(new_transformer.get_task())
@@ -170,10 +173,54 @@ class TaskRabbitEmployee(Employee):
                 CLOSE_TASK_SUFFIX)
 
         closed_task_dict = self._post(close_path, {})
-        closed_transformer = TaskRabbitTransformer()
+        closed_transformer = TaskRabbitTaskTransformer()
         closed_transformer.set_raw_task(closed_task_dict)
 
         return self._ready_spec(closed_transformer.get_task())
+
+
+    def add_comment(self, task, message):
+        """Create a comment in the service on a task."""
+        # comments don't work for our purposes in task rabbit.
+        # raw_comment = TaskRabbitCommentTransformer.convert_message_to_dict(
+        #         message)
+        #
+        #comments_path = "{}/{}{}".format(
+        #        TASKS_PATH,
+        #        str(task.id()),
+        #        COMMENTS_TASK_SUFFIX)
+        #
+        #response_dict = self._post(comments_path, raw_comment)
+        #print response_dict
+        print "IF task rabbit commenting worked: ", task.id(), message
+
+        return True
+
+
+    def read_comments(self, task_id):
+        """Read Comments for a task from service and return a dict keyed on
+        id."""
+        # the easiest way to get comments from task rabbit is through the task.
+        #raw_task = self._get("{}/{}".format(TASKS_PATH, str(task_id)))
+        #
+        ## extract the raw task rabbit comments from the raw task dict.
+        #raw_comments = (
+        #        TaskRabbitCommentTransformer.pull_tr_comments_from_task_dict(
+        #                raw_task)
+        #        )
+        #
+        ## convert raw comments to Comments
+        #comments = {}
+        #for raw_comment in raw_comments:
+        #    comment = (
+        #            TaskRabbitCommentTransformer.convert_dict_to_comment(
+        #                    raw_comment)
+        #            )
+        #    comments[comment.id()] = comment
+        print "fake comment coming from task rabbit"
+        comment = Comment(-1, -1, "partnership is key.")
+        comments = {comment.id(): comment}
+        return comments
 
 
     def _get(self, path):
@@ -217,7 +264,7 @@ class TaskRabbitEmployee(Employee):
         return response.json
 
 
-class TaskRabbitTransformer(Transformer):
+class TaskRabbitTaskTransformer(TaskTransformer):
 
     """ Handle parsing the service's response dictionary to construct a Task
     and deconstructing a Task into a raw task dictionary for the service.
@@ -231,14 +278,13 @@ class TaskRabbitTransformer(Transformer):
 
 
     def __init__(self):
-        """ Construct a TaskRabbitTransformer. """
-        super(TaskRabbitTransformer, self).__init__(None)
+        super(TaskRabbitTaskTransformer, self).__init__(None)
 
 
     def _deconstruct_task_to_dict(self):
         """ Deconstruct Task into a raw task dict and return it. """
         raw_task = super(
-                TaskRabbitTransformer,
+                TaskRabbitTaskTransformer,
                 self)._deconstruct_task_to_dict()
 
         # TODO: Remove this
@@ -322,7 +368,7 @@ class TaskRabbitTransformer(Transformer):
     def _get_field_name_map(self):
         """ Return a mapping of our field names to Asana's field names. """
         field_name_map = super(
-                TaskRabbitTransformer,
+                TaskRabbitTaskTransformer,
                 self)._get_field_name_map()
         field_name_map[FIELD.PRICE] = TASK_RABBIT_FIELD.PRICE
         field_name_map[FIELD.LOCATION] = TASK_RABBIT_FIELD.LOCATION

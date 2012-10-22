@@ -22,6 +22,7 @@ DO_NOT_OVERRIDE = "Do not override this method."
 
 # Asana
 ASANA_API_KEY = os.environ.get("ASANA_API_KEY")
+ASANA_JACK_USER_ID = integer.to_integer(os.environ.get("ASANA_JACK_USER_ID"))
 TEST_WORKSPACE_ID = integer.to_integer(os.environ.get("TEST_WORKSPACE_ID"))
 JACKALOPE_TAG_ID = integer.to_integer(os.environ.get("JACKALOPE_TAG_ID"))
 

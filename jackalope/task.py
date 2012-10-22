@@ -63,6 +63,7 @@ class Task(object):
     _id : `int`
     _status : `str`
     _name : `str`
+    _comments : {id, `Comment`}, optional
     _last_synched_ts : `int`, optional
         The timestamp of the last time a synch occurred with the service.
     _reciprocal_id : `int`, optional
@@ -83,6 +84,7 @@ class Task(object):
         self._status = None  # doesn't get created until it's in the DB
         self._name = name
 
+        self._comments = {}
         self._last_synched_ts = None
         self._reciprocal_id = None
         self._description = None
@@ -148,6 +150,28 @@ class Task(object):
         return self._name
 
 
+    def get_comments(self):
+        """Return a dict of Comments keyed on id."""
+        return self._comments
+
+
+    def set_comments(self, comments):
+        """Set a dict of Comments keyed on id."""
+        self._comments = comments
+
+
+    def get_new_comments_list(self):
+        """Return a list of Comments that have been created since the last
+        synch time."""
+        new_comments = [
+                comment
+                for comment in self.get_comments().values()
+                if comment.created_ts() > self.last_synched_ts()
+                ]
+
+        return sorted(new_comments, key=lambda c: c.created_ts())
+
+
     def price(self):
         return self._price
 
@@ -165,18 +189,18 @@ class Task(object):
         self._email = email
 
 
-    def last_synched(self):
+    def last_synched_ts(self):
         return self._last_synched_ts
 
 
-    def set_last_synched(self, last_synched_ts):
+    def set_last_synched_ts(self, last_synched_ts):
         if last_synched_ts:
-            self._last_synched_ts = last_synched_ts
+            self._last_synched_ts = int(last_synched_ts)
 
 
     def push_current_to_last_synched(self):
         """Update the last synched ts to the current synch."""
-        self.set_last_synched(self._current_synched_ts)
+        self.set_last_synched_ts(self._current_synched_ts)
 
 
     def reciprocal_id(self):

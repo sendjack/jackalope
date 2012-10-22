@@ -129,7 +129,8 @@ class PairedJob(Job):
         # employee task is completed and employer task is assigned, then update
         elif (
                 self._get_employee_task().is_completed() and
-                self._get_employer_task().is_assigned()
+                self._get_employer_task().is_assigned() or
+                self._get_employer_task().is_posted()
                 ):
             print "completed update"
             updated_task = self._get_employer().update_task_to_completed(
@@ -146,6 +147,23 @@ class PairedJob(Job):
             raise JobError()
 
         # check to see if Content is in sync and act.
+
+        # sync comments between the services.
+        # FIXME: Currently only pulls comments from job initiator (employer)
+        comments = self._worker.read_comments(self._task.id())
+        self._task.set_comments(comments)
+        new_comments = self._task.get_new_comments_list()
+        if new_comments:
+            self._task_changed = True
+        for comment in new_comments:
+            #self._reciprocal_worker.add_comment(
+            #        self._reciprocal_task,
+            #        comment.message())
+            self._worker.add_comment(
+                    self._task,
+                    "MIRRORED FOR TEST:" + comment.message())
+
+        # TODO:pull comments from reciprocal service (employee)
 
         # if either task has changed make sure synch ts is updated and pushed.
         updated_task = None
