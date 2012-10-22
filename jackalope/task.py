@@ -1,13 +1,18 @@
-""" Module: task
+"""
+    task
+    ----
 
-Task is a specification for a task that can be used to pass data between
-services. The Foreman will use Tasks to coordinate activity.
+    Task is a specification for a service's task that can be used to compare
+    between service and communicate with our central processing unit, Foreman.
 
-All fields we handle should have accessors and mutators in the Task superclass.
-The subclasses are used to define required fields and any special
-functionality.
+    Notes
+    +++++
+    All service fields have corresponding accessors and mutators in the Task
+    superclass. The subclasses are used to define required fields and special
+    functionality.
 
 """
+
 from time import time
 
 from util.decorators import constant
@@ -15,33 +20,31 @@ from util.decorators import constant
 
 class _Status(object):
 
-    """ Task Status Constants. """
-
     @constant
     def CREATED(self):
-        """ Task has been created but not yet posted. """
+        """Task has been created but not yet posted."""
         return "created"
 
     @constant
     def POSTED(self):
-        """ Task has been posted to/from Foreman/Worker. """
+        """Task has been posted to/from Foreman/Worker."""
         return "posted"
 
     @constant
     def ASSIGNED(self):
-        """ Task has been assigned to somebody to actually do. """
+        """Task has been assigned to somebody to actually do."""
         return "assigned"
 
     @constant
     def COMPLETED(self):
-        """ The outlined work in this Task is complete but under
-        review. """
+        """The outlined work in this Task is complete but under
+        review."""
         return "completed"
 
     @constant
     def APPROVED(self):
-        """ The work has been approved by the Employer and is closed
-        out. """
+        """The work has been approved by the Employer and is closed
+        out."""
         return "approved"
 
 STATUS = _Status()
@@ -49,37 +52,31 @@ STATUS = _Status()
 
 class Task(object):
 
-    """ A specification for a task.
+    """A field list.
 
-    Required:
-    ts _current_synched_ts  The ts of the current synch.
-    str _category       The category of task.
-    id _id              The id of the Task, pulled from the source.
-    ServiceWorker _worker The ServiceWorker associated with this Task.
-    str _status         The STATUS of the Task.
-    str _name           The name of the Task, pulled from the source.
-
-    Optional:
-    ts _last_synched_ts The timestamp of the last time we synched with the
-    service's task.
-    id _reciprocal_id The Tasks's complimentary Task's id.
-    str _description    The description of the Task.
-    str _email          The email of attached to the Task.
-    int _price          The price of the Task in US Dollars.
-    int _location       The location of the Task by id.
+    Attributes
+    ----------
+    _current_synched_ts : `int`
+        The timestamp of the current synch that is being processed.
+    _worker : `ServiceWorker`
+    _category : `str`
+    _id : `int`
+    _status : `str`
+    _name : `str`
+    _last_synched_ts : `int`, optional
+        The timestamp of the last time a synch occurred with the service.
+    _reciprocal_id : `int`, optional
+        The Tasks's complementary Task's id.
+    _description : `str`, optional
+    _email : `str`, optional
+    _price : `int`, optional
+    _location : `int`, optional
+        An id (currently using TaskRabbit's) that represents the city.
 
     """
 
 
     def __init__(self, category, id, name):
-        """ Construct Task.
-
-        Required:
-        str category                The category of Task.
-        id id                       The id of the Task.
-        str name                    The name field of the Task.
-
-        """
         self._current_synched_ts = int(time())
         self._category = category
         self._id = id
@@ -95,151 +92,126 @@ class Task(object):
 
 
     def category(self):
-        """ Return task category. """
         return self._category
 
 
     def id(self):
-        """ Return id. """
         return self._id
 
 
     def has_status(self):
-        """ Return True if status isn't None. """
+        """If the Task has any status then return True."""
         return self._status is not None
 
 
     def is_created(self):
-        """ Return True if the Task is CREATED. """
         return self._status == STATUS.CREATED
 
 
     def set_status_to_created(self):
-        """ Set Status to CREATED. """
         self._status = STATUS.CREATED
 
 
     def is_posted(self):
-        """ Return True if the Task is POSTED. """
         return self._status == STATUS.POSTED
 
 
     def set_status_to_posted(self):
-        """ Set Status to POSTED. """
         self._status = STATUS.POSTED
 
 
     def is_assigned(self):
-        """ Return True if the Task is ASSIGNED. """
         return self._status == STATUS.ASSIGNED
 
 
     def set_status_to_assigned(self):
-        """ Set Status to ASSIGNED. """
         self._status = STATUS.ASSIGNED
 
 
     def is_completed(self):
-        """ Return True if the Task is COMPLETED. """
         return self._status == STATUS.COMPLETED
 
 
     def set_status_to_completed(self):
-        """ Set Status to COMPLETED. """
         self._status = STATUS.COMPLETED
 
 
     def is_approved(self):
-        """ Return True if the Task is APPROVED. """
         return self._status == STATUS.APPROVED
 
 
     def set_status_to_approved(self):
-        """ Set Status to APPROVED. """
         self._status = STATUS.APPROVED
 
 
     def name(self):
-        """ Return name. """
         return self._name
 
 
     def price(self):
-        """ Return price. """
         return self._price
 
 
     def set_price(self, price):
-        """ Set the price. """
         if price:
             self._price = int(price)
 
 
     def email(self):
-        """ Return email. """
         return self._email
 
 
     def set_email(self, email):
-        """ Set the email. """
         self._email = email
 
 
     def last_synched(self):
-        """ Return the last synched timestamp. """
         return self._last_synched_ts
 
 
     def set_last_synched(self, last_synched_ts):
-        """ Set the last synched ts. """
         if last_synched_ts:
             self._last_synched_ts = last_synched_ts
 
 
     def push_current_to_last_synched(self):
-        """ Update the last synched ts to the current synch. """
+        """Update the last synched ts to the current synch."""
         self.set_last_synched(self._current_synched_ts)
 
 
     def reciprocal_id(self):
-        """ Return reciprocal id. """
         return self._reciprocal_id
 
 
     def set_reciprocal_id(self, id):
-        """ Set reciprocal id. """
         self._reciprocal_id = id
 
 
     def description(self):
-        """ Return description. """
         return self._description
 
 
     def set_description(self, description):
-        """ Set the description. """
         self._description = description
 
 
     def location(self):
-        """ Return the location. """
         return self._location
 
 
     def set_location(self, location_id):
-        """ Set the location. """
         if location_id:
             self._location = int(location_id)
 
 
     def is_spec_ready(self):
-        """ Return True if all the required fields have values. """
+        """If all required fields have values then return True."""
         required_fields = [a() for a in self.get_required_accessors()]
         return all(required_fields)
 
 
     def get_required_accessors(self):
-        """ Return a list of the required fields. """
+        """Return a list of required fields' accessors."""
         return [
                 self.id,
                 self.name,
@@ -247,14 +219,15 @@ class Task(object):
 
 
     def _print_task(self):
-        """ Print all tasks. """
         print "\nTASK\n--------"
         print "id:", self._id
         print "name:", self._name
         print "price:", self._price
         print "email:", self._email
+        print "category:", self._category
         print "reciprocal_id", self._reciprocal_id
         print "status:", self._status
+        print "location:", self._location
         print "description:", self.description()
         print "spec ready?:", self.is_spec_ready()
         print ""
@@ -262,45 +235,38 @@ class Task(object):
 
 class RegistrationTask(Task):
 
-    """ A Task for registering a new user with Jackalope.
-
-    Required:
-    str _email  The email field.
-
-    """
+    """The Task for registering new users with Jackalope. This Task uses
+    SoloJob."""
 
 
     def get_required_accessors(self):
-        """ Return a list of the required fields. """
-        required_accessors = super(
-                RegistrationTask,
-                self).get_required_accessors()
-        required_accessors.extend([
-                self.email])
-        return required_accessors
+        """Return a list of required fields' accessors."""
+        accessors = super(RegistrationTask, self).get_required_accessors()
+        accessors.extend(
+                [
+                    self.email
+                ])
+        return accessors
 
 
 class PricedTask(Task):
 
-    """ A Task that forces the user to name a price.
-
-    Required:
-    str _price The price field.
-
-    """
+    """A Task that requires a price. This Task uses PairedJob."""
 
 
     def get_required_accessors(self):
-        """ Return a list of the required fields. """
-        required_accessors = super(PricedTask, self).get_required_accessors()
-        required_accessors.extend([
-                self.price])
-        return required_accessors
+        """Return a list of required fields' accessors."""
+        accessors = super(PricedTask, self).get_required_accessors()
+        accessors.extend(
+                [
+                    self.price
+                ])
+        return accessors
 
 
 class TaskFactory(object):
 
-    """ Use the category of task key to map to a specfic subclass of Task. """
+    """Construct a Task with the subclass dependent on category."""
 
     REGISTRATION = "registration"  # RegistrationTask
     PRICED = "priced"  # PricedTask
@@ -315,16 +281,6 @@ class TaskFactory(object):
 
     @classmethod
     def instantiate_task(class_, category, task_id, name):
-        """ Use the task category to construct a Task.
-
-        Required:
-        str category        The specific category of Task.
-        id  task_id         The service id of the Task.
-        str name            The name of the Task.
-
-        Return: Task
-
-        """
         task_constructor = class_.TASK_CATEGORY_MAPPING.get(category, Task)
         if type(task_constructor) == Task:
             print "oh yeah, we got one of them tasks"
