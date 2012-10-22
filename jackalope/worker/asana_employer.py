@@ -6,9 +6,9 @@ and Asana.
 """
 from asana import asana
 
-from util.decorators import constant
-import settings
-from phrase import Phrase
+from jackalope.util.decorators import constant
+from jackalope import settings
+from jackalope.phrase import Phrase
 
 from base import Employer, Transformer, FIELD, VALUE
 

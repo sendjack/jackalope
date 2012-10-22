@@ -8,8 +8,8 @@ import copy
 import json
 import requests
 
-from util.decorators import constant
-import settings
+from jackalope.util.decorators import constant
+from jackalope import settings
 
 from base import Employee, Transformer, FIELD, VALUE
 

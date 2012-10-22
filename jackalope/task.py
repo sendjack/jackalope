@@ -61,7 +61,7 @@ class Task(object):
 
     Optional:
     ts _last_synched_ts The timestamp of the last time we synched with the
-                        service's task.
+    service's task.
     id _reciprocal_id The Tasks's complimentary Task's id.
     str _description    The description of the Task.
     str _email          The email of attached to the Task.

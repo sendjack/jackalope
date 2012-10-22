@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 """
-    app
-    ~~~
-
     Jackalope application object.
+    -----------------------------
 
     Jackalope connects the Asana and Task Rabbit APIs.
 

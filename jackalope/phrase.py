@@ -1,6 +1,6 @@
 """
     phrase
-    ~~~~~~
+    ------
 
     The special Jackalope language that brings Jack to life.
 

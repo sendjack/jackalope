@@ -1,6 +1,6 @@
 """
     string
-    ~~~~~~
+    ------
 
     A all-purpose module for working with strings.
 

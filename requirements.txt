@@ -3,3 +3,5 @@ distribute==0.6.27
 requests==0.14.0
 wsgiref==0.1.2
 git+git://github.com/pandemicsyn/asana.git
+sphinx==1.1.3
+numpydoc==0.4

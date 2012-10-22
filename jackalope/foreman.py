@@ -1,6 +1,6 @@
 """
     foreman
-    ~~~~~~~
+    -------
 
     Handle all coordination between Employer and Employee workers.
 
@@ -17,10 +17,10 @@ class Foreman(object):
 
     """Manage all Employer, Employee, Task interactions.
 
-    Required
-    --------
-    `list` *employers*
-    `list` *employees*
+    Attributes
+    ----------
+    employers : list of `Employer`
+    employees : list of `Employee`
 
     """
 
@@ -54,7 +54,7 @@ class Foreman(object):
 
 
     def process_employer_tasks(self, employer, tasks):
-        """Process a dict of `Employer` service `Task`s keyed on id."""
+        """Process a dict of `Employer` service `Task` keyed on id."""
         for task in tasks.values():
             if task:
                 print ""
@@ -76,5 +76,5 @@ class Foreman(object):
 
 
     def process_employee_tasks(self, employee, tasks):
-        """Process a dict of `Employee` service `Task`s keyed on id."""
+        """Process a dict of `Employee` service `Task` keyed on id."""
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)

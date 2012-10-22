@@ -15,10 +15,10 @@ to interact with external services.
 import re
 from copy import deepcopy
 
-from util.decorators import constant
-from util import string
-import settings
-from task import TaskFactory
+from jackalope.util.decorators import constant
+from jackalope.util import string
+from jackalope import settings
+from jackalope.task import TaskFactory
 
 
 class _Field(object):
