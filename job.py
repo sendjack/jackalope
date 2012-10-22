@@ -107,6 +107,7 @@ class PairedJob(Job):
     Required:
     ServiceWorker _reciprocal_worker
     Task _reciprocal_task
+    bool _reciprocal_task_changed
 
     """
 
@@ -122,6 +123,7 @@ class PairedJob(Job):
 
         """
         super(PairedJob, self).__init__(worker, task, foreman, is_employer_job)
+        self._reciprocal_task_changed = False
         self._set_smart_reciprocal_worker()
         self._set_reciprocal_task()
 
@@ -170,9 +172,14 @@ class PairedJob(Job):
 
         # check to see if Content is in sync and act.
 
+        # if either task has changed make sure synch ts is updated and pushed.
         updated_task = None
         if self._task_changed:
-            updated_task = self._task
+            self._task.push_current_to_last_synched()
+            updated_task = self._worker.update_task(self._task)
+        if self._reciprocal_task_changed:
+            self._reciprocal_task.push_current_to_last_synched()
+            self._reciprocal_worker.update_task(self._reciprocal_task)
         return updated_task
 
 
@@ -210,9 +217,10 @@ class PairedJob(Job):
         """ Set a new Employer Task. """
         if self._is_employer_job:
             self._task = updated_task
+            self._task_changed = True
         else:
             self._reciprocal_task = updated_task
-        self._task_changed = True
+            self._reciprocal_task_changed = True
 
 
     def _get_employee_task(self):
@@ -229,9 +237,10 @@ class PairedJob(Job):
         """ Set a new Employee Task. """
         if self._is_employer_job:
             self._reciprocal_task = updated_task
+            self._reciprocal_task_changed = True
         else:
             self._task = updated_task
-        self._task_changed = True
+            self._task_changed = True
 
 
     def _set_smart_reciprocal_worker(self):

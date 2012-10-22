@@ -8,6 +8,8 @@ The subclasses are used to define required fields and any special
 functionality.
 
 """
+from time import time
+
 from util.decorators import constant
 
 
@@ -50,6 +52,7 @@ class Task(object):
     """ A specification for a task.
 
     Required:
+    ts _current_synched_ts  The ts of the current synch.
     str _category       The category of task.
     id _id              The id of the Task, pulled from the source.
     ServiceWorker _worker The ServiceWorker associated with this Task.
@@ -57,6 +60,8 @@ class Task(object):
     str _name           The name of the Task, pulled from the source.
 
     Optional:
+    ts _last_synched_ts The timestamp of the last time we synched with the
+                        service's task.
     id _reciprocal_id The Tasks's complimentary Task's id.
     str _description    The description of the Task.
     str _email          The email of attached to the Task.
@@ -75,11 +80,13 @@ class Task(object):
         str name                    The name field of the Task.
 
         """
+        self._current_synched_ts = int(time())
         self._category = category
         self._id = id
         self._status = None  # doesn't get created until it's in the DB
         self._name = name
 
+        self._last_synched_ts = None
         self._reciprocal_id = None
         self._description = None
         self._email = None
@@ -176,6 +183,22 @@ class Task(object):
     def set_email(self, email):
         """ Set the email. """
         self._email = email
+
+
+    def last_synched(self):
+        """ Return the last synched timestamp. """
+        return self._last_synched_ts
+
+
+    def set_last_synched(self, last_synched_ts):
+        """ Set the last synched ts. """
+        if last_synched_ts:
+            self._last_synched_ts = last_synched_ts
+
+
+    def push_current_to_last_synched(self):
+        """ Update the last synched ts to the current synch. """
+        self.set_last_synched(self._current_synched_ts)
 
 
     def reciprocal_id(self):

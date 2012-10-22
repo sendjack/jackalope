@@ -61,6 +61,10 @@ class _Field(object):
     def STATUS(self):
         return "status"
 
+    @constant
+    def LAST_SYNCHED_TS(self):
+        return "last_synched_ts"
+
 FIELD = _Field()
 
 
@@ -249,10 +253,8 @@ class ServiceWorker(object):
         the Foreman. """
         if task.is_spec_ready():
             if not task.has_status():
-                task.set_status_to_created()
                 self.update_task_to_created(task)
             elif task.is_created():
-                task.set_status_to_posted()
                 self.update_task_to_posted(task)
         else:
             if task.is_created():
@@ -646,7 +648,8 @@ class Transformer(object):
                 FIELD.DESCRIPTION: FIELD.DESCRIPTION,
                 FIELD.RECIPROCAL_ID: FIELD.RECIPROCAL_ID,
                 FIELD.LOCATION: FIELD.LOCATION,
-                FIELD.STATUS: FIELD.STATUS
+                FIELD.STATUS: FIELD.STATUS,
+                FIELD.LAST_SYNCHED_TS: FIELD.LAST_SYNCHED_TS
                 }
 
 
@@ -663,7 +666,10 @@ class Transformer(object):
                 FIELD.RECIPROCAL_ID: (
                         task.reciprocal_id,
                         task.set_reciprocal_id),
-                FIELD.LOCATION: (task.location, task.set_location)
+                FIELD.LOCATION: (task.location, task.set_location),
+                FIELD.LAST_SYNCHED_TS: (
+                        task.last_synched,
+                        task.set_last_synched)
                 }
 
 

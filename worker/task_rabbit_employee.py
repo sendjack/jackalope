@@ -333,4 +333,6 @@ class TaskRabbitTransformer(Transformer):
 
     def _embedded_fields(self):
         """ Return a list of embedded fields as Jackalope field names. """
-        return []
+        return [
+                FIELD.LAST_SYNCHED_TS
+                ]

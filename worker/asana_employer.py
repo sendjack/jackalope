@@ -97,7 +97,7 @@ class AsanaEmployer(Employer):
 
 
     def update_task(self, task):
-        """ Connect to Worker's service and udpate the task.
+        """ Connect to Worker's service and update the task.
 
         Required:
         Task task   The Task to update.
@@ -317,5 +317,6 @@ class AsanaTransformer(Transformer):
                 FIELD.RECIPROCAL_ID,
                 FIELD.CATEGORY,
                 FIELD.LOCATION,
-                FIELD.STATUS
+                FIELD.STATUS,
+                FIELD.LAST_SYNCHED_TS
                 ]
