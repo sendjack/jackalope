@@ -1,10 +1,14 @@
-""" Module: settings
+"""
+    settings
+    ~~~~~~~~
 
-All settings for the app. The only file that should interact with the
-environmental variables.
+    All application settings. A single point for environmental variable
+    interactions.
 
 """
+
 import os
+
 
 # Make filepaths relative to settings.
 path = lambda root, *a: os.path.join(root, *a)

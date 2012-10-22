@@ -1,8 +1,11 @@
-""" Module: foreman
+"""
+    foreman
+    ~~~~~~~
 
-This module handles all coordination between Employer and Employee workers.
+    Handle all coordination between Employer and Employee workers.
 
 """
+
 import settings
 from worker.asana_employer import AsanaEmployer
 from worker.task_rabbit_employee import TaskRabbitEmployee
@@ -12,17 +15,17 @@ from job import JobFactory
 
 class Foreman(object):
 
-    """ Manage all Employer, Employee, Task interactions.
+    """Manage all Employer, Employee, Task interactions.
 
-    Required:
-    list employers      a list of all Employers to poll.
-    list employees      a list of all Employees to push to.
+    Required
+    --------
+    `list` *employers*
+    `list` *employees*
 
     """
 
 
     def __init__(self):
-        """ Construct a Foreman. """
         self._employers = [
                 AsanaEmployer()
                 ]
@@ -33,17 +36,17 @@ class Foreman(object):
 
 
     def get_task_rabbit_worker(self):
-        """ Return an instance of the TaskRabbitEmployee. """
+        """Return an instance of the `TaskRabbitEmployee`."""
         return self._employees[0]
 
 
     def get_asana_worker(self):
-        """ Return an instance of the AsanaEmployer. """
+        """Return an instance of the `AsanaEmployer`."""
         return self._employers[0]
 
 
     def send_jack(self):
-        """ Poll workers for Tasks and respond to them. """
+        """Process all Jackalope services and handle `Task` updates."""
         employer_tasks = {}
         for employer in self._employers:
             employer_tasks = employer.read_tasks()
@@ -51,14 +54,7 @@ class Foreman(object):
 
 
     def process_employer_tasks(self, employer, tasks):
-        """ Process employer Tasks by creating a Job for each Task and
-        processing it.
-
-        Required:
-        Employer employer   The Employer whose tasks to process
-        dict tasks          The Tasks to process.
-
-        """
+        """Process a dict of `Employer` service `Task`s keyed on id."""
         for task in tasks.values():
             if task:
                 print ""
@@ -80,11 +76,5 @@ class Foreman(object):
 
 
     def process_employee_tasks(self, employee, tasks):
-        """ Process employee Tasks by creating a Job for each Task and
-        processing it.
-
-        Required:
-        dict tasks  The Tasks to process.
-
-        """
+        """Process a dict of `Employee` service `Task`s keyed on id."""
         raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)

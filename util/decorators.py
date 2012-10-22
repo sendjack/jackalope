@@ -1,21 +1,23 @@
-""" Module: Decorators
+"""
+    decorators
+    ~~~~~~~~~~
 
-Define Decorators we want to be able to use globally here.
+    General purpose decorators.
 
 """
 
 
 def constant(f):
-    """ Constant Decorator to make constants Final. """
+    """Convert function to a constant variable."""
 
 
     def fset(self, value):
-        """ Overload constant function's set to disable."""
+        """Overload constant function's set to make final."""
         raise SyntaxError
 
 
     def fget(self):
-        """ Overload constant function's get. """
+        """Overload constant function's get."""
         return f(self)
 
     return property(fget, fset)

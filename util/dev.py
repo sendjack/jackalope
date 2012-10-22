@@ -1,14 +1,17 @@
-""" Module: dev
+"""
+    dev
+    ~~~
 
-Use these tools in a dev environment only.
+    Tools for development.
 
 """
+
 from pprint import pprint
 import os
 
 
 def print_timing(func):
-    """ Debug decorator to see how long functions take. """
+    """Debug decorator to see how long functions take."""
 
 
     def wrapper(*arg):

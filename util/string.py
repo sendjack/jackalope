@@ -1,13 +1,15 @@
-""" Module: string
+"""
+    string
+    ~~~~~~
 
-A all-purpose module for working with strings.
+    A all-purpose module for working with strings.
 
 """
 
 
 def to_string(anything):
-    """ Convert anything into a string. Only difference between this function
-    and str() is that 'NoneType' returns the empty string. """
+    """Convert *anything* to a string using `str()` but return an empty string
+    if None."""
     new_string = ""
     if anything is not None:
         new_string = str(anything)

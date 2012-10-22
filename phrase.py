@@ -1,6 +1,8 @@
-""" Module: phrase
+"""
+    phrase
+    ~~~~~~
 
-A collection of phrases (e.g. copy, text) to use in Jackalope.
+    The special Jackalope language that brings Jack to life.
 
 """
 

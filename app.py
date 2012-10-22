@@ -1,10 +1,14 @@
 #!/usr/bin/env python
-""" Module: app
+"""
+    app
+    ~~~
 
-Jackalope Test to mess around with connecting the Asana API to the TaskRabbit
-API.
+    Jackalope application object.
+
+    Jackalope connects the Asana and Task Rabbit APIs.
 
 """
+
 from foreman import Foreman
 
 
