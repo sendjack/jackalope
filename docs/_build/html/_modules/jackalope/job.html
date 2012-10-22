@@ -1,0 +1,444 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jackalope.job &mdash; Jackalope  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Jackalope  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Jackalope  documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for jackalope.job</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot; Module: job</span>
+
+<span class="sd">Job is a combination of Tasks (currently a pair) that represents the total</span>
+<span class="sd">state between services. The Foreman uses the Job to evaluate and process the</span>
+<span class="sd">Employer&#39;s and Employee&#39;s Tasks.</span>
+
+<span class="sd">This separation between Foreman and Job allows for more complicated Task</span>
+<span class="sd">combinations in the future.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">settings</span>
+<span class="kn">from</span> <span class="nn">phrase</span> <span class="kn">import</span> <span class="n">Phrase</span>
+<span class="kn">from</span> <span class="nn">task</span> <span class="kn">import</span> <span class="n">Task</span><span class="p">,</span> <span class="n">PricedTask</span><span class="p">,</span> <span class="n">RegistrationTask</span>
+
+
+<div class="viewcode-block" id="Job"><a class="viewcode-back" href="../../jackalope.html#jackalope.job.Job">[docs]</a><span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; A combination of Tasks.</span>
+
+<span class="sd">    Required:</span>
+<span class="sd">    ServiceWorker _worker   The Job&#39;s main Worker.</span>
+<span class="sd">    Task _task              The Job&#39;s main Task.</span>
+<span class="sd">    Foreman _foreman        The Foreman in charge of the Job.</span>
+<span class="sd">    bool _is_employer_job   If True then an Employer Task initiated this Job.</span>
+<span class="sd">    bool _task_changed      True if the task has been updated by the Job.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">foreman</span><span class="p">,</span> <span class="n">is_employer_job</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct a Job.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        SerivceWorker worker</span>
+<span class="sd">        Task task</span>
+<span class="sd">        Foreman foreman</span>
+
+<span class="sd">        Optional:</span>
+<span class="sd">        bool is_employer_job</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_worker</span> <span class="o">=</span> <span class="n">worker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span> <span class="o">=</span> <span class="n">task</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_foreman</span> <span class="o">=</span> <span class="n">foreman</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span> <span class="o">=</span> <span class="n">is_employer_job</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task_changed</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># a Task must have a status before it gets handed to a Job.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">has_status</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">JobError</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Job.process"><a class="viewcode-back" href="../../jackalope.html#jackalope.job.Job.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Evaluate the tasks and then use the Workers to process the</span>
+<span class="sd">        Tasks.</span>
+
+<span class="sd">        Return: Task if has been updated or None if it hasn&#39;t.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="SoloJob"><a class="viewcode-back" href="../../jackalope.html#jackalope.job.SoloJob">[docs]</a><span class="k">class</span> <span class="nc">SoloJob</span><span class="p">(</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Evaluate a task from a Employer and take appropriate action but only</span>
+<span class="sd">    on Tasks that won&#39;t have a paired Employee Task. &quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="SoloJob.process"><a class="viewcode-back" href="../../jackalope.html#jackalope.job.SoloJob.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Evaluate the tasks and then use the Workers to process the</span>
+<span class="sd">        Tasks.</span>
+
+<span class="sd">        Return: Task if has been updated or None if it hasn&#39;t.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># only process SoloJobs from Employers.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">JobError</span><span class="p">()</span>
+
+        <span class="k">print</span> <span class="s">&quot;getting here&quot;</span>
+
+        <span class="c"># if posted, then complete.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">is_posted</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worker</span><span class="o">.</span><span class="n">update_task_to_completed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_worker</span><span class="o">.</span><span class="n">add_comment</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">,</span>
+                    <span class="n">Phrase</span><span class="o">.</span><span class="n">registration_confirmation</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task_changed</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="c"># if completed, then do nothing.</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">is_completed</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task_changed</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c"># any other case is an error.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">JobError</span><span class="p">()</span>
+
+        <span class="n">updated_task</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_changed</span><span class="p">:</span>
+            <span class="n">updated_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span>
+        <span class="k">return</span> <span class="n">updated_task</span>
+
+</div></div>
+<div class="viewcode-block" id="PairedJob"><a class="viewcode-back" href="../../jackalope.html#jackalope.job.PairedJob">[docs]</a><span class="k">class</span> <span class="nc">PairedJob</span><span class="p">(</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Evaluate the tasks and then use the Workers to process the Tasks. There</span>
+<span class="sd">    will be one Employer and one Employee Task.</span>
+
+<span class="sd">    Required:</span>
+<span class="sd">    ServiceWorker _reciprocal_worker</span>
+<span class="sd">    Task _reciprocal_task</span>
+<span class="sd">    bool _reciprocal_task_changed</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">foreman</span><span class="p">,</span> <span class="n">is_employer_job</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct a Job.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        ServiceWorker worker</span>
+<span class="sd">        Task task</span>
+<span class="sd">        Foreman foreman</span>
+<span class="sd">        bool is_employer_job</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PairedJob</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">foreman</span><span class="p">,</span> <span class="n">is_employer_job</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task_changed</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_smart_reciprocal_worker</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_reciprocal_task</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="PairedJob.process"><a class="viewcode-back" href="../../jackalope.html#jackalope.job.PairedJob.process">[docs]</a>    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Evaluate the tasks and then use the Workers to process the</span>
+<span class="sd">        Tasks.</span>
+
+<span class="sd">        Return: Task if has been updated or None if it hasn&#39;t.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span> <span class="s">&quot;PROCESS THE JOB&quot;</span>
+        <span class="c"># check to see if Status is in sync and act.</span>
+        <span class="c"># both states are the same. do nothing.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_are_same_states</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_employer_task</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_employee_task</span><span class="p">()):</span>
+            <span class="k">print</span> <span class="s">&quot;same state&quot;</span>
+        <span class="c"># employee task is assigned and employer task is posted, then update</span>
+        <span class="k">elif</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_employee_task</span><span class="p">()</span><span class="o">.</span><span class="n">is_assigned</span><span class="p">()</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_employer_task</span><span class="p">()</span><span class="o">.</span><span class="n">is_posted</span><span class="p">()</span>
+                <span class="p">):</span>
+            <span class="k">print</span> <span class="s">&quot;assigned update&quot;</span>
+            <span class="n">updated_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_employer</span><span class="p">()</span><span class="o">.</span><span class="n">update_task_to_assigned</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_get_employer_task</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_employer_task</span><span class="p">(</span><span class="n">updated_task</span><span class="p">)</span>
+        <span class="c"># employee task is completed and employer task is assigned, then update</span>
+        <span class="k">elif</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_employee_task</span><span class="p">()</span><span class="o">.</span><span class="n">is_completed</span><span class="p">()</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_employer_task</span><span class="p">()</span><span class="o">.</span><span class="n">is_assigned</span><span class="p">()</span>
+                <span class="p">):</span>
+            <span class="k">print</span> <span class="s">&quot;completed update&quot;</span>
+            <span class="n">updated_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_employer</span><span class="p">()</span><span class="o">.</span><span class="n">update_task_to_completed</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_get_employer_task</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_employer_task</span><span class="p">(</span><span class="n">updated_task</span><span class="p">)</span>
+        <span class="c"># employer task is approved. update employee task.</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_employer_task</span><span class="p">()</span><span class="o">.</span><span class="n">is_approved</span><span class="p">():</span>
+            <span class="k">print</span> <span class="s">&quot;approved update&quot;</span>
+            <span class="n">updated_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_employee</span><span class="p">()</span><span class="o">.</span><span class="n">update_task_to_approved</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_get_employee_task</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_employee_task</span><span class="p">(</span><span class="n">updated_task</span><span class="p">)</span>
+        <span class="c"># error state.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">JobError</span><span class="p">()</span>
+
+        <span class="c"># check to see if Content is in sync and act.</span>
+
+        <span class="c"># if either task has changed make sure synch ts is updated and pushed.</span>
+        <span class="n">updated_task</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task_changed</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">push_current_to_last_synched</span><span class="p">()</span>
+            <span class="n">updated_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worker</span><span class="o">.</span><span class="n">update_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task_changed</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task</span><span class="o">.</span><span class="n">push_current_to_last_synched</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_worker</span><span class="o">.</span><span class="n">update_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">updated_task</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_get_employer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the Employer&#39;s worker. &quot;&quot;&quot;</span>
+        <span class="n">employer</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span><span class="p">:</span>
+            <span class="n">employer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worker</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">employer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_worker</span>
+        <span class="k">return</span> <span class="n">employer</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_employee</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the Employee&#39;s worker. &quot;&quot;&quot;</span>
+        <span class="n">employee</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span><span class="p">:</span>
+            <span class="n">employee</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_worker</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">employee</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worker</span>
+        <span class="k">return</span> <span class="n">employee</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_employer_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the Employer&#39;s Task. &quot;&quot;&quot;</span>
+        <span class="n">employer_task</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span><span class="p">:</span>
+            <span class="n">employer_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">employer_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task</span>
+        <span class="k">return</span> <span class="n">employer_task</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_employer_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">updated_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set a new Employer Task. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span> <span class="o">=</span> <span class="n">updated_task</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task_changed</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task</span> <span class="o">=</span> <span class="n">updated_task</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task_changed</span> <span class="o">=</span> <span class="bp">True</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_employee_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the Employee&#39;s Task. &quot;&quot;&quot;</span>
+        <span class="n">employee_task</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span><span class="p">:</span>
+            <span class="n">employee_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">employee_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span>
+        <span class="k">return</span> <span class="n">employee_task</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_employee_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">updated_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set a new Employee Task. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task</span> <span class="o">=</span> <span class="n">updated_task</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task_changed</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span> <span class="o">=</span> <span class="n">updated_task</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task_changed</span> <span class="o">=</span> <span class="bp">True</span>
+
+
+    <span class="k">def</span> <span class="nf">_set_smart_reciprocal_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the right Employer for an employee Task. &quot;&quot;&quot;</span>
+        <span class="c"># TODO make this function pull from a dictionary or database</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_worker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_foreman</span><span class="o">.</span><span class="n">get_task_rabbit_worker</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_worker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_foreman</span><span class="o">.</span><span class="n">get_asana_worker</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">_set_reciprocal_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set the reciprocal task by fetching it or by creating it. &quot;&quot;&quot;</span>
+        <span class="n">reciprocal_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">reciprocal_id</span><span class="p">()</span>
+        <span class="c"># if it exists, just store it.</span>
+        <span class="k">if</span> <span class="n">reciprocal_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_worker</span><span class="o">.</span><span class="n">read_task</span><span class="p">(</span>
+                    <span class="n">reciprocal_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># if it doesn&#39;t exist and the Job was started by an employer, then</span>
+            <span class="c"># create it.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_employer_job</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_reciprocal_task</span><span class="p">()</span>
+            <span class="c"># Employee initiated Jobs cannot create reciprocal tasks.</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">JobError</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">_create_reciprocal_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a reciprocal task and return it. &quot;&quot;&quot;</span>
+        <span class="n">reciprocal_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reciprocal_worker</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="o">.</span><span class="n">set_reciprocal_id</span><span class="p">(</span><span class="n">reciprocal_task</span><span class="o">.</span><span class="n">id</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_worker</span><span class="o">.</span><span class="n">update_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">)</span>
+        <span class="c">#self._worker.add_comment(</span>
+        <span class="c">#        self._task,</span>
+        <span class="c">#        Phrase.task_posted_note)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task_changed</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">return</span> <span class="n">reciprocal_task</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_are_same_states</span><span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return True if both tasks are in the same state. &quot;&quot;&quot;</span>
+        <span class="n">are_same_states</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="n">task1</span><span class="o">.</span><span class="n">is_posted</span><span class="p">()</span> <span class="ow">and</span> <span class="n">task2</span><span class="o">.</span><span class="n">is_posted</span><span class="p">():</span>
+            <span class="n">are_same_states</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">task1</span><span class="o">.</span><span class="n">is_assigned</span><span class="p">()</span> <span class="ow">and</span> <span class="n">task2</span><span class="o">.</span><span class="n">is_assigned</span><span class="p">():</span>
+            <span class="n">are_same_states</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">task1</span><span class="o">.</span><span class="n">is_completed</span><span class="p">()</span> <span class="ow">and</span> <span class="n">task2</span><span class="o">.</span><span class="n">is_completed</span><span class="p">():</span>
+            <span class="n">are_same_states</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">task1</span><span class="o">.</span><span class="n">is_approved</span><span class="p">()</span> <span class="ow">and</span> <span class="n">task2</span><span class="o">.</span><span class="n">is_approved</span><span class="p">():</span>
+            <span class="n">are_same_states</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">return</span> <span class="n">are_same_states</span>
+
+</div>
+<div class="viewcode-block" id="JobFactory"><a class="viewcode-back" href="../../jackalope.html#jackalope.job.JobFactory">[docs]</a><span class="k">class</span> <span class="nc">JobFactory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Use the Type of Task to determine which Job to instantiate. &quot;&quot;&quot;</span>
+
+    <span class="c"># Use the Task Class to map to the correct Job.</span>
+    <span class="n">JOB_TASK_MAPPING</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">Task</span><span class="p">:</span> <span class="n">PairedJob</span><span class="p">,</span>
+            <span class="n">RegistrationTask</span><span class="p">:</span> <span class="n">SoloJob</span><span class="p">,</span>
+            <span class="n">PricedTask</span><span class="p">:</span> <span class="n">PairedJob</span>
+            <span class="p">}</span>
+
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="JobFactory.instantiate_job_from_employer"><a class="viewcode-back" href="../../jackalope.html#jackalope.job.JobFactory.instantiate_job_from_employer">[docs]</a>    <span class="k">def</span> <span class="nf">instantiate_job_from_employer</span><span class="p">(</span>
+            <span class="n">class_</span><span class="p">,</span>
+            <span class="n">employer</span><span class="p">,</span>
+            <span class="n">employer_task</span><span class="p">,</span>
+            <span class="n">foreman</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Use the Task&#39;s Class to constructa Job.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Employer employer</span>
+<span class="sd">        Task employer_task      The Employer half of the package.</span>
+<span class="sd">        Foreman foreman</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span> <span class="s">&quot;&quot;</span>
+        <span class="k">print</span> <span class="s">&quot;jobfactory instantiating...&quot;</span>
+        <span class="n">task_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">employer_task</span><span class="p">)</span>
+        <span class="n">job_constructor</span> <span class="o">=</span> <span class="n">class_</span><span class="o">.</span><span class="n">JOB_TASK_MAPPING</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task_class</span><span class="p">)</span>
+        <span class="n">job</span> <span class="o">=</span> <span class="n">job_constructor</span><span class="p">(</span><span class="n">employer</span><span class="p">,</span> <span class="n">employer_task</span><span class="p">,</span> <span class="n">foreman</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">job</span>
+
+</div></div>
+<div class="viewcode-block" id="JobError"><a class="viewcode-back" href="../../jackalope.html#jackalope.job.JobError">[docs]</a><span class="k">class</span> <span class="nc">JobError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; A generic error thrown by a Job if the workflow is not being respected.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct a JobError. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reason</span> <span class="o">=</span> <span class="s">&quot;JobError: You&#39;re using this Job incorrectly.&quot;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Jackalope  documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Evan Hammer, Jon Warman.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,817 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jackalope.worker.base &mdash; Jackalope  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Jackalope  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Jackalope  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for jackalope.worker.base</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot; Module: base</span>
+
+<span class="sd">ServiceWorker is the base class for all interactions with external service&#39;s</span>
+<span class="sd">APIs. Employer (ServiceWorker) handles interactions with task doer type</span>
+<span class="sd">services and Employee (ServiceWorker) handles interactions with project</span>
+<span class="sd">management type services. Each service/API will have its own subclass.</span>
+
+<span class="sd">ServiceWorker is on a Transformer to handle mappings between the service and</span>
+<span class="sd">our Task object.</span>
+
+<span class="sd">ServiceWorker also provides the public facing API that the Foreman/Job can use</span>
+<span class="sd">to interact with external services.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">from</span> <span class="nn">jackalope.util.decorators</span> <span class="kn">import</span> <span class="n">constant</span>
+<span class="kn">from</span> <span class="nn">jackalope.util</span> <span class="kn">import</span> <span class="n">string</span>
+<span class="kn">from</span> <span class="nn">jackalope</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">jackalope.task</span> <span class="kn">import</span> <span class="n">TaskFactory</span>
+
+
+<span class="k">class</span> <span class="nc">_Field</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Constants for accessing and setting task dictionaries. &quot;&quot;&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">ID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;id&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">NAME</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;name&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">PRICE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;price&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">EMAIL</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;email&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">DESCRIPTION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;description&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">RECIPROCAL_ID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;reciprocal_id&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">CATEGORY</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;category&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">LOCATION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;location&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">STATUS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;status&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">LAST_SYNCHED_TS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;last_synched_ts&quot;</span>
+
+<span class="n">FIELD</span> <span class="o">=</span> <span class="n">_Field</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">_Value</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Constants for setting task dictionary values. &quot;&quot;&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">CREATED</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;created&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">POSTED</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;posted&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">ASSIGNED</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;assigned&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">COMPLETED</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;completed&quot;</span>
+
+    <span class="nd">@constant</span>
+    <span class="k">def</span> <span class="nf">APPROVED</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;approved&quot;</span>
+
+<span class="n">VALUE</span> <span class="o">=</span> <span class="n">_Value</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="ServiceWorker"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker">[docs]</a><span class="k">class</span> <span class="nc">ServiceWorker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Abstract superclass for connecting to external apis. &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct ServiceWorker. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ServiceWorker.create_task"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.create_task">[docs]</a>    <span class="k">def</span> <span class="nf">create_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Use a Worker&#39;s Task to create a task in the Worker&#39;s Service.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task worker_task    the Worker&#39;s Task.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        Task - the new Task</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ServiceWorker.read_task"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.read_task">[docs]</a>    <span class="k">def</span> <span class="nf">read_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Connect to Worker&#39;s service and return the requested Task.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ServiceWorker.read_tasks"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.read_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">read_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Connect to Worker&#39;s service and return all tasks.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        dict    all the Tasks keyed on id</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ServiceWorker.update_task"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.update_task">[docs]</a>    <span class="k">def</span> <span class="nf">update_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Connect to Worker&#39;s service and udpate the task.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task   The Task to update.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        Task - updated Task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ServiceWorker.request_fields"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.request_fields">[docs]</a>    <span class="k">def</span> <span class="nf">request_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Request from the service additional fields. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ServiceWorker.update_task_to_created"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.update_task_to_created">[docs]</a>    <span class="k">def</span> <span class="nf">update_task_to_created</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Update the service&#39;s task&#39;s status to CREATED and return this</span>
+<span class="sd">        updated Task.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task   The Task to update.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        Task - udpated Task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ServiceWorker.update_task_to_posted"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.update_task_to_posted">[docs]</a>    <span class="k">def</span> <span class="nf">update_task_to_posted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Update the service&#39;s task&#39;s status to POSTED and return this</span>
+<span class="sd">        updated Task.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task   The Task to update.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        Task - udpated Task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ServiceWorker.update_task_to_assigned"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.update_task_to_assigned">[docs]</a>    <span class="k">def</span> <span class="nf">update_task_to_assigned</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Update the service&#39;s task&#39;s status to ASSIGNED and return this</span>
+<span class="sd">        updated Task.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task   The Task to update.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        Task - udpated Task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ServiceWorker.update_task_to_completed"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.update_task_to_completed">[docs]</a>    <span class="k">def</span> <span class="nf">update_task_to_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Update the service&#39;s task&#39;s status to COMPLETED and return this</span>
+<span class="sd">        updated Task.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task   The Task to update.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        Task - udpated Task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="ServiceWorker.update_task_to_approved"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.ServiceWorker.update_task_to_approved">[docs]</a>    <span class="k">def</span> <span class="nf">update_task_to_approved</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Update the service&#39;s task&#39;s status to APPROVED and return this</span>
+<span class="sd">        updated Task.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task   The Task to update.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        Task - udpated Task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Connect to a service with a GET request.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        str     path to desired action</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        str     The parsed response</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Connect to a service with a POST request.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        str     path to desired action</span>
+<span class="sd">        str     data to post</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        str     The parsed response</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_ready_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check to make sure task has a ready spec before handing it over to</span>
+<span class="sd">        the Foreman. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">is_spec_ready</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">has_status</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_task_to_created</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">task</span><span class="o">.</span><span class="n">is_created</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_task_to_posted</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">is_created</span><span class="p">():</span>
+                <span class="c"># TODO: some diff here to see if things have changed</span>
+                <span class="k">print</span> <span class="s">&quot;is created already&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">set_status_to_created</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">request_required_fields</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">print</span> <span class="s">&quot;spec incomplete&quot;</span>
+
+        <span class="k">return</span> <span class="n">task</span>
+
+
+    <span class="c"># FIXME: produce_dict and retrieve_id are clearly part of Transformer.</span>
+    <span class="k">def</span> <span class="nf">_produce_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_tasks</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Convert the list of raw tasks into a dict keyed on &#39;id&#39;. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_retrieve_id</span><span class="p">(</span><span class="n">t</span><span class="p">):</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">raw_tasks</span><span class="p">}</span>
+
+
+    <span class="k">def</span> <span class="nf">_retrieve_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the &#39;id&#39; from the raw_task. &quot;&quot;&quot;</span>
+        <span class="c"># FIXME: This needs to got through the field map</span>
+        <span class="k">return</span> <span class="n">raw_task</span><span class="p">[</span><span class="n">FIELD</span><span class="o">.</span><span class="n">ID</span><span class="p">]</span>
+
+
+</div>
+<div class="viewcode-block" id="Employer"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Employer">[docs]</a><span class="k">class</span> <span class="nc">Employer</span><span class="p">(</span><span class="n">ServiceWorker</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Abstract superclass for interacting with Employer (e.g., project</span>
+<span class="sd">    management services. &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct Employer. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Employer.create_task"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Employer.create_task">[docs]</a>    <span class="k">def</span> <span class="nf">create_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">worker_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Employers do not create tasks, their external services do. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">DO_NOT_OVERRIDE</span><span class="p">)</span>
+
+
+</div></div>
+<div class="viewcode-block" id="Employee"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Employee">[docs]</a><span class="k">class</span> <span class="nc">Employee</span><span class="p">(</span><span class="n">ServiceWorker</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Abstract superclass for interacting with Employee (e.g., task doers)</span>
+<span class="sd">    services.&quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct Employee. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="Transformer"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Transformer">[docs]</a><span class="k">class</span> <span class="nc">Transformer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Handle parsing the service&#39;s response dictionary to construct a Task</span>
+<span class="sd">    and deconstructing a Task into a raw task dictionary for the service.</span>
+
+<span class="sd">    Required:</span>
+<span class="sd">    str _embedding_field        The field to use to embed other fields.</span>
+
+<span class="sd">    Optional:</span>
+<span class="sd">    Task _task      Once the Transformer has been used it stores the Task for</span>
+<span class="sd">                    further access.</span>
+<span class="sd">    dict _raw_task  Once the Transformer has been used it stores the Task&#39;s</span>
+<span class="sd">                    dict for further access.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embedding_field</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct a Transformer. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_field</span> <span class="o">=</span> <span class="n">embedding_field</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_task</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raw_task</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+<div class="viewcode-block" id="Transformer.get_task"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Transformer.get_task">[docs]</a>    <span class="k">def</span> <span class="nf">get_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the set task or construct it from the raw_task. &quot;&quot;&quot;</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">:</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_task</span><span class="p">:</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_construct_task_from_dict</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadTransformationError</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">task</span>
+
+</div>
+<div class="viewcode-block" id="Transformer.set_task"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Transformer.set_task">[docs]</a>    <span class="k">def</span> <span class="nf">set_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set the Task for this Transformation and make it uneditable. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_task</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadTransformationError</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_task</span> <span class="o">=</span> <span class="n">task</span>
+
+</div>
+<div class="viewcode-block" id="Transformer.get_raw_task"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Transformer.get_raw_task">[docs]</a>    <span class="k">def</span> <span class="nf">get_raw_task</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the raw task dict or deconstruct it from task. &quot;&quot;&quot;</span>
+        <span class="n">raw_task</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_task</span><span class="p">:</span>
+            <span class="n">raw_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_task</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">:</span>
+            <span class="n">raw_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deconstruct_task_to_dict</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadTransformationError</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">raw_task</span>
+
+</div>
+<div class="viewcode-block" id="Transformer.set_raw_task"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Transformer.set_raw_task">[docs]</a>    <span class="k">def</span> <span class="nf">set_raw_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set the raw task dict for this Transformation and make it</span>
+<span class="sd">        uneditable. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_task</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadTransformationError</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_raw_task</span> <span class="o">=</span> <span class="n">raw_task</span>
+
+</div>
+<div class="viewcode-block" id="Transformer.get_embedded_field_value"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Transformer.get_embedded_field_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_embedded_field_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the value of the Task&#39;s embedded field. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raw_task</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_field</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Transformer.transform_accessors_to_fields"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Transformer.transform_accessors_to_fields">[docs]</a>    <span class="k">def</span> <span class="nf">transform_accessors_to_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">accessors</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Transform a list of accessors to a list of fields (str). &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name_from_accessor</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">accessors</span>
+                <span class="p">]</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_construct_task_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct Task from the raw task.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        Task The Task built from the raw task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">raw_task</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw_task</span><span class="p">)</span>
+
+        <span class="c"># flatten raw task dict</span>
+        <span class="n">raw_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten_raw_task</span><span class="p">(</span><span class="n">raw_task</span><span class="p">)</span>
+
+        <span class="c"># build task</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">raw_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">FIELD</span><span class="o">.</span><span class="n">ID</span><span class="p">)):</span>
+            <span class="k">print</span> <span class="n">raw_task</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">raw_task</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">FIELD</span><span class="o">.</span><span class="n">ID</span><span class="p">)]</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">raw_task</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">FIELD</span><span class="o">.</span><span class="n">NAME</span><span class="p">)]</span>
+        <span class="c"># TODO: and what will happen if Cateogry is None?</span>
+        <span class="n">category</span> <span class="o">=</span> <span class="n">raw_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">FIELD</span><span class="o">.</span><span class="n">CATEGORY</span><span class="p">))</span>
+
+        <span class="n">task</span> <span class="o">=</span> <span class="n">TaskFactory</span><span class="o">.</span><span class="n">instantiate_task</span><span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_populate_task</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">raw_task</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">task</span>
+
+
+    <span class="k">def</span> <span class="nf">_deconstruct_task_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Deconstruct Task into a raw task dict and return it. &quot;&quot;&quot;</span>
+
+        <span class="c"># turn task into dict</span>
+        <span class="n">raw_task</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">raw_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_populate_raw_task</span><span class="p">(</span><span class="n">raw_task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_task</span><span class="p">)</span>
+
+        <span class="c"># unflatten raw task dict</span>
+        <span class="n">raw_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unflatten_raw_task</span><span class="p">(</span><span class="n">raw_task</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">raw_task</span>
+
+
+    <span class="k">def</span> <span class="nf">_flatten_raw_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Pop embedding field, extract embedded fields, and update raw task</span>
+<span class="sd">        dict. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_field</span><span class="p">:</span>
+
+            <span class="c"># pop embedding fields and extract embedded fields to dict</span>
+            <span class="n">embedding_field_value</span> <span class="o">=</span> <span class="n">raw_task</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_field</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">embedded_fields_dict</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="o">.</span><span class="n">convert_blob_to_dict</span><span class="p">(</span>
+                    <span class="n">embedding_field_value</span><span class="p">)</span>
+
+            <span class="c"># update raw_task with the embedded fields we can handle</span>
+            <span class="k">for</span> <span class="n">jack_field_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedded_fields</span><span class="p">():</span>
+                <span class="n">service_field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">jack_field_name</span><span class="p">)</span>
+                <span class="n">raw_task</span><span class="p">[</span><span class="n">service_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">embedded_fields_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                        <span class="n">service_field</span><span class="p">)</span>
+
+        <span class="c"># take a service specific raw task and pull additional fields from it</span>
+        <span class="c"># based on its special fields (e.g., grabbing &quot;completed&quot; from asasna)</span>
+        <span class="n">raw_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pull_service_quirks</span><span class="p">(</span><span class="n">raw_task</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">raw_task</span>
+
+
+    <span class="k">def</span> <span class="nf">_unflatten_raw_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Insert embedded fields into embedding field, remove those fields</span>
+<span class="sd">        from the dict, and add the new embedding field to the dict. &quot;&quot;&quot;</span>
+        <span class="c"># take a jackalope raw task and use service specific knowledge to</span>
+        <span class="c"># create service specific fields (e.g., pushing &quot;completed&quot; to asana)</span>
+        <span class="n">raw_task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_push_service_quirks</span><span class="p">(</span><span class="n">raw_task</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedding_field</span><span class="p">:</span>
+
+            <span class="c"># pop embedded fields and insert them into embedding value</span>
+            <span class="n">embedded_fields_dict</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">jack_field_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embedded_fields</span><span class="p">():</span>
+                <span class="n">service_field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">jack_field_name</span><span class="p">)</span>
+                <span class="n">embedded_fields_dict</span><span class="p">[</span><span class="n">service_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_task</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+                        <span class="n">service_field</span><span class="p">,</span>
+                        <span class="bp">None</span><span class="p">)</span>
+            <span class="n">embedding_field_value</span> <span class="o">=</span> <span class="n">Tokenizer</span><span class="o">.</span><span class="n">convert_dict_to_blob</span><span class="p">(</span>
+                    <span class="n">embedded_fields_dict</span><span class="p">)</span>
+
+            <span class="c"># update raw_task with the embedding field</span>
+            <span class="n">raw_task</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_embedding_field</span><span class="p">]</span> <span class="o">=</span> <span class="n">embedding_field_value</span>
+
+        <span class="k">return</span> <span class="n">raw_task</span>
+
+
+    <span class="k">def</span> <span class="nf">_pull_service_quirks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Interact with the service in very service specific ways to pull</span>
+<span class="sd">        additional fields into the raw task. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">raw_task</span>
+
+
+    <span class="k">def</span> <span class="nf">_push_service_quirks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Interact with the service in very service specific ways to push</span>
+<span class="sd">        fields back into their proper spot. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">raw_task</span>
+
+
+    <span class="k">def</span> <span class="nf">_populate_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">raw_task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add the rest of the fields form the raw task to the Task.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task           The Task to finish constructing.</span>
+<span class="sd">        dict raw_task       The dict to pull fields from</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        Task The Task built from the raw task.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_field_names</span><span class="p">():</span>
+            <span class="n">id_cond</span> <span class="o">=</span> <span class="n">field_name</span> <span class="o">!=</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">ID</span>
+            <span class="n">name_cond</span> <span class="o">=</span> <span class="n">field_name</span> <span class="o">!=</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">NAME</span>
+            <span class="n">category_cond</span> <span class="o">=</span> <span class="n">field_name</span> <span class="o">!=</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">CATEGORY</span>
+            <span class="n">status_cond</span> <span class="o">=</span> <span class="n">field_name</span> <span class="o">!=</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">STATUS</span>
+            <span class="k">if</span> <span class="n">id_cond</span> <span class="ow">and</span> <span class="n">name_cond</span> <span class="ow">and</span> <span class="n">category_cond</span> <span class="ow">and</span> <span class="n">status_cond</span><span class="p">:</span>
+                <span class="n">service_field_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+                <span class="n">mutator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_mutator_from_jack_field_name</span><span class="p">(</span>
+                        <span class="n">task</span><span class="p">,</span>
+                        <span class="n">field_name</span><span class="p">)</span>
+
+                <span class="n">mutator</span><span class="p">(</span><span class="n">raw_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">service_field_name</span><span class="p">))</span>
+
+        <span class="c"># add status info to task</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">raw_task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">FIELD</span><span class="o">.</span><span class="n">STATUS</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">CREATED</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">set_status_to_created</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">POSTED</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">set_status_to_posted</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">ASSIGNED</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">set_status_to_assigned</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">set_status_to_completed</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">APPROVED</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">set_status_to_approved</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;No status yet&quot;</span>
+
+        <span class="k">return</span> <span class="n">task</span>
+
+
+    <span class="k">def</span> <span class="nf">_populate_raw_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_task</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Grabs fields from the Task and updates the raw task dict. &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_field_names</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">field_name</span> <span class="o">!=</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">STATUS</span><span class="p">:</span>
+                <span class="n">service_field_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+                <span class="n">accessor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_accessor_from_jack_field_name</span><span class="p">(</span>
+                        <span class="n">task</span><span class="p">,</span>
+                        <span class="n">field_name</span><span class="p">)</span>
+                <span class="n">raw_task</span><span class="p">[</span><span class="n">service_field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">accessor</span><span class="p">()</span>
+
+        <span class="c"># add status info to raw task</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">is_created</span><span class="p">():</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">CREATED</span>
+        <span class="k">elif</span> <span class="n">task</span><span class="o">.</span><span class="n">is_posted</span><span class="p">():</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">POSTED</span>
+        <span class="k">elif</span> <span class="n">task</span><span class="o">.</span><span class="n">is_assigned</span><span class="p">():</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">ASSIGNED</span>
+        <span class="k">elif</span> <span class="n">task</span><span class="o">.</span><span class="n">is_completed</span><span class="p">():</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">COMPLETED</span>
+        <span class="k">elif</span> <span class="n">task</span><span class="o">.</span><span class="n">is_approved</span><span class="p">():</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">VALUE</span><span class="o">.</span><span class="n">APPROVED</span>
+        <span class="n">raw_task</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">FIELD</span><span class="o">.</span><span class="n">STATUS</span><span class="p">)]</span> <span class="o">=</span> <span class="n">status</span>
+
+        <span class="k">return</span> <span class="n">raw_task</span>
+
+
+    <span class="k">def</span> <span class="nf">_embedded_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; A list of embedded fields for this service. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">NOT_IMPLEMENTED_ERROR</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_field_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a list of Jackalope field names. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_field_name_map</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_service_field_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jack_field_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Converts Jackalope&#39;s field name to the service&#39;s field name for</span>
+<span class="sd">        accessing the raw task dictionary.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        str jack_field_name - the field name that we use.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        str service&#39;s field name.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_field_name_map</span><span class="p">()[</span><span class="n">jack_field_name</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_service_field_name_from_accessor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">accessor</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Converts the task&#39;s accessor to the service&#39;s field name.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task - the task whose accessor should be used as a key.</span>
+<span class="sd">        function accessor - the Task&#39;s accessor to the field.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        str - the service&#39;s field name.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">accessor_to_field_name_dict</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="nb">tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">field_name</span>
+                <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="nb">tuple</span>
+                <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_field_task_property_map</span><span class="p">(</span><span class="n">task</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">}</span>
+        <span class="n">field_name</span> <span class="o">=</span> <span class="n">accessor_to_field_name_dict</span><span class="p">[</span><span class="n">accessor</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_service_field_name</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_accessor_from_jack_field_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">jack_field_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Converts Jackalope field name to accessor.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task - the Task whose accessor should be returned.</span>
+<span class="sd">        str jack_field_name - the name that we use.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        function - accessor to Task&#39;s field.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">accessor</span><span class="p">,</span> <span class="n">mutator</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_field_task_property_map</span><span class="p">(</span><span class="n">task</span><span class="p">)[</span>
+                <span class="n">jack_field_name</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">accessor</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_mutator_from_jack_field_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">jack_field_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Converts Jackalope field name to mutator.</span>
+
+<span class="sd">        Required:</span>
+<span class="sd">        Task task - the Task whose mutator should be returned.</span>
+<span class="sd">        str jack_field_name - the name that we use.</span>
+
+<span class="sd">        Return:</span>
+<span class="sd">        function - mutator to Task&#39;s field.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">accessor</span><span class="p">,</span> <span class="n">mutator</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_field_task_property_map</span><span class="p">(</span><span class="n">task</span><span class="p">)[</span>
+                <span class="n">jack_field_name</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">mutator</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_field_name_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a dict keyed on Jackalope&#39;s field name and valued on the</span>
+<span class="sd">        service&#39;s field name. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">CATEGORY</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">CATEGORY</span><span class="p">,</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">ID</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">ID</span><span class="p">,</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">NAME</span><span class="p">,</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">PRICE</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">PRICE</span><span class="p">,</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">EMAIL</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">EMAIL</span><span class="p">,</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">,</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">RECIPROCAL_ID</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">RECIPROCAL_ID</span><span class="p">,</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">LOCATION</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">LOCATION</span><span class="p">,</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">STATUS</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">STATUS</span><span class="p">,</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">LAST_SYNCHED_TS</span><span class="p">:</span> <span class="n">FIELD</span><span class="o">.</span><span class="n">LAST_SYNCHED_TS</span>
+                <span class="p">}</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_field_task_property_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a dict keyed on field name and valued by a tuple, (accessor,</span>
+<span class="sd">        mutator). &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">CATEGORY</span><span class="p">:</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">ID</span><span class="p">:</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">NAME</span><span class="p">:</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">PRICE</span><span class="p">:</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">price</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">set_price</span><span class="p">),</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">EMAIL</span><span class="p">:</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">set_email</span><span class="p">),</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">:</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">description</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">set_description</span><span class="p">),</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">RECIPROCAL_ID</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="n">task</span><span class="o">.</span><span class="n">reciprocal_id</span><span class="p">,</span>
+                        <span class="n">task</span><span class="o">.</span><span class="n">set_reciprocal_id</span><span class="p">),</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">LOCATION</span><span class="p">:</span> <span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">set_location</span><span class="p">),</span>
+                <span class="n">FIELD</span><span class="o">.</span><span class="n">LAST_SYNCHED_TS</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="n">task</span><span class="o">.</span><span class="n">last_synched</span><span class="p">,</span>
+                        <span class="n">task</span><span class="o">.</span><span class="n">set_last_synched</span><span class="p">)</span>
+                <span class="p">}</span>
+
+</div>
+<div class="viewcode-block" id="Tokenizer"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Tokenizer">[docs]</a><span class="k">class</span> <span class="nc">Tokenizer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Tokenize a text blob into key value pairs and reconstruct that blob.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">delimiter</span> <span class="o">=</span> <span class="s">&quot;:&quot;</span>
+    <span class="n">regex</span> <span class="o">=</span> <span class="s">r&quot;^(\w+?){}\s?(.*?)(?=^\w+?{}|\Z)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">delimiter</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">)</span>
+    <span class="n">key_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span> <span class="o">+</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
+
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Tokenizer.convert_blob_to_dict"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Tokenizer.convert_blob_to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">convert_blob_to_dict</span><span class="p">(</span><span class="n">class_</span><span class="p">,</span> <span class="n">text_blob</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Convert text blob into dictionary of fields. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+                <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">class_</span><span class="o">.</span><span class="n">key_pattern</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">text_blob</span><span class="p">)</span>
+                <span class="p">}</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Tokenizer.convert_dict_to_blob"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.Tokenizer.convert_dict_to_blob">[docs]</a>    <span class="k">def</span> <span class="nf">convert_dict_to_blob</span><span class="p">(</span><span class="n">class_</span><span class="p">,</span> <span class="n">field_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Convert a field dict to a text blob. &quot;&quot;&quot;</span>
+        <span class="c"># convert field dict into a list of entries for sorting</span>
+        <span class="n">new_entries</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s">&quot;{}{} {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">string</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">k</span><span class="p">),</span>
+                        <span class="n">class_</span><span class="o">.</span><span class="n">delimiter</span><span class="p">,</span>
+                        <span class="n">string</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">field_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">]</span>
+        <span class="n">new_entries</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_entries</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="BadTransformationError"><a class="viewcode-back" href="../../../jackalope.worker.html#jackalope.worker.base.BadTransformationError">[docs]</a><span class="k">class</span> <span class="nc">BadTransformationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; Raise this Exception when Transformer is not being used correctly. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct a BadTransformationError. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reason</span> <span class="o">=</span> <span class="s">&quot;Don&#39;t use Transformer like that.&quot;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Jackalope  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Evan Hammer, Jon Warman.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

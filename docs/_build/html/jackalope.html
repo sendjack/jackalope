@@ -1,0 +1,667 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>jackalope Package &mdash; Jackalope  documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Jackalope  documentation" href="index.html" />
+    <link rel="next" title="util Package" href="jackalope.util.html" />
+    <link rel="prev" title="Welcome to .’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="jackalope.util.html" title="util Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to .’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Jackalope  documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="jackalope-package">
+<h1>jackalope Package<a class="headerlink" href="#jackalope-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-jackalope.app">
+<span id="app-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">app</span></tt> Module<a class="headerlink" href="#module-jackalope.app" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="jackalope-application-object">
+<h3>Jackalope application object.<a class="headerlink" href="#jackalope-application-object" title="Permalink to this headline">¶</a></h3>
+<p>Jackalope connects the Asana and Task Rabbit APIs.</p>
+<dl class="function">
+<dt id="jackalope.app.main">
+<tt class="descclassname">jackalope.app.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/app.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.app.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-jackalope.clock">
+<span id="clock-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">clock</span></tt> Module<a class="headerlink" href="#module-jackalope.clock" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="clock">
+<h3>clock<a class="headerlink" href="#clock" title="Permalink to this headline">¶</a></h3>
+<p>A wrapper around the app to run it on a schedule.</p>
+<dl class="function">
+<dt id="jackalope.clock.timed_job">
+<tt class="descclassname">jackalope.clock.</tt><tt class="descname">timed_job</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/clock.html#timed_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.clock.timed_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call the app.py main method.</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-jackalope.foreman">
+<span id="foreman-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">foreman</span></tt> Module<a class="headerlink" href="#module-jackalope.foreman" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="foreman">
+<h3>foreman<a class="headerlink" href="#foreman" title="Permalink to this headline">¶</a></h3>
+<p>Handle all coordination between Employer and Employee workers.</p>
+<dl class="class">
+<dt id="jackalope.foreman.Foreman">
+<em class="property">class </em><tt class="descclassname">jackalope.foreman.</tt><tt class="descname">Foreman</tt><a class="reference internal" href="_modules/jackalope/foreman.html#Foreman"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.foreman.Foreman" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Manage all Employer, Employee, Task interactions.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="51%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>employers</td>
+<td><cite>list</cite> of <cite>Employer</cite></td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>employees</td>
+<td><cite>list</cite> of <cite>Employee</cite></td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="jackalope.foreman.Foreman.get_asana_worker">
+<tt class="descname">get_asana_worker</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/foreman.html#Foreman.get_asana_worker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.foreman.Foreman.get_asana_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an instance of the <cite>AsanaEmployer</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.foreman.Foreman.get_task_rabbit_worker">
+<tt class="descname">get_task_rabbit_worker</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/foreman.html#Foreman.get_task_rabbit_worker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.foreman.Foreman.get_task_rabbit_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an instance of the <cite>TaskRabbitEmployee</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.foreman.Foreman.process_employee_tasks">
+<tt class="descname">process_employee_tasks</tt><big>(</big><em>employee</em>, <em>tasks</em><big>)</big><a class="reference internal" href="_modules/jackalope/foreman.html#Foreman.process_employee_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.foreman.Foreman.process_employee_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process a dict of <cite>Employee</cite> service <cite>Task</cite> keyed on id.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.foreman.Foreman.process_employer_tasks">
+<tt class="descname">process_employer_tasks</tt><big>(</big><em>employer</em>, <em>tasks</em><big>)</big><a class="reference internal" href="_modules/jackalope/foreman.html#Foreman.process_employer_tasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.foreman.Foreman.process_employer_tasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process a dict of <cite>Employer</cite> service <cite>Task</cite> keyed on id.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.foreman.Foreman.send_jack">
+<tt class="descname">send_jack</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/foreman.html#Foreman.send_jack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.foreman.Foreman.send_jack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process all Jackalope services and handle <cite>Task</cite> updates.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-jackalope.job">
+<span id="job-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">job</span></tt> Module<a class="headerlink" href="#module-jackalope.job" title="Permalink to this headline">¶</a></h2>
+<p>Module: job</p>
+<p>Job is a combination of Tasks (currently a pair) that represents the total
+state between services. The Foreman uses the Job to evaluate and process the
+Employer&#8217;s and Employee&#8217;s Tasks.</p>
+<p>This separation between Foreman and Job allows for more complicated Task
+combinations in the future.</p>
+<dl class="class">
+<dt id="jackalope.job.Job">
+<em class="property">class </em><tt class="descclassname">jackalope.job.</tt><tt class="descname">Job</tt><big>(</big><em>worker</em>, <em>task</em>, <em>foreman</em>, <em>is_employer_job=True</em><big>)</big><a class="reference internal" href="_modules/jackalope/job.html#Job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.job.Job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A combination of Tasks.</p>
+<p>Required:
+ServiceWorker _worker   The Job&#8217;s main Worker.
+Task _task              The Job&#8217;s main Task.
+Foreman _foreman        The Foreman in charge of the Job.
+bool _is_employer_job   If True then an Employer Task initiated this Job.
+bool _task_changed      True if the task has been updated by the Job.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="jackalope.job.Job.process">
+<tt class="descname">process</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/job.html#Job.process"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.job.Job.process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the tasks and then use the Workers to process the
+Tasks.</p>
+<p>Return: Task if has been updated or None if it hasn&#8217;t.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="jackalope.job.JobError">
+<em class="property">exception </em><tt class="descclassname">jackalope.job.</tt><tt class="descname">JobError</tt><a class="reference internal" href="_modules/jackalope/job.html#JobError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.job.JobError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<p>A generic error thrown by a Job if the workflow is not being respected.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="jackalope.job.JobFactory">
+<em class="property">class </em><tt class="descclassname">jackalope.job.</tt><tt class="descname">JobFactory</tt><a class="reference internal" href="_modules/jackalope/job.html#JobFactory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.job.JobFactory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Use the Type of Task to determine which Job to instantiate.</p>
+<p class="rubric">Methods</p>
+<dl class="attribute">
+<dt id="jackalope.job.JobFactory.JOB_TASK_MAPPING">
+<tt class="descname">JOB_TASK_MAPPING</tt><em class="property"> = {&lt;class 'jackalope.task.PricedTask'&gt;: &lt;class 'jackalope.job.PairedJob'&gt;, &lt;class 'jackalope.task.RegistrationTask'&gt;: &lt;class 'jackalope.job.SoloJob'&gt;, &lt;class 'jackalope.task.Task'&gt;: &lt;class 'jackalope.job.PairedJob'&gt;}</em><a class="headerlink" href="#jackalope.job.JobFactory.JOB_TASK_MAPPING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="jackalope.job.JobFactory.instantiate_job_from_employer">
+<em class="property">classmethod </em><tt class="descname">instantiate_job_from_employer</tt><big>(</big><em>class_</em>, <em>employer</em>, <em>employer_task</em>, <em>foreman</em><big>)</big><a class="reference internal" href="_modules/jackalope/job.html#JobFactory.instantiate_job_from_employer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.job.JobFactory.instantiate_job_from_employer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the Task&#8217;s Class to constructa Job.</p>
+<p>Required:
+Employer employer
+Task employer_task      The Employer half of the package.
+Foreman foreman</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="jackalope.job.PairedJob">
+<em class="property">class </em><tt class="descclassname">jackalope.job.</tt><tt class="descname">PairedJob</tt><big>(</big><em>worker</em>, <em>task</em>, <em>foreman</em>, <em>is_employer_job=True</em><big>)</big><a class="reference internal" href="_modules/jackalope/job.html#PairedJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.job.PairedJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jackalope.job.Job" title="jackalope.job.Job"><tt class="xref py py-class docutils literal"><span class="pre">jackalope.job.Job</span></tt></a></p>
+<p>Evaluate the tasks and then use the Workers to process the Tasks. There
+will be one Employer and one Employee Task.</p>
+<p>Required:
+ServiceWorker _reciprocal_worker
+Task _reciprocal_task
+bool _reciprocal_task_changed</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="jackalope.job.PairedJob.process">
+<tt class="descname">process</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/job.html#PairedJob.process"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.job.PairedJob.process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the tasks and then use the Workers to process the
+Tasks.</p>
+<p>Return: Task if has been updated or None if it hasn&#8217;t.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="jackalope.job.SoloJob">
+<em class="property">class </em><tt class="descclassname">jackalope.job.</tt><tt class="descname">SoloJob</tt><big>(</big><em>worker</em>, <em>task</em>, <em>foreman</em>, <em>is_employer_job=True</em><big>)</big><a class="reference internal" href="_modules/jackalope/job.html#SoloJob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.job.SoloJob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jackalope.job.Job" title="jackalope.job.Job"><tt class="xref py py-class docutils literal"><span class="pre">jackalope.job.Job</span></tt></a></p>
+<p>Evaluate a task from a Employer and take appropriate action but only
+on Tasks that won&#8217;t have a paired Employee Task.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="jackalope.job.SoloJob.process">
+<tt class="descname">process</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/job.html#SoloJob.process"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.job.SoloJob.process" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the tasks and then use the Workers to process the
+Tasks.</p>
+<p>Return: Task if has been updated or None if it hasn&#8217;t.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-jackalope.phrase">
+<span id="phrase-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">phrase</span></tt> Module<a class="headerlink" href="#module-jackalope.phrase" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="phrase">
+<h3>phrase<a class="headerlink" href="#phrase" title="Permalink to this headline">¶</a></h3>
+<p>The special Jackalope language that brings Jack to life.</p>
+</div>
+</div>
+<div class="section" id="module-jackalope.settings">
+<span id="settings-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">settings</span></tt> Module<a class="headerlink" href="#module-jackalope.settings" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="settings">
+<h3>settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h3>
+<p>All application settings. A single point for environmental variable
+interactions.</p>
+<dl class="function">
+<dt id="jackalope.settings.path">
+<tt class="descclassname">jackalope.settings.</tt><tt class="descname">path</tt><big>(</big><em>root</em>, <em>*a</em><big>)</big><a class="headerlink" href="#jackalope.settings.path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-jackalope.task">
+<span id="task-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">task</span></tt> Module<a class="headerlink" href="#module-jackalope.task" title="Permalink to this headline">¶</a></h2>
+<p>Module: task</p>
+<p>Task is a specification for a task that can be used to pass data between
+services. The Foreman will use Tasks to coordinate activity.</p>
+<p>All fields we handle should have accessors and mutators in the Task superclass.
+The subclasses are used to define required fields and any special
+functionality.</p>
+<dl class="class">
+<dt id="jackalope.task.PricedTask">
+<em class="property">class </em><tt class="descclassname">jackalope.task.</tt><tt class="descname">PricedTask</tt><big>(</big><em>category</em>, <em>id</em>, <em>name</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#PricedTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.PricedTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jackalope.task.Task" title="jackalope.task.Task"><tt class="xref py py-class docutils literal"><span class="pre">jackalope.task.Task</span></tt></a></p>
+<p>A Task that forces the user to name a price.</p>
+<p>Required:
+str _price The price field.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="jackalope.task.PricedTask.get_required_accessors">
+<tt class="descname">get_required_accessors</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#PricedTask.get_required_accessors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.PricedTask.get_required_accessors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of the required fields.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="jackalope.task.RegistrationTask">
+<em class="property">class </em><tt class="descclassname">jackalope.task.</tt><tt class="descname">RegistrationTask</tt><big>(</big><em>category</em>, <em>id</em>, <em>name</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#RegistrationTask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.RegistrationTask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#jackalope.task.Task" title="jackalope.task.Task"><tt class="xref py py-class docutils literal"><span class="pre">jackalope.task.Task</span></tt></a></p>
+<p>A Task for registering a new user with Jackalope.</p>
+<p>Required:
+str _email  The email field.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="jackalope.task.RegistrationTask.get_required_accessors">
+<tt class="descname">get_required_accessors</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#RegistrationTask.get_required_accessors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.RegistrationTask.get_required_accessors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of the required fields.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="jackalope.task.Task">
+<em class="property">class </em><tt class="descclassname">jackalope.task.</tt><tt class="descname">Task</tt><big>(</big><em>category</em>, <em>id</em>, <em>name</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A specification for a task.</p>
+<p>Required:
+ts _current_synched_ts  The ts of the current synch.
+str _category       The category of task.
+id _id              The id of the Task, pulled from the source.
+ServiceWorker _worker The ServiceWorker associated with this Task.
+str _status         The STATUS of the Task.
+str _name           The name of the Task, pulled from the source.</p>
+<p>Optional:
+ts _last_synched_ts The timestamp of the last time we synched with the
+service&#8217;s task.
+id _reciprocal_id The Tasks&#8217;s complimentary Task&#8217;s id.
+str _description    The description of the Task.
+str _email          The email of attached to the Task.
+int _price          The price of the Task in US Dollars.
+int _location       The location of the Task by id.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="jackalope.task.Task.category">
+<tt class="descname">category</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.category"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.category" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return task category.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.description">
+<tt class="descname">description</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.description"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return description.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.email">
+<tt class="descname">email</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.email"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.email" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return email.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.get_required_accessors">
+<tt class="descname">get_required_accessors</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.get_required_accessors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.get_required_accessors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of the required fields.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.has_status">
+<tt class="descname">has_status</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.has_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.has_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if status isn&#8217;t None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.id">
+<tt class="descname">id</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return id.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.is_approved">
+<tt class="descname">is_approved</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.is_approved"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.is_approved" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the Task is APPROVED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.is_assigned">
+<tt class="descname">is_assigned</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.is_assigned"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.is_assigned" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the Task is ASSIGNED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.is_completed">
+<tt class="descname">is_completed</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.is_completed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.is_completed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the Task is COMPLETED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.is_created">
+<tt class="descname">is_created</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.is_created"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.is_created" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the Task is CREATED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.is_posted">
+<tt class="descname">is_posted</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.is_posted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.is_posted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the Task is POSTED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.is_spec_ready">
+<tt class="descname">is_spec_ready</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.is_spec_ready"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.is_spec_ready" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if all the required fields have values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.last_synched">
+<tt class="descname">last_synched</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.last_synched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.last_synched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the last synched timestamp.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.location">
+<tt class="descname">location</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.location"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.location" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the location.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.name">
+<tt class="descname">name</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.price">
+<tt class="descname">price</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.price"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.price" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return price.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.push_current_to_last_synched">
+<tt class="descname">push_current_to_last_synched</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.push_current_to_last_synched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.push_current_to_last_synched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the last synched ts to the current synch.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.reciprocal_id">
+<tt class="descname">reciprocal_id</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.reciprocal_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.reciprocal_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return reciprocal id.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_description">
+<tt class="descname">set_description</tt><big>(</big><em>description</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_description"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_description" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the description.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_email">
+<tt class="descname">set_email</tt><big>(</big><em>email</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_email"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_email" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the email.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_last_synched">
+<tt class="descname">set_last_synched</tt><big>(</big><em>last_synched_ts</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_last_synched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_last_synched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the last synched ts.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_location">
+<tt class="descname">set_location</tt><big>(</big><em>location_id</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_location"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_location" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the location.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_price">
+<tt class="descname">set_price</tt><big>(</big><em>price</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_price"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_price" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the price.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_reciprocal_id">
+<tt class="descname">set_reciprocal_id</tt><big>(</big><em>id</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_reciprocal_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_reciprocal_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set reciprocal id.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_status_to_approved">
+<tt class="descname">set_status_to_approved</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_status_to_approved"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_status_to_approved" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set Status to APPROVED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_status_to_assigned">
+<tt class="descname">set_status_to_assigned</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_status_to_assigned"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_status_to_assigned" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set Status to ASSIGNED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_status_to_completed">
+<tt class="descname">set_status_to_completed</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_status_to_completed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_status_to_completed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set Status to COMPLETED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_status_to_created">
+<tt class="descname">set_status_to_created</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_status_to_created"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_status_to_created" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set Status to CREATED.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="jackalope.task.Task.set_status_to_posted">
+<tt class="descname">set_status_to_posted</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#Task.set_status_to_posted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.Task.set_status_to_posted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set Status to POSTED.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="jackalope.task.TaskFactory">
+<em class="property">class </em><tt class="descclassname">jackalope.task.</tt><tt class="descname">TaskFactory</tt><a class="reference internal" href="_modules/jackalope/task.html#TaskFactory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.TaskFactory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Use the category of task key to map to a specfic subclass of Task.</p>
+<p class="rubric">Methods</p>
+<dl class="attribute">
+<dt id="jackalope.task.TaskFactory.PRICED">
+<tt class="descname">PRICED</tt><em class="property"> = 'priced'</em><a class="headerlink" href="#jackalope.task.TaskFactory.PRICED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="jackalope.task.TaskFactory.REGISTRATION">
+<tt class="descname">REGISTRATION</tt><em class="property"> = 'registration'</em><a class="headerlink" href="#jackalope.task.TaskFactory.REGISTRATION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="jackalope.task.TaskFactory.TASK_CATEGORY_MAPPING">
+<tt class="descname">TASK_CATEGORY_MAPPING</tt><em class="property"> = {'priced': &lt;class 'jackalope.task.PricedTask'&gt;, 'registration': &lt;class 'jackalope.task.RegistrationTask'&gt;}</em><a class="headerlink" href="#jackalope.task.TaskFactory.TASK_CATEGORY_MAPPING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="jackalope.task.TaskFactory.instantiate_task">
+<em class="property">classmethod </em><tt class="descname">instantiate_task</tt><big>(</big><em>class_</em>, <em>category</em>, <em>task_id</em>, <em>name</em><big>)</big><a class="reference internal" href="_modules/jackalope/task.html#TaskFactory.instantiate_task"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#jackalope.task.TaskFactory.instantiate_task" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the task category to construct a Task.</p>
+<p>Required:
+str category        The specific category of Task.
+id  task_id         The service id of the Task.
+str name            The name of the Task.</p>
+<p>Return: Task</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="jackalope.util.html">util Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="jackalope.util.html#module-jackalope.util.decorators"><tt class="docutils literal"><span class="pre">decorators</span></tt> Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="jackalope.util.html#decorators">decorators</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="jackalope.util.html#module-jackalope.util.dev"><tt class="docutils literal"><span class="pre">dev</span></tt> Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="jackalope.util.html#dev">dev</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="jackalope.util.html#module-jackalope.util.integer"><tt class="docutils literal"><span class="pre">integer</span></tt> Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="jackalope.util.html#integer">integer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="jackalope.util.html#module-jackalope.util.string"><tt class="docutils literal"><span class="pre">string</span></tt> Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="jackalope.util.html#string">string</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="jackalope.worker.html">worker Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="jackalope.worker.html#module-jackalope.worker.asana_employer"><tt class="docutils literal"><span class="pre">asana_employer</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jackalope.worker.html#module-jackalope.worker.base"><tt class="docutils literal"><span class="pre">base</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jackalope.worker.html#module-jackalope.worker.task_rabbit_employee"><tt class="docutils literal"><span class="pre">task_rabbit_employee</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">jackalope Package</a><ul>
+<li><a class="reference internal" href="#module-jackalope.app"><tt class="docutils literal"><span class="pre">app</span></tt> Module</a><ul>
+<li><a class="reference internal" href="#jackalope-application-object">Jackalope application object.</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-jackalope.clock"><tt class="docutils literal"><span class="pre">clock</span></tt> Module</a><ul>
+<li><a class="reference internal" href="#clock">clock</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-jackalope.foreman"><tt class="docutils literal"><span class="pre">foreman</span></tt> Module</a><ul>
+<li><a class="reference internal" href="#foreman">foreman</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-jackalope.job"><tt class="docutils literal"><span class="pre">job</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-jackalope.phrase"><tt class="docutils literal"><span class="pre">phrase</span></tt> Module</a><ul>
+<li><a class="reference internal" href="#phrase">phrase</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-jackalope.settings"><tt class="docutils literal"><span class="pre">settings</span></tt> Module</a><ul>
+<li><a class="reference internal" href="#settings">settings</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-jackalope.task"><tt class="docutils literal"><span class="pre">task</span></tt> Module</a></li>
+<li><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to .&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="jackalope.util.html"
+                        title="next chapter">util Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/jackalope.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="jackalope.util.html" title="util Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to .’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Jackalope  documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Evan Hammer, Jon Warman.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
