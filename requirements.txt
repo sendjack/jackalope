@@ -1,8 +1,10 @@
-APScheduler==2.0.3
+# standard
 distribute==0.6.27
+wsgiref==0.1.2
+
+# general
 requests==0.14.0
 python-dateutil==1.5
-wsgiref==0.1.2
 
 # partners
 git+git://github.com/pandemicsyn/asana.git
@@ -10,3 +12,7 @@ git+git://github.com/pandemicsyn/asana.git
 # docs
 sphinx==1.1.3
 numpydoc==0.4
+
+# others
+APScheduler==2.0.3
+
