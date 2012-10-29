@@ -6,32 +6,41 @@
     interactions.
 
 """
-
 import os
 
-from util import integer
+import tornado
+#import tornado.template
+from tornado.options import define, options
 
 # Make filepaths relative to settings.
 path = lambda root, *a: os.path.join(root, *a)
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
-# Generic Error messages
-NOT_IMPLEMENTED_ERROR = "Subclass and override."
-INIT_INTERFACE_ERROR = "Do not try to instantiate an interface."
-DO_NOT_OVERRIDE = "Do not override this method."
-
-# Asana
-ASANA_API_KEY = os.environ.get("ASANA_API_KEY")
-ASANA_JACK_USER_ID = integer.to_integer(os.environ.get("ASANA_JACK_USER_ID"))
-TEST_WORKSPACE_ID = integer.to_integer(os.environ.get("TEST_WORKSPACE_ID"))
-JACKALOPE_TAG_ID = integer.to_integer(os.environ.get("JACKALOPE_TAG_ID"))
-
-# TaskRabbit
-TASK_RABBIT_KEY = os.environ.get("TASK_RABBIT_KEY")
-TASK_RABBIT_SECRET = os.environ.get("TASK_RABBIT_SECRET")
-TASK_RABBIT_ACCESS_TOKEN = os.environ.get("TASK_RABBIT_ACCESS_TOKEN")
-TASK_RABBIT_REDIRECT_URI = os.environ.get("TASK_RABBIT_REDIRECT_URI")
-
-# Mailgun
+# MailGun
 MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
 MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN")
+
+# Tornado
+PORT = os.environ.get("PORT", 4000)
+define("port", default=PORT, help="run on the given port", type=int)
+
+define("config", default=None, help="tornado config file")
+#define("debug", default=True, help="debug mode")
+options.parse_command_line()
+
+#MEDIA_ROOT = path(ROOT, 'media')
+#TEMPLATE_ROOT = path(ROOT, 'view/templates')
+#
+# settings dictionary
+settings = {}
+#settings['debug'] = options.debug
+#settings['static_path'] = MEDIA_ROOT
+#settings['cookie_secret'] = (
+#        "\xee\x0ec\x9bl\x02\xeb/.\xd4\xeb\xc2(\xb0\xb1\x8a\x0b\xb5[^Tq\xecy")
+#settings['xsrf_cookies'] = True
+#settings['login_url'] = "/"
+#settings['template_loader'] = tornado.template.Loader(TEMPLATE_ROOT)
+settings['ui_modules'] = {}
+
+if options.config:
+    tornado.options.parse_config_file(options.config)

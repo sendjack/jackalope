@@ -11,7 +11,7 @@ from copy import deepcopy
 
 from jackalope.util import string
 from jackalope.util.decorators import constant
-from jackalope import settings
+from jackalope.errors import OverrideRequiredError
 from jackalope.task import TaskFactory
 from jackalope.comment import Comment
 
@@ -352,7 +352,7 @@ class TaskTransformer(object):
 
     def _embedded_fields(self):
         """ A list of embedded fields for this service. """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def _get_field_names(self):

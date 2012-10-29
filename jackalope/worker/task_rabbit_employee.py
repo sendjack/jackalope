@@ -4,33 +4,20 @@ TaskRabbitEmployee subclasses Employee and handles all interaction between
 Jackalope and TaskRabbit.
 
 """
+import os
 import copy
 import json
 import requests
 
 from jackalope.util.decorators import constant
-from jackalope import settings
 from jackalope.phrase import Phrase
-from jackalope.comment import Comment  # remove this after TR has messaging.
 from jackalope import mailer
+from jackalope.worker.client import REQUEST
+# TODO: remove this after TR has messaging.
+from jackalope.comment import Comment
 
 from worker import Employee
 from transformer import TaskTransformer, FIELD, VALUE
-
-
-SITE = "https://taskrabbitdev.com"
-AUTHORIZATION_HEADER = "Authorization"
-OAUTH_PREFIX = "OAuth "
-APPLICATION_HEADER = "X-Client-Application"
-CONTENT_TYPE = "Content-Type"
-APPLICATION_JSON = "application/json"
-
-AUTHORIZE_URL = "https://taskrabbitdev.com/api/authorize"
-TOKEN_URL = "https://taskrabbitdev.com/api/oauth/token"
-
-TASKS_PATH = "/api/v1/tasks"
-CLOSE_TASK_SUFFIX = "/close"
-#COMMENTS_TASK_SUFFIX = "/comments"
 
 
 class _TaskRabbitField(object):
@@ -101,6 +88,53 @@ class _TaskRabbitValue(object):
 TASK_RABBIT_VALUE = _TaskRabbitValue()
 
 
+class _TaskRabbit(object):
+
+    """ These constants contain miscellaneous special Asana values. """
+
+    @constant
+    def DOMAIN(self):
+        return "https://taskrabbitdev.com"
+
+    @constant
+    def AUTHORIZE_URL(self):
+        return "https://taskrabbitdev.com/api/authorize"
+
+    @constant
+    def TOKEN_URL(self):
+        return "https://taskrabbitdev.com/api/oauth/token"
+
+    @constant
+    def TASKS_PATH(self):
+        return "/api/v1/tasks"
+
+    @constant
+    def CLOSE_TASK_ACTION(self):
+        return "/close"
+
+    #@constant
+    #def COMMENTS_TASK_ACTION(self):
+    #    return "/comments"
+
+    @constant
+    def KEY(self):
+        return os.environ.get("TASK_RABBIT_KEY")
+
+    @constant
+    def SECRET(self):
+        return os.environ.get("TASK_RABBIT_SECRET")
+
+    @constant
+    def ACCESS_TOKEN(self):
+        return os.environ.get("TASK_RABBIT_ACCESS_TOKEN")
+
+    @constant
+    def REDIRECT_URI(self):
+        return os.environ.get("TASK_RABBIT_REDIRECT_URI")
+
+TASK_RABBIT = _TaskRabbit()
+
+
 class TaskRabbitEmployee(Employee):
 
     """ Connect with TaskRabbit to allow requests.
@@ -112,15 +146,16 @@ class TaskRabbitEmployee(Employee):
 
 
     def __init__(self):
-        access_token = settings.TASK_RABBIT_ACCESS_TOKEN
         self._headers = {
-                APPLICATION_HEADER: settings.TASK_RABBIT_SECRET,
-                AUTHORIZATION_HEADER: OAUTH_PREFIX + access_token}
+                REQUEST.APP_HEADER: TASK_RABBIT.SECRET,
+                REQUEST.AUTH_HEADER: REQUEST.OAUTH + TASK_RABBIT.ACCESS_TOKEN,
+                }
 
 
     def read_task(self, task_id):
         """Connect to the ServiceWorker's service and return a Task."""
-        raw_task = self._get("{}/{}".format(TASKS_PATH, str(task_id)))
+        path = "{}/{}".format(TASK_RABBIT.TASKS_PATH, str(task_id))
+        raw_task = self._get(path)
 
         transformer = TaskRabbitTaskTransformer()
         transformer.set_raw_task(raw_task)
@@ -134,7 +169,7 @@ class TaskRabbitEmployee(Employee):
         dict    all the Tasks keyed on id
 
         """
-        items_dict = self._get(TASKS_PATH)
+        items_dict = self._get(TASK_RABBIT.TASKS_PATH)
         task_rabbit_tasks = self._produce_dict(
                 items_dict[TASK_RABBIT_FIELD.ITEMS])
 
@@ -158,7 +193,7 @@ class TaskRabbitEmployee(Employee):
         # TODO: do this check in the base class
         raw_task_dict.get('task').pop("id")
 
-        new_raw_task_dict = self._post(TASKS_PATH, raw_task_dict)
+        new_raw_task_dict = self._post(TASK_RABBIT.TASKS_PATH, raw_task_dict)
         new_transformer = TaskRabbitTaskTransformer()
         new_transformer.set_raw_task(new_raw_task_dict)
 
@@ -178,9 +213,9 @@ class TaskRabbitEmployee(Employee):
         """
         id = task.id()
         close_path = "{}/{}{}".format(
-                TASKS_PATH,
+                TASK_RABBIT.TASKS_PATH,
                 str(id),
-                CLOSE_TASK_SUFFIX)
+                TASK_RABBIT.CLOSE_TASK_ACTION)
 
         closed_task_dict = self._post(close_path, {})
         closed_transformer = TaskRabbitTaskTransformer()
@@ -191,7 +226,9 @@ class TaskRabbitEmployee(Employee):
 
     def add_comment(self, task, message):
         """Create a comment in the service on a task."""
-        raw_task = self._get("{}/{}".format(TASKS_PATH, str(task.id())))
+        raw_task = self._get("{}/{}".format(
+            TASK_RABBIT.TASKS_PATH,
+            str(task.id())))
         runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
                 TASK_RABBIT_FIELD.EMAIL)
 
@@ -208,7 +245,8 @@ class TaskRabbitEmployee(Employee):
         """Read Comments for a task from service and return a dict keyed on
         id."""
         # the easiest way to get comments from task rabbit is through the task.
-        #raw_task = self._get("{}/{}".format(TASKS_PATH, str(task_id)))
+        #path = "{}/{}".format(TASK_RABBIT.TASKS_PATH, str(task_id))
+        #raw_task = self._get(path)
         #
         ## extract the raw task rabbit comments from the raw task dict.
         #raw_comments = (
@@ -242,7 +280,7 @@ class TaskRabbitEmployee(Employee):
         str         The parsed response.
 
         """
-        url = SITE + path
+        url = TASK_RABBIT.DOMAIN + path
         response = requests.get(url, headers=self._headers)
 
         return response.json
@@ -259,9 +297,9 @@ class TaskRabbitEmployee(Employee):
         str     The parsed response
 
         """
-        url = SITE + path
+        url = TASK_RABBIT.DOMAIN + path
         post_headers = copy.copy(self._headers)  # don't update reusable dict
-        post_headers[CONTENT_TYPE] = APPLICATION_JSON
+        post_headers[REQUEST.CONTENT_TYPE] = REQUEST.APP_JSON
 
         response = requests.post(
                 url,

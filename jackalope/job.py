@@ -11,7 +11,7 @@
 
 """
 
-from jackalope import settings
+from jackalope.errors import OverrideRequiredError
 from jackalope.phrase import Phrase
 from jackalope.task import Task, PricedTask, RegistrationTask
 
@@ -48,7 +48,7 @@ class Job(object):
     def process(self):
         """Evaluate the tasks and then use the Workers to process the Tasks,
         returning a Task if it's been updated or None if it hasn't."""
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
 class SoloJob(Job):

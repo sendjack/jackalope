@@ -20,7 +20,7 @@
 
 """
 
-from jackalope import settings
+from jackalope.errors import OverrideRequiredError, OverrideNotAllowedError
 
 
 class ServiceWorker(object):
@@ -29,18 +29,18 @@ class ServiceWorker(object):
 
 
     def __init__(self):
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def create_task(self, task):
         """Use the Task to create a task in the Worker's service and then
         return the new Task."""
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def read_task(self, task_id):
         """Connect to the ServiceWorker's service and return a Task."""
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def read_tasks(self):
@@ -50,7 +50,7 @@ class ServiceWorker(object):
         dict    all the Tasks keyed on id
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def update_task(self, task):
@@ -63,12 +63,12 @@ class ServiceWorker(object):
         Task - updated Task.
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def request_fields(self, task):
         """ Request from the service additional fields. """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def update_task_to_created(self, task):
@@ -82,7 +82,7 @@ class ServiceWorker(object):
         Task - udpated Task.
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def update_task_to_posted(self, task):
@@ -96,7 +96,7 @@ class ServiceWorker(object):
         Task - udpated Task.
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def update_task_to_assigned(self, task):
@@ -110,7 +110,7 @@ class ServiceWorker(object):
         Task - udpated Task.
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def update_task_to_completed(self, task):
@@ -124,7 +124,7 @@ class ServiceWorker(object):
         Task - udpated Task.
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def update_task_to_approved(self, task):
@@ -138,18 +138,18 @@ class ServiceWorker(object):
         Task - udpated Task.
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def add_comment(self, task, message):
         """Create a comment in the service on a task."""
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def read_comments(self, task_id):
         """Read Comments for a task from service and return a dict keyed on
         id."""
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def _get(self, path):
@@ -162,7 +162,7 @@ class ServiceWorker(object):
         str     The parsed response
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def _post(self, path, data):
@@ -176,7 +176,7 @@ class ServiceWorker(object):
         str     The parsed response
 
         """
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def _ready_spec(self, task):
@@ -212,7 +212,6 @@ class ServiceWorker(object):
         return raw_task["id"]
 
 
-
 class Employer(ServiceWorker):
 
     """ Abstract superclass for interacting with Employer (e.g., project
@@ -220,13 +219,12 @@ class Employer(ServiceWorker):
 
 
     def __init__(self):
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()
 
 
     def create_task(self, worker_task):
         """ Employers do not create tasks, their external services do. """
-        raise NotImplementedError(settings.DO_NOT_OVERRIDE)
-
+        raise OverrideNotAllowedError()
 
 
 class Employee(ServiceWorker):
@@ -236,4 +234,4 @@ class Employee(ServiceWorker):
 
 
     def __init__(self):
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideRequiredError()

@@ -4,13 +4,15 @@ AsanaEmployer subclasses Employer and handles all interaction between Jackalope
 and Asana.
 
 """
+import os
 import time
+from util import integer
 import dateutil.parser
 import dateutil.tz
 from asana import asana
 
 from jackalope.util.decorators import constant
-from jackalope import settings
+from jackalope.errors import OverrideNotAllowedError
 from jackalope.phrase import Phrase
 
 from worker import Employer
@@ -70,6 +72,21 @@ class _Asana(object):
     def ME(self):
         return "me"
 
+    @constant
+    def API_KEY(self):
+        # ASANA_API_KEY
+        return os.environ.get("ASANA_API_KEY")
+
+    @constant
+    def JACK_USER_ID(self):
+        # ASANA_JACK_USER_ID
+        return integer.to_integer(os.environ.get("ASANA_JACK_USER_ID"))
+
+    @constant
+    def TEST_WORKSPACE_ID(self):
+        # TEST_WORKSPACE_ID
+        return integer.to_integer(os.environ.get("TEST_WORKSPACE_ID"))
+
 ASANA = _Asana()
 
 
@@ -87,7 +104,7 @@ class AsanaEmployer(Employer):
     def __init__(self):
         """ Construct AsanaEmployer. """
         self._asana_api = asana.AsanaAPI(
-                settings.ASANA_API_KEY,
+                ASANA.API_KEY,
                 debug=True)
         self._workspaces = self._produce_dict(
                 self._asana_api.list_workspaces())
@@ -110,7 +127,7 @@ class AsanaEmployer(Employer):
 
         """
         test_workspace_id = self._retrieve_id(
-                self._workspaces.get(settings.TEST_WORKSPACE_ID))
+                self._workspaces.get(ASANA.TEST_WORKSPACE_ID))
 
         short_asana_tasks = self._produce_dict(
                 self._asana_api.list_tasks(test_workspace_id, ASANA.ME))
@@ -262,7 +279,7 @@ class AsanaEmployer(Employer):
 
         """
         # Asana shouldn't be getting approved notices but sending them.
-        raise NotImplementedError(settings.NOT_IMPLEMENTED_ERROR)
+        raise OverrideNotAllowedError()
 
 
     def add_comment(self, task, message):
@@ -443,7 +460,7 @@ class AsanaCommentTransformer(CommentTransformer):
         """Return True if the story was posted by someone other than Jack."""
         creator_id = raw_story[ASANA_FIELD.CREATED_BY][FIELD.ID]
 
-        return creator_id != settings.ASANA_JACK_USER_ID
+        return creator_id != ASANA.JACK_USER_ID
 
 
     @classmethod
