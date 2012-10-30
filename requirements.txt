@@ -15,4 +15,3 @@ numpydoc==0.4
 
 # others
 APScheduler==2.0.3
-

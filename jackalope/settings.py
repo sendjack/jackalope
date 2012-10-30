@@ -26,8 +26,12 @@ ASANA_JACK_USER_ID = integer.to_integer(os.environ.get("ASANA_JACK_USER_ID"))
 TEST_WORKSPACE_ID = integer.to_integer(os.environ.get("TEST_WORKSPACE_ID"))
 JACKALOPE_TAG_ID = integer.to_integer(os.environ.get("JACKALOPE_TAG_ID"))
 
-#TaskRabbit
+# TaskRabbit
 TASK_RABBIT_KEY = os.environ.get("TASK_RABBIT_KEY")
 TASK_RABBIT_SECRET = os.environ.get("TASK_RABBIT_SECRET")
 TASK_RABBIT_ACCESS_TOKEN = os.environ.get("TASK_RABBIT_ACCESS_TOKEN")
 TASK_RABBIT_REDIRECT_URI = os.environ.get("TASK_RABBIT_REDIRECT_URI")
+
+# Mailgun
+MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
+MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN")
