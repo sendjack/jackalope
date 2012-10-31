@@ -10,6 +10,10 @@
 class _Phrase(object):
 
     @property
+    def new_comment_subject(self):
+        return "A New Comment"
+
+    @property
     def registration_confirmation(self):
         return "You're registered!"
 

@@ -10,7 +10,9 @@ import requests
 
 from jackalope.util.decorators import constant
 from jackalope import settings
+from jackalope.phrase import Phrase
 from jackalope.comment import Comment  # remove this after TR has messaging.
+from jackalope import mailer
 
 from worker import Employee
 from transformer import TaskTransformer, FIELD, VALUE
@@ -63,6 +65,14 @@ class _TaskRabbitField(object):
     @constant
     def CONTENT(self):
         return "content"
+
+    @constant
+    def RUNNER(self):
+        return "runner"
+
+    @constant
+    def EMAIL(self):
+        return "email"
 
 TASK_RABBIT_FIELD = _TaskRabbitField()
 
@@ -181,18 +191,15 @@ class TaskRabbitEmployee(Employee):
 
     def add_comment(self, task, message):
         """Create a comment in the service on a task."""
-        # comments don't work for our purposes in task rabbit.
-        # raw_comment = TaskRabbitCommentTransformer.convert_message_to_dict(
-        #         message)
-        #
-        #comments_path = "{}/{}{}".format(
-        #        TASKS_PATH,
-        #        str(task.id()),
-        #        COMMENTS_TASK_SUFFIX)
-        #
-        #response_dict = self._post(comments_path, raw_comment)
-        #print response_dict
-        print "IF task rabbit commenting worked: ", task.id(), message
+        raw_task = self._get("{}/{}".format(TASKS_PATH, str(task.id())))
+        runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
+                TASK_RABBIT_FIELD.EMAIL)
+
+        if runner_email:
+            mailer.send_simple_message(
+                    runner_email,
+                    Phrase.new_comment_subject,
+                    message)
 
         return True
 
