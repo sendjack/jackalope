@@ -1,9 +1,12 @@
 #!/usr/bin/env python
-""" Module: mail
+"""
+    Jackalope Mail Receiver
+    -----------------------
 
-SendJack, Inc.'s mail receiver for Jackalope.
+    A process for receiving mail trigger's from worker services.
 
 """
+
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
@@ -15,16 +18,14 @@ from urls import url_patterns
 
 class MailReceiver(tornado.web.Application):
 
-    """ The Tornado instance for Deckalope. """
+    """The Tornado instance for receiving mail triggers."""
 
 
     def __init__(self):
-        """ Construct a Tornado application. """
         tornado.web.Application.__init__(self, url_patterns, **settings)
 
 
 def main():
-    """ main loop for Python script. """
     app = MailReceiver()
     http_server = tornado.httpserver.HTTPServer(app)
     http_server.listen(options.port)

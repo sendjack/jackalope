@@ -9,6 +9,7 @@
 from worker.asana_employer import AsanaEmployer
 from worker.task_rabbit_employee import TaskRabbitEmployee
 
+from errors import OverrideRequiredError
 from job import JobFactory
 
 
@@ -76,4 +77,4 @@ class Foreman(object):
 
     def process_employee_tasks(self, employee, tasks):
         """Process a dict of `Employee` service `Task` keyed on id."""
-        raise NotImplementedError()
+        raise OverrideRequiredError()

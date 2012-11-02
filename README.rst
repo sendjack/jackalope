@@ -17,6 +17,7 @@ Dependencies:
 -------------
 General
 +++++++
+- `Tornado <http://www.tornadoweb.org>`_: Tornado Web Server
 - `Requests <http://docs.python-requests.org>`_: HTTP for Humans
 - `Labix dateutil <http://labix.org/python-dateutil>`_: datetime Wrapper
 

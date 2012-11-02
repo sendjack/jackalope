@@ -5,7 +5,9 @@
     Handlers for incoming mail.
 
 """
-import httplib
+
+import hashlib
+import hmac
 import tornado.web
 
 from jackalope.errors import OverrideRequiredError, OverrideNotAllowedError
@@ -46,7 +48,7 @@ class _Mail(object):
         return "subject"
 
     @constant
-    def BODY(self):
+    def BODY_TEXT(self):
         return "body-plain"
 
     @constant
@@ -54,16 +56,16 @@ class _Mail(object):
         return "body-html"
 
     @constant
-    def STRIPPED_TEXT(self):
+    def BODY_TEXT_STRIPPED(self):
         return "stripped-text"
+
+    @constant
+    def BODY_HTML_STRIPPED(self):
+        return "stripped-html"
 
     @constant
     def STRIPPED_SIGNATURE(self):
         return "stripped-signature"
-
-    @constant
-    def STRIPPED_HTML(self):
-        return "stripped-html"
 
     @constant
     def ATTACHMENT_COUNT(self):
@@ -106,26 +108,43 @@ class MailHandler(tornado.web.RequestHandler):
 
 
     def post(self):
+        token = self.get_argument(MAIL.TOKEN)
+        timestamp = self.get_argument(MAIL.TIMESTAMP)
+        signature = self.get_argument(MAIL.SIGNATURE)
+        if self.verify(API_KEY, token, timestamp, signature):
+            self.process_request()
+        else:
+            raise UnverifiedMailRequest()
+
+
+    def verify(self, api_key, token, timestamp, signature):
+            return signature == hmac.new(
+                    key=api_key,
+                    msg='{}{}'.format(timestamp, token),
+                    digestmod=hashlib.sha256).hexdigest()
+
+
+    def process_request(self):
         raise OverrideRequiredError()
 
 
 class MailToHandler(MailHandler):
 
 
-    def post(self):
+    def process_request(self):
         # http://docs.python.org/2/library/httplib.html
         sender = self.get_argument(MAIL.SENDER)
         recipient = self.get_argument(MAIL.RECIPIENT)
         subject = self.get_argument(MAIL.SUBJECT)
-        body = self.get_argument(MAIL.BODY)
-        body_without_quotes = self.get_argument(MAIL.BODY_STRIPPED)
+        body = self.get_argument(MAIL.BODY_TEXT)
+        body_without_quoted_text = self.get_argument(MAIL.BODY_TEXT_STRIPPED)
 
         print "\nMAIL\n--------"
         print "sender:", sender
         print "recipient:", recipient
         print "subject:", subject
         print "body:", body
-        print "body w/o quotes:", body_without_quotes
+        print "body w/o quotes:", body_without_quoted_text
         print ""
 
         # note: other MIME headers are also posted here...
@@ -137,9 +156,7 @@ class MailToHandler(MailHandler):
 
         # returned text is ignored but HTTP status code matters. mailgun wants
         # to see 2xx, otherwise it will make another attempt in 5 minutes.
-        self.set_status(httplib.OK)
-        self.flush()
-        self.finish()
+        # tornado finishes requests automatically
 
 
 class MailFromHandler(MailHandler):
@@ -148,3 +165,11 @@ class MailFromHandler(MailHandler):
 
 class MailAboutHandler(MailHandler):
     pass
+
+
+class UnverifiedMailRequest(Exception):
+
+    REASON = "Unverified mail request sent and caught."
+
+    def __init__(self):
+        super(UnverifiedMailRequest, self).__init__(self.REASON)

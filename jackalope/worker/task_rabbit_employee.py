@@ -22,8 +22,7 @@ from transformer import TaskTransformer, FIELD, VALUE
 
 class _TaskRabbitField(object):
 
-    """ These constants contain special fields for interacting with the
-    Task Rabbit tasks. """
+    """Constants for Task Rabbit dictionary fields."""
 
     @constant
     def PRICE(self):
@@ -66,8 +65,7 @@ TASK_RABBIT_FIELD = _TaskRabbitField()
 
 class _TaskRabbitValue(object):
 
-    """ These constants contain special values for interacting with the Task
-    Rabbit tasks. """
+    """Constants for Task Rabbit dictionary values."""
 
     @constant
     def OPENED(self):
@@ -90,7 +88,7 @@ TASK_RABBIT_VALUE = _TaskRabbitValue()
 
 class _TaskRabbit(object):
 
-    """ These constants contain miscellaneous special Asana values. """
+    """Constants for interacting with Task Rabbit service."""
 
     @constant
     def DOMAIN(self):
@@ -111,10 +109,6 @@ class _TaskRabbit(object):
     @constant
     def CLOSE_TASK_ACTION(self):
         return "/close"
-
-    #@constant
-    #def COMMENTS_TASK_ACTION(self):
-    #    return "/comments"
 
     @constant
     def KEY(self):

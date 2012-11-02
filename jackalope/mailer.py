@@ -9,9 +9,11 @@
 
 import requests
 
-import settings
+import os
 
 
+MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
+MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN")
 MAILGUN_API_URL = "https://api.mailgun.net/v2"
 MAILGUN_MESSAGES_SUFFIX = "messages"
 
@@ -55,11 +57,11 @@ def send_simple_message(recipient, subject, body):
             }
     url = "{}/{}/{}".format(
             MAILGUN_API_URL,
-            settings.MAILGUN_DOMAIN,
+            MAILGUN_DOMAIN,
             MAILGUN_MESSAGES_SUFFIX)
     response = requests.post(
             url,
-            auth=(API, settings.MAILGUN_API_KEY),
+            auth=(API, MAILGUN_API_KEY),
             data=data_dict)
 
     return response.text

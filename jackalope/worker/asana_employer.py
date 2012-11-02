@@ -21,8 +21,7 @@ from transformer import TaskTransformer, CommentTransformer, FIELD, VALUE
 
 class _AsanaField(object):
 
-    """ These constants contain special fields for interacting with the Asana
-    task. """
+    """Constants for Asana dictionary fields."""
 
     @constant
     def NOTES(self):
@@ -57,6 +56,8 @@ ASANA_FIELD = _AsanaField()
 
 class _AsanaValue():
 
+    """Constants for Asana dictionary values."""
+
     @constant
     def COMMENT(self):
         return "comment"
@@ -66,7 +67,7 @@ ASANA_VALUE = _AsanaValue()
 
 class _Asana(object):
 
-    """ These constants contain miscellaneous special Asana values. """
+    """Constants for interacting with Asana service."""
 
     @constant
     def ME(self):
@@ -74,17 +75,14 @@ class _Asana(object):
 
     @constant
     def API_KEY(self):
-        # ASANA_API_KEY
         return os.environ.get("ASANA_API_KEY")
 
     @constant
     def JACK_USER_ID(self):
-        # ASANA_JACK_USER_ID
         return integer.to_integer(os.environ.get("ASANA_JACK_USER_ID"))
 
     @constant
     def TEST_WORKSPACE_ID(self):
-        # TEST_WORKSPACE_ID
         return integer.to_integer(os.environ.get("TEST_WORKSPACE_ID"))
 
 ASANA = _Asana()
@@ -102,7 +100,6 @@ class AsanaEmployer(Employer):
 
 
     def __init__(self):
-        """ Construct AsanaEmployer. """
         self._asana_api = asana.AsanaAPI(
                 ASANA.API_KEY,
                 debug=True)
