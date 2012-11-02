@@ -12,6 +12,8 @@ from copy import deepcopy
 from jackalope.util import string
 from jackalope.util.decorators import constant
 from jackalope.errors import OverrideRequiredError
+from jackalope.phrase import Phrase
+from jackalope import mailer
 from jackalope.task import TaskFactory
 from jackalope.comment import Comment
 
@@ -177,6 +179,24 @@ class TaskTransformer(object):
                 self._get_service_field_name_from_accessor(task, a)
                 for a in accessors
                 ]
+
+
+    @staticmethod
+    def get_jackalope_blurb(service_name, task_id):
+        """Get a standard Jackalope blurb with task specific contact email and
+        return it.
+
+        Parameters
+        service_name : `str`
+        task_id : `int`
+
+        """
+        email = "{}-{}@{}".format(service_name, task_id, mailer.MAILGUN_DOMAIN)
+        jackalope_blurb = "\n--\n{}\n{}".format(
+                Phrase.jackalope_intro,
+                email)
+
+        return jackalope_blurb
 
 
     def _construct_task_from_dict(self):

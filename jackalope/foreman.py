@@ -9,7 +9,6 @@
 from worker.asana_employer import AsanaEmployer
 from worker.task_rabbit_employee import TaskRabbitEmployee
 
-from errors import OverrideRequiredError
 from job import JobFactory
 
 
@@ -57,12 +56,15 @@ class Foreman(object):
 
             asana_worker = self.get_asana_worker()
 
+            # FIXME: the 'from_task_id' is actually the to_task_id' because we
+            # don't have the from_task_id when this is set.
+            to_task_id = from_task_id
             # remove when reciprocal id comes from tr
-            tasks = asana_worker.read_tasks()
-            to_task_id = -1
-            for id, to_task in tasks.items():
-                if to_task.reciprocal_id() == from_task_id:
-                    to_task_id = id
+            #tasks = asana_worker.read_tasks()
+            #to_task_id = -1
+            #for id, to_task in tasks.items():
+            #    if to_task.reciprocal_id() == from_task_id:
+            #        to_task_id = id
 
             new_comment = asana_worker.add_comment(
                     to_task_id,
@@ -105,4 +107,4 @@ class Foreman(object):
 
     def process_employee_tasks(self, employee, tasks):
         """Process a dict of `Employee` service `Task` keyed on id."""
-        raise OverrideRequiredError()
+        raise NotImplementedError()

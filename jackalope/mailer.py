@@ -7,9 +7,10 @@
 
 """
 
+import os
 import requests
 
-import os
+from jackalope.util.decorators import constant
 
 
 MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
@@ -17,25 +18,94 @@ MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN")
 MAILGUN_API_URL = "https://api.mailgun.net/v2"
 MAILGUN_MESSAGES_SUFFIX = "messages"
 
-FROM = "from"
-TO = "to"
-SUBJECT = "subject"
-TEXT = "text"
-API = "api"
-
 SENDER = "Jack A. Lope <jack@sendjack.com>"
 
 
-def main():
+class _Mail(object):
 
-    recipient = "Test <admin@sendjack.com>"
-    subject = "Jack's not feeling so well."
-    body = "You guys are the worst. Where the hell is my chicken soup?\n"
-    body = body + (
-            "Send through python, from mailgun. (yeah, that's how i roll.)"
-            )
+    """Mail constants for interacting with incoming mail from MailGun.
 
-    send_simple_message(recipient, subject, body)
+    http://documentation.mailgun.net/user_manual.html#receiving-messages
+
+    """
+
+    @constant
+    def RECIPIENT(self):
+        return "recipient"
+
+    @constant
+    def SENDER(self):
+        return "sender"
+
+    @constant
+    def FROM(self):
+        return "from"
+
+    @constant
+    def TO(self):
+        return "to"
+
+    @constant
+    def SUBJECT(self):
+        return "subject"
+
+    @constant
+    def BODY_TEXT(self):
+        return "body-plain"
+
+    @constant
+    def BODY_HTML(self):
+        return "body-html"
+
+    @constant
+    def BODY_TEXT_STRIPPED(self):
+        return "stripped-text"
+
+    @constant
+    def BODY_HTML_STRIPPED(self):
+        return "stripped-html"
+
+    @constant
+    def STRIPPED_SIGNATURE(self):
+        return "stripped-signature"
+
+    @constant
+    def ATTACHMENT_COUNT(self):
+        return "attachment-count"
+
+    @constant
+    def ATTACHMENT_X(self):
+        return "attachment-x"
+
+    @constant
+    def TIMESTAMP(self):
+        return "timestamp"
+
+    @constant
+    def TOKEN(self):
+        return "token"
+
+    @constant
+    def SIGNATURE(self):
+        return "signature"
+
+    @constant
+    def MESSAGE_HEADERS(self):
+        return "message-headers"
+
+    @constant
+    def CONTENT_ID_MAP(self):
+        return "content-id-map"
+
+    @constant
+    def TEXT(self):
+        return "text"
+
+    @constant
+    def API(self):
+        return "api"
+
+MAIL = _Mail()
 
 
 def send_simple_message(recipient, subject, body):
@@ -50,10 +120,10 @@ def send_simple_message(recipient, subject, body):
 
     """
     data_dict = {
-            FROM: SENDER,
-            TO: [recipient],
-            SUBJECT: subject,
-            TEXT: body
+            MAIL.FROM: SENDER,
+            MAIL.TO: [recipient],
+            MAIL.SUBJECT: subject,
+            MAIL.TEXT: body
             }
     url = "{}/{}/{}".format(
             MAILGUN_API_URL,
@@ -61,7 +131,7 @@ def send_simple_message(recipient, subject, body):
             MAILGUN_MESSAGES_SUFFIX)
     response = requests.post(
             url,
-            auth=(API, MAILGUN_API_KEY),
+            auth=(MAIL.API, MAILGUN_API_KEY),
             data=data_dict)
 
     return response.text

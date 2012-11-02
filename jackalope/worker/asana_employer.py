@@ -188,7 +188,7 @@ class AsanaEmployer(Employer):
 
         return all([
                 self.update_task(task),
-                self.add_comment(task, comment),
+                self.add_comment(task.id(), comment),
                 ])
 
 
@@ -223,7 +223,7 @@ class AsanaEmployer(Employer):
         """
         task.set_status_to_posted()
         updated_task = self.update_task(task)
-        self.add_comment(task, Phrase.task_posted_note)
+        self.add_comment(task.id(), Phrase.task_posted_note)
 
         return updated_task
 
@@ -241,7 +241,7 @@ class AsanaEmployer(Employer):
         """
         task.set_status_to_assigned()
         updated_task = self.update_task(task)
-        self.add_comment(task, Phrase.task_assigned_note)
+        self.add_comment(task.id(), Phrase.task_assigned_note)
 
         return updated_task
 
@@ -259,7 +259,7 @@ class AsanaEmployer(Employer):
         """
         task.set_status_to_completed()
         updated_task = self.update_task(task)
-        self.add_comment(task, Phrase.task_completed_note)
+        self.add_comment(task.id(), Phrase.task_completed_note)
 
         return updated_task
 

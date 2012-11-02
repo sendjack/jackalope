@@ -60,6 +60,10 @@ class _TaskRabbitField(object):
     def EMAIL(self):
         return "email"
 
+    @constant
+    def PRIVATE_DESCRIPTION(self):
+        return "private_description"
+
 TASK_RABBIT_FIELD = _TaskRabbitField()
 
 
@@ -89,6 +93,10 @@ TASK_RABBIT_VALUE = _TaskRabbitValue()
 class _TaskRabbit(object):
 
     """Constants for interacting with Task Rabbit service."""
+
+    @constant
+    def SERVICE_NAME(self):
+        return "taskrabbit"
 
     @constant
     def DOMAIN(self):
@@ -184,8 +192,19 @@ class TaskRabbitEmployee(Employee):
         transformer.set_task(task)
         raw_task_dict = transformer.get_raw_task()
 
+        # add a blurb for the runner to know about Jackalope and who to email.
+        # FIXME: the task id should actually be the reciprocal id (or our
+        # internal id) but we can't do that yet so it's the Asana ID.
+        blurb = TaskRabbitTaskTransformer.get_jackalope_blurb(
+                TASK_RABBIT.SERVICE_NAME,
+                task.id())
+        private_desc_field = TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION
+        raw_task_dict[TASK_RABBIT_FIELD.TASK][private_desc_field] = blurb
+        from pprint import pprint
+        pprint(raw_task_dict)
+
         # TODO: do this check in the base class
-        raw_task_dict.get('task').pop("id")
+        raw_task_dict.get(TASK_RABBIT_FIELD.TASK).pop(FIELD.ID)
 
         new_raw_task_dict = self._post(TASK_RABBIT.TASKS_PATH, raw_task_dict)
         new_transformer = TaskRabbitTaskTransformer()
@@ -220,9 +239,14 @@ class TaskRabbitEmployee(Employee):
 
     def add_comment(self, task_id, message):
         """Create a comment in the service on a task."""
+        print task_id
+        print message
         raw_task = self._get("{}/{}".format(
             TASK_RABBIT.TASKS_PATH,
             str(task_id)))
+        from pprint import pprint
+        print "COMMENT"
+        pprint(raw_task)
         runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
                 TASK_RABBIT_FIELD.EMAIL)
 

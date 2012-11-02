@@ -69,7 +69,7 @@ class SoloJob(Job):
         if self._task.is_posted():
             self._task = self._worker.update_task_to_completed(self._task)
             self._worker.add_comment(
-                    self._task,
+                    self._task.id(),
                     Phrase.registration_confirmation)
             self._task_changed = True
         # if completed, then do nothing.
@@ -161,7 +161,7 @@ class PairedJob(Job):
                 self._task_changed = True
             for comment in new_comments:
                 self._reciprocal_worker.add_comment(
-                        self._reciprocal_task,
+                        self._reciprocal_task.id(),
                         comment.message())
 
         # if either task has changed make sure synch ts is updated and pushed.
@@ -277,7 +277,7 @@ class PairedJob(Job):
         self._task.set_reciprocal_id(reciprocal_task.id())
         self._task = self._worker.update_task(self._task)
         #self._worker.add_comment(
-        #        self._task,
+        #        self._task.id(),
         #        Phrase.task_posted_note)
         self._task_changed = True
 
