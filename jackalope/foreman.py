@@ -45,6 +45,34 @@ class Foreman(object):
         return self._employers[0]
 
 
+    def ferry_comment(self, service, from_task_id, message):
+        """Add the comment to the reciprocal task."""
+        new_comment = None
+
+        if service == "taskrabbit":
+            # when the reciprocal id is in the tr task
+            # tr_worker = self.get_task_rabbit_worker()
+            # from_task = tr_worker.read_task(from_task_id)
+            # to_task_id = from_task.reciprocal_id()
+
+            asana_worker = self.get_asana_worker()
+
+            # remove when reciprocal id comes from tr
+            tasks = asana_worker.read_tasks()
+            to_task_id = -1
+            for id, to_task in tasks.items():
+                if to_task.reciprocal_id() == from_task_id:
+                    to_task_id = id
+
+            new_comment = asana_worker.add_comment(
+                    to_task_id,
+                    message)
+        else:
+            print "only handling comments from taskrabbit"
+
+        return new_comment is not None
+
+
     def send_jack(self):
         """Process all Jackalope services and handle `Task` updates."""
         employer_tasks = {}

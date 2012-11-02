@@ -279,9 +279,9 @@ class AsanaEmployer(Employer):
         raise OverrideNotAllowedError()
 
 
-    def add_comment(self, task, message):
+    def add_comment(self, task_id, message):
         """Create a comment in the service on a task."""
-        return self._asana_api.add_story(task.id(), message)
+        return self._asana_api.add_story(task_id, message)
 
 
     def read_comments(self, task_id):

@@ -218,11 +218,11 @@ class TaskRabbitEmployee(Employee):
         return self._ready_spec(closed_transformer.get_task())
 
 
-    def add_comment(self, task, message):
+    def add_comment(self, task_id, message):
         """Create a comment in the service on a task."""
         raw_task = self._get("{}/{}".format(
             TASK_RABBIT.TASKS_PATH,
-            str(task.id())))
+            str(task_id)))
         runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
                 TASK_RABBIT_FIELD.EMAIL)
 

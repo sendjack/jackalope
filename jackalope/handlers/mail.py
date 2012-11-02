@@ -8,17 +8,19 @@
 
 import hashlib
 import hmac
+import re
 import tornado.web
 
 from jackalope.errors import OverrideRequiredError, OverrideNotAllowedError
 from jackalope.util.decorators import constant
+from jackalope.foreman import Foreman
 
 
 DOMAIN = "app7972367.mailgun.org"
 POSTMASTER_LOGIN = "postmaster"
 POSTMASTER_PASSWORD = "6uug3km0ofv8"
-TEST_LOGIN = "test"
-TEST_PASSWORD = "themightypeacock"
+#TEST_LOGIN = "test"
+#TEST_PASSWORD = "themightypeacock"
 API_URL = "https://api.mailgun.net/v2"
 API_KEY = "key-82kpweabx72z6bmih2sa9xp6hqbv7b97"
 
@@ -130,6 +132,9 @@ class MailHandler(tornado.web.RequestHandler):
 
 class MailToHandler(MailHandler):
 
+    email_regex = r"(.+)\-(\d+)@"
+    email_pattern = re.compile(email_regex)
+
 
     def process_request(self):
         # http://docs.python.org/2/library/httplib.html
@@ -147,6 +152,14 @@ class MailToHandler(MailHandler):
         print "body w/o quotes:", body_without_quoted_text
         print ""
 
+        match = self.email_pattern.match(recipient)
+        service = match.group(1)
+        task_id = match.group(2)
+
+        if service and task_id:
+            foreman = Foreman()
+            message = subject + ":\n" + body
+            foreman.ferry_comment(service, task_id, message)
         # note: other MIME headers are also posted here...
 
         # attachments

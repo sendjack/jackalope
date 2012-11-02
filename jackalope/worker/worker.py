@@ -141,7 +141,7 @@ class ServiceWorker(object):
         raise OverrideRequiredError()
 
 
-    def add_comment(self, task, message):
+    def add_comment(self, task_id, message):
         """Create a comment in the service on a task."""
         raise OverrideRequiredError()
 
