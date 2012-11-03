@@ -242,9 +242,6 @@ class TaskRabbitEmployee(Employee):
         raw_task = self._get("{}/{}".format(
             TASK_RABBIT.TASKS_PATH,
             str(task_id)))
-        from pprint import pprint
-        print "COMMENT"
-        pprint(raw_task)
         runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
                 TASK_RABBIT_FIELD.EMAIL)
 

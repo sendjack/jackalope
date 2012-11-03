@@ -3,7 +3,7 @@
     Jackalope Mail Receiver
     -----------------------
 
-    A process for receiving mail trigger's from worker services.
+    Run a tornado server for receiving mail trigger's for work.
 
 """
 

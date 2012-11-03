@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 """
-    clock
-    -----
+    Recurring Jackalope App
+    -----------------------
 
-    A wrapper around the app to run it on a schedule.
+    Run Jackalope on a regular interval to poll for work.
 
 """
 
 import os
 from apscheduler.scheduler import Scheduler
 
-import app
+from foreman import Foreman
 from util import integer
 
 
@@ -22,8 +22,10 @@ actually_running = os.environ.get("INTERVAL_SECONDS")
 @sched.interval_schedule(seconds=interval)
 def timed_job():
     """Call the app.py main method."""
-    print "and another job..."
-    app.main()
+    print "Polling commence..."
+    foreman = Foreman()
+    foreman.send_jack()
+    print "...Polling complete.\n\n\n\n"
 
 
 sched.start()
