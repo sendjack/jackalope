@@ -100,15 +100,15 @@ class _TaskRabbit(object):
 
     @constant
     def DOMAIN(self):
-        return "https://taskrabbitdev.com"
+        return os.environ.get("TASK_RABBIT_DOMAIN")
 
     @constant
     def AUTHORIZE_URL(self):
-        return "https://taskrabbitdev.com/api/authorize"
+        return self.DOMAIN + "/api/authorize"
 
     @constant
     def TOKEN_URL(self):
-        return "https://taskrabbitdev.com/api/oauth/token"
+        return self.DOMAIN + "/api/oauth/token"
 
     @constant
     def TASKS_PATH(self):
@@ -200,8 +200,6 @@ class TaskRabbitEmployee(Employee):
                 task.id())
         private_desc_field = TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION
         raw_task_dict[TASK_RABBIT_FIELD.TASK][private_desc_field] = blurb
-        from pprint import pprint
-        pprint(raw_task_dict)
 
         # TODO: do this check in the base class
         raw_task_dict.get(TASK_RABBIT_FIELD.TASK).pop(FIELD.ID)
@@ -299,6 +297,7 @@ class TaskRabbitEmployee(Employee):
 
         """
         url = TASK_RABBIT.DOMAIN + path
+        print url
         response = requests.get(url, headers=self._headers)
 
         return response.json

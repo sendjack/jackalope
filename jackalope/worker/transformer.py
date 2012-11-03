@@ -208,9 +208,6 @@ class TaskTransformer(object):
         """
         raw_task = deepcopy(self._raw_task)
 
-        #from pprint import pprint
-        #pprint(raw_task)
-
         # flatten raw task dict
         raw_task = self._flatten_raw_task(raw_task)
 

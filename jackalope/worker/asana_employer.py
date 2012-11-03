@@ -79,11 +79,11 @@ class _Asana(object):
 
     @constant
     def JACK_USER_ID(self):
-        return integer.to_integer(os.environ.get("ASANA_JACK_USER_ID"))
+        return integer.to_integer(os.environ.get("ASANA_USER_ID"))
 
     @constant
-    def TEST_WORKSPACE_ID(self):
-        return integer.to_integer(os.environ.get("TEST_WORKSPACE_ID"))
+    def WORKSPACE_ID(self):
+        return integer.to_integer(os.environ.get("ASANA_WORKSPACE_ID"))
 
 ASANA = _Asana()
 
@@ -124,7 +124,7 @@ class AsanaEmployer(Employer):
 
         """
         test_workspace_id = self._retrieve_id(
-                self._workspaces.get(ASANA.TEST_WORKSPACE_ID))
+                self._workspaces.get(ASANA.WORKSPACE_ID))
 
         short_asana_tasks = self._produce_dict(
                 self._asana_api.list_tasks(test_workspace_id, ASANA.ME))

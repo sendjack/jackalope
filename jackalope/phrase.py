@@ -35,11 +35,13 @@ class _Phrase(object):
 
     @property
     def jackalope_intro(self):
-        return """This task has been sent to you by a service called Jackalope.
-                Jackalope pulls tasks from a number of sources. Please check
-                us out at http://sendjack.com. \n\nMost importantly, we'd like
-                to be able to communicate with the person who created this
-                task, so we've created a unique email address to reach him or
-                her. Please send all task related email to:"""
+        return ("This task has been sent to you by a service called "
+                "Jackalope. Jackalope pulls tasks from a number of sources. "
+                "Please check us out at http://sendjack.com. \n\nMost "
+                "importantly, we'd like to be able to communicate with the "
+                "person who created this task, so we've created a unique "
+                "email address to reach him or her. Please send all task "
+                "related email to:"
+                )
 
 Phrase = _Phrase()
