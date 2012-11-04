@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """
-    Recurring Jackalope App
-    -----------------------
+    Jackalope Service Poller
+    ------------------------
 
-    Run Jackalope on a regular interval to poll for work.
+    Run Jackalope on a regular interval to poll for work (new and updates
+    tasks; comments.)
 
 """
 
@@ -16,6 +17,8 @@ from util import integer
 
 sched = Scheduler()
 interval = integer.to_integer(os.environ.get("INTERVAL_SECONDS", 10000))
+# actually_running: fulfills ApScheduler True requirement and doesn't loop
+# indefintiely while Sphinx generates documentation.
 actually_running = os.environ.get("INTERVAL_SECONDS")
 
 
