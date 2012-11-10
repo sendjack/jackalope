@@ -11,15 +11,24 @@ import os
 import requests
 
 from jackalope.util.decorators import constant
-
+from jackalope.phrase import NAME
 
 MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
 MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN")
 MAILGUN_API_URL = "https://api.mailgun.net/v2"
 MAILGUN_MESSAGES_SUFFIX = "messages"
 
+ENVIRONMENT = os.environ.get("ENVIRONMENT")
+DEFAULT_NAME = ""
+if ENVIRONMENT == "PRODUCTION":
+    DEFAULT_NAME = NAME.PRODUCTION
+elif ENVIRONMENT == "STAGING":
+    DEFAULT_NAME = NAME.STAGING
+elif ENVIRONMENT == "DEV":
+    DEFAULT_NAME = NAME.DEV
+
 DEFAULT_SENDER = "{} <{}>".format(
-        os.environ.get("JACKS_NAME"),
+        DEFAULT_NAME,
         os.environ.get("JACKS_EMAIL"))
 
 
@@ -111,7 +120,7 @@ MAIL = _Mail()
 
 
 def send_message_from_jack(recipient, subject, body):
-    """Send a smtp message using Mailgun's API with Jack Lope as the sender
+    """Send a smtp message using Mailgun's API with 'Jack Lope' as the sender
     and return the response dict.
 
     Parameters
@@ -123,6 +132,23 @@ def send_message_from_jack(recipient, subject, body):
 
     """
     return send_message(DEFAULT_SENDER, recipient, subject, body)
+
+
+def send_message_as_jack(sender_email, recipient, subject, body):
+    """Send a smtp mesage using Mailgun's API with 'Jack Lope' as
+    the name and the sender_email as the email, and return the response dict.
+
+    Parameters
+    ----------
+    sender_email `str`
+    recipient : `str`
+        Formatted as "Name <email@domain.com>"
+    subject : `str`
+    body : `str`
+
+    """
+    sender = "{} <{}>".format(DEFAULT_NAME, sender_email)
+    return send_message(sender, recipient, subject, body)
 
 
 def send_message(sender, recipient, subject, body):
@@ -138,8 +164,6 @@ def send_message(sender, recipient, subject, body):
     body : `str`
 
     """
-    print "SICKNESS WHILE SENDING"
-    print sender
     data_dict = {
             MAIL.FROM: sender,
             MAIL.TO: [recipient],

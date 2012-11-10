@@ -10,3 +10,5 @@ curl -H "Authorization: OAuth SSrdla71Z11BA0O2W6vBJZ2JVUmYKWpfIir6SjBi" https://
 # Close Task with TaskRabbit:
 curl -X POST -H "Authorization: OAuth SSrdla71Z11BA0O2W6vBJZ2JVUmYKWpfIir6SjBi" https://taskrabbitdev.com/api/v1/tasks/191/close -v
 
+# Asana
+curl -u GLp1JB6.aRWxlrYAAcPwRkFxtYU5WF2A: https://app.asana.com/api/1.0/users/me

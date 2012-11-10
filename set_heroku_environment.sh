@@ -1,4 +1,10 @@
 #!/bin/sh
 
-FIELDS=$(cat .env .env-prod | sed '/^\#/d' | sed '/^$/d' | tr '\n' ' ')
-heroku config:set $FIELDS
+if (( $# == 2 ))
+then
+    FIELDS=$(cat $2 | sed '/^\#/d' | sed '/^$/d' | tr '\n' ' ')
+    ENVIRONMENT=$1
+    heroku config:set $FIELDS --remote $ENVIRONMENT
+else
+    echo "Arg1: App, Arg2: env file"
+fi

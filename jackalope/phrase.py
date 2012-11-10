@@ -6,6 +6,25 @@
 
 """
 
+from jackalope.util.decorators import constant
+
+
+class _Name(object):
+
+    @constant
+    def PRODUCTION(self):
+        return "Jack A. Lope"
+
+    @constant
+    def STAGING(self):
+        return "Jack Staging"
+
+    @constant
+    def DEV(self):
+        return "Jack Dev"
+
+NAME = _Name()
+
 
 class _Phrase(object):
 

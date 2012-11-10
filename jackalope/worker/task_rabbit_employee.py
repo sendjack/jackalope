@@ -251,7 +251,7 @@ class TaskRabbitEmployee(Employee):
         from_email = re.search(r"[\w.-]+@[\w.-]+[\w]", description).group()
 
         if runner_email:
-            mailer.send_message(
+            mailer.send_message_as_jack(
                     from_email,
                     runner_email,
                     Phrase.new_comment_subject,
