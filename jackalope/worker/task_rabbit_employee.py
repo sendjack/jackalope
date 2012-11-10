@@ -6,6 +6,7 @@ Jackalope and TaskRabbit.
 """
 import os
 import copy
+import re
 import json
 import requests
 
@@ -237,16 +238,21 @@ class TaskRabbitEmployee(Employee):
 
     def add_comment(self, task_id, message):
         """Create a comment in the service on a task."""
-        print task_id
-        print message
         raw_task = self._get("{}/{}".format(
             TASK_RABBIT.TASKS_PATH,
             str(task_id)))
         runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
                 TASK_RABBIT_FIELD.EMAIL)
 
+        # pull the task-specific email from the private description
+        # TODO: pull this from the DB, or make this an optional parameter
+        # or pull it from the Task.
+        description = raw_task.get(TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION, "")
+        from_email = re.search(r"[\w.-]+@[\w.-]+[\w]", description).group()
+
         if runner_email:
-            mailer.send_simple_message(
+            mailer.send_message(
+                    from_email,
                     runner_email,
                     Phrase.new_comment_subject,
                     message)

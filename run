@@ -1,0 +1,3 @@
+#!/bin/bash
+python jackalope/mail_receiver.py &
+python jackalope/poller.py 

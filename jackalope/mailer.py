@@ -18,7 +18,9 @@ MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN")
 MAILGUN_API_URL = "https://api.mailgun.net/v2"
 MAILGUN_MESSAGES_SUFFIX = "messages"
 
-SENDER = "Jack A. Lope <jack@sendjack.com>"
+DEFAULT_SENDER = "{} <{}>".format(
+        os.environ.get("JACKS_NAME"),
+        os.environ.get("JACKS_EMAIL"))
 
 
 class _Mail(object):
@@ -108,8 +110,9 @@ class _Mail(object):
 MAIL = _Mail()
 
 
-def send_simple_message(recipient, subject, body):
-    """Send a smtp message using Mailgun's API and return the response dict.
+def send_message_from_jack(recipient, subject, body):
+    """Send a smtp message using Mailgun's API with Jack Lope as the sender
+    and return the response dict.
 
     Parameters
     ----------
@@ -119,8 +122,26 @@ def send_simple_message(recipient, subject, body):
     body : `str`
 
     """
+    return send_message(DEFAULT_SENDER, recipient, subject, body)
+
+
+def send_message(sender, recipient, subject, body):
+    """Send a smtp message using Mailgun's API and return the response dict.
+
+    Parameters
+    ----------
+    sender : `str`
+        Formatted as "Name <email@domain.com>"
+    recipient : `str`
+        Formatted as "Name <email@domain.com>"
+    subject : `str`
+    body : `str`
+
+    """
+    print "SICKNESS WHILE SENDING"
+    print sender
     data_dict = {
-            MAIL.FROM: SENDER,
+            MAIL.FROM: sender,
             MAIL.TO: [recipient],
             MAIL.SUBJECT: subject,
             MAIL.TEXT: body
