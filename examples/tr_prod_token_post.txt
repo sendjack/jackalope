@@ -1,0 +1,5 @@
+code=fjpVNqSXDlDdd5FZqKwP
+&client_id=qsUBmGBuQcqv2ubRs5zFeCdUHYfhdgpOFOyofDRt
+&client_secret=kzDVw3gFdKo1jy93wDrjlE9F2EObonyAOHNnePhU
+&grant_type=authorization_code
+&redirect_uri=http://alpha.sendjack.com/callback/tr
