@@ -4,7 +4,7 @@ wsgiref==0.1.2
 
 # general
 tornado==2.4
-requests==0.14.0
+requests==0.14.2
 python-dateutil==1.5
 
 # partners

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
     foreman
     -------
@@ -108,3 +109,10 @@ class Foreman(object):
     def process_employee_tasks(self, employee, tasks):
         """Process a dict of `Employee` service `Task` keyed on id."""
         raise NotImplementedError()
+
+
+if __name__ == "__main__":
+    print "Running a single test loop..."
+    foreman = Foreman()
+    foreman.send_jack()
+    print "end"

@@ -300,7 +300,6 @@ class TaskRabbitEmployee(Employee):
 
         """
         url = TASK_RABBIT.DOMAIN + path
-        print url
         response = requests.get(url, headers=self._headers)
 
         return response.json
