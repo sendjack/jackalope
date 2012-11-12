@@ -3,8 +3,8 @@
     ------
 
     ServiceWorker is the base class for all interactions with external
-    services' APIs, and provides an API for the Foreman/Job to interact with an
-    external service.
+    services' APIs, and provides an API for the Foreman/Workflow to interact
+    with an external service.
 
     Employer (ServiceWorker) handles interactions with the Task
     requester (project management) services. Employee (ServiceWorker) handles

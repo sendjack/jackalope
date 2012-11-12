@@ -10,7 +10,7 @@
 from worker.asana_employer import AsanaEmployer
 from worker.task_rabbit_employee import TaskRabbitEmployee
 
-from job import JobFactory
+from workflow import WorkflowFactory
 
 
 class Foreman(object):
@@ -90,18 +90,18 @@ class Foreman(object):
             if task:
                 print ""
                 print task.id
-                # hand the Tasks over to a Job and evaluate the statuses.
+                # hand the Tasks over to a Workflow and evaluate the statuses.
                 # keep on processing Task until it doesn't change.
                 task_to_process = task
                 count = 0
                 while task_to_process:
                     print "count:", count
                     task_to_process._print_task()
-                    job = JobFactory.instantiate_job_from_employer(
+                    workflow = WorkflowFactory.instantiate_from_employer(
                             employer,
                             task_to_process,
                             self)
-                    task_to_process = job.process()
+                    task_to_process = workflow.process()
 
                     count = count + 1
 

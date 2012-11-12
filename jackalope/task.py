@@ -260,7 +260,7 @@ class Task(object):
 class RegistrationTask(Task):
 
     """The Task for registering new users with Jackalope. This Task uses
-    SoloJob."""
+    SoloWorkflow."""
 
 
     def get_required_accessors(self):
@@ -275,7 +275,7 @@ class RegistrationTask(Task):
 
 class PricedTask(Task):
 
-    """A Task that requires a price. This Task uses PairedJob."""
+    """A Task that requires a price. This Task uses PairedWorkflow."""
 
 
     def get_required_accessors(self):

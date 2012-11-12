@@ -1,13 +1,13 @@
 """
-    job
-    ---
+    workflow
+    --------
 
-    Job manages the workflow to respond to task changes and synching between
-    services. Foreman uses the Job to evaluate and process Employer and
-    Employee Tasks.
+    Workflow manages the workflow to respond to task changes and synching
+    between services. Foreman uses the Workflow to evaluate and process
+    Employer and Employee Tasks.
 
-    This separation between Foreman and Job allows for more complicated Task
-    combinations in the future.
+    This separation between Foreman and Workflow allows for more complicated
+    Task combinations in the future.
 
 """
 
@@ -16,7 +16,7 @@ from jackalope.phrase import Phrase
 from jackalope.task import Task, PricedTask, RegistrationTask
 
 
-class Job(object):
+class Workflow(object):
 
     """Manage the workflow between services and Jackalope.
 
@@ -25,24 +25,24 @@ class Job(object):
     _worker : `ServiceWorker`
     _task : `Task`
     _forman : `Foreman`
-    _is_employer_job : `bool`
-        If Employer initiated this Job, then True.
+    _is_employer_workflow: `bool`
+        If Employer initiated this Workflow, then True.
     _task_changed : `bool`
-        If the Task has been updated by this Job, then True.
+        If the Task has been updated by this Workflow, then True.
 
     """
 
 
-    def __init__(self, worker, task, foreman, is_employer_job=True):
+    def __init__(self, worker, task, foreman, is_employer_workflow=True):
         self._worker = worker
         self._task = task
         self._foreman = foreman
-        self._is_employer_job = is_employer_job
+        self._is_employer_workflow = is_employer_workflow
         self._task_changed = False
 
-        # a Task must have a status before it gets handed to a Job.
+        # a Task must have a status before it gets handed to a Workflow.
         if not self._task.has_status():
-            raise JobError()
+            raise WorkflowError()
 
 
     def process(self):
@@ -51,7 +51,7 @@ class Job(object):
         raise OverrideRequiredError()
 
 
-class SoloJob(Job):
+class SoloWorkflow(Workflow):
 
     """Evaluate a Task from an Employer but only handle workflows where there
     is not an additional service or Task."""
@@ -59,9 +59,9 @@ class SoloJob(Job):
     def process(self):
         """Evaluate the tasks and then use the Workers to process the Tasks,
         returning a Task if it's been updated or None if it hasn't."""
-        # only process SoloJobs from Employers.
-        if not self._is_employer_job:
-            raise JobError()
+        # only process SoloWorkflows from Employers.
+        if not self._is_employer_workflow:
+            raise WorkflowError()
 
         print "getting here"
 
@@ -77,7 +77,7 @@ class SoloJob(Job):
             self._task_changed = False
         # any other case is an error.
         else:
-            raise JobError()
+            raise WorkflowError()
 
         updated_task = None
         if self._task_changed:
@@ -85,7 +85,7 @@ class SoloJob(Job):
         return updated_task
 
 
-class PairedJob(Job):
+class PairedWorkflow(Workflow):
 
     """Evaluate the Tasks and then use the Workers to handle any updates or
     synching that needs to occur between the services.
@@ -99,8 +99,12 @@ class PairedJob(Job):
     """
 
 
-    def __init__(self, worker, task, foreman, is_employer_job=True):
-        super(PairedJob, self).__init__(worker, task, foreman, is_employer_job)
+    def __init__(self, worker, task, foreman, is_employer_workflow=True):
+        super(PairedWorkflow, self).__init__(
+                worker,
+                task,
+                foreman,
+                is_employer_workflow)
 
         self._reciprocal_task_changed = False
         self._set_smart_reciprocal_worker()
@@ -110,7 +114,7 @@ class PairedJob(Job):
     def process(self):
         """Evaluate the tasks and then use the Workers to process the Tasks,
         returning a Task if it's been updated or None if it hasn't."""
-        print "PROCESS THE JOB"
+        print "PROCESS THE WORKFLOW"
         # check to see if Status is in sync and act.
         # both states are the same. do nothing.
         if self._are_same_states(
@@ -144,12 +148,13 @@ class PairedJob(Job):
             self._update_employee_task(updated_task)
         # error state.
         else:
-            raise JobError()
+            raise WorkflowError()
 
         # check to see if Content is in sync and act.
 
         # sync comments between the services when they've been paired
-        # FIXME: Currently only pulls comments from job initiator (employer)
+        # FIXME: Currently only pulls comments from workflow initiator
+        # (employer)
         if (
                 self._task.is_assigned() or
                 self._task.is_completed() or
@@ -177,10 +182,10 @@ class PairedJob(Job):
 
 
     def _get_employer(self):
-        # this conditional allows the Job to be initiated by an Employee or
-        # Employer
+        # this conditional allows the Workflow to be initiated by an Employee
+        # or Employer
         employer = None
-        if self._is_employer_job:
+        if self._is_employer_workflow:
             employer = self._worker
         else:
             employer = self._reciprocal_worker
@@ -188,10 +193,10 @@ class PairedJob(Job):
 
 
     def _get_employee(self):
-        # this conditional allows the Job to be initiated by an Employee or
-        # Employer
+        # this conditional allows the Workflow to be initiated by an Employee
+        # or Employer
         employee = None
-        if self._is_employer_job:
+        if self._is_employer_workflow:
             employee = self._reciprocal_worker
         else:
             employee = self._worker
@@ -199,10 +204,10 @@ class PairedJob(Job):
 
 
     def _get_employer_task(self):
-        # this conditional allows the Job to be initiated by an Employee or
-        # Employer
+        # this conditional allows the Workflow to be initiated by an Employee
+        # or Employer
         employer_task = None
-        if self._is_employer_job:
+        if self._is_employer_workflow:
             employer_task = self._task
         else:
             employer_task = self._reciprocal_task
@@ -210,9 +215,9 @@ class PairedJob(Job):
 
 
     def _update_employer_task(self, updated_task):
-        # this conditional allows the Job to be initiated by an Employee or
-        # Employer
-        if self._is_employer_job:
+        # this conditional allows the Workflow to be initiated by an Employee
+        # or Employer
+        if self._is_employer_workflow:
             self._task = updated_task
             self._task_changed = True
         else:
@@ -221,10 +226,10 @@ class PairedJob(Job):
 
 
     def _get_employee_task(self):
-        # this conditional allows the Job to be initiated by an Employee or
-        # Employer
+        # this conditional allows the Workflow to be initiated by an Employee
+        # or Employer
         employee_task = None
-        if self._is_employer_job:
+        if self._is_employer_workflow:
             employee_task = self._reciprocal_task
         else:
             employee_task = self._task
@@ -232,9 +237,9 @@ class PairedJob(Job):
 
 
     def _update_employee_task(self, updated_task):
-        # this conditional allows the Job to be initiated by an Employee or
-        # Employer
-        if self._is_employer_job:
+        # this conditional allows the Workflow to be initiated by an Employee
+        # or Employer
+        if self._is_employer_workflow:
             self._reciprocal_task = updated_task
             self._reciprocal_task_changed = True
         else:
@@ -246,7 +251,7 @@ class PairedJob(Job):
         """Figure out which reciprocal ServiceWorker should match this Task and
         set the *_reciprocal_worker*."""
         # TODO make this function pull from a dictionary or database
-        if self._is_employer_job:
+        if self._is_employer_workflow:
             self._reciprocal_worker = self._foreman.get_task_rabbit_worker()
         else:
             self._reciprocal_worker = self._foreman.get_asana_worker()
@@ -261,18 +266,18 @@ class PairedJob(Job):
             self._reciprocal_task = self._reciprocal_worker.read_task(
                     reciprocal_id)
         else:
-            # if it doesn't exist and the Job was started by an employer, then
-            # create it.
-            if self._is_employer_job:
+            # if it doesn't exist and the Workflow was started by an employer,
+            # then create it.
+            if self._is_employer_workflow:
                 self._reciprocal_task = self._create_reciprocal_task()
-            # Employee initiated Jobs cannot create reciprocal tasks.
+            # Employee initiated Workflows cannot create reciprocal tasks.
             else:
-                raise JobError()
+                raise WorkflowError()
 
 
     def _create_reciprocal_task(self):
-        """Create a Task to be the recipricol of the Job's *_task*, link the
-        two Tasks, and return the new one."""
+        """Create a Task to be the recipricol of the Workflow's *_task*, link
+        the two Tasks, and return the new one."""
         reciprocal_task = self._reciprocal_worker.create_task(self._task)
         self._task.set_reciprocal_id(reciprocal_task.id())
         self._task = self._worker.update_task(self._task)
@@ -301,34 +306,35 @@ class PairedJob(Job):
         return are_same_states
 
 
-class JobFactory(object):
+class WorkflowFactory(object):
 
-    """Construct a Job with the subclass depending on the subclass of Task."""
+    """Construct a Workflow with the subclass depending on the subclass of
+    Task."""
 
-    # Use the Task Class to map to the correct Job.
-    JOB_TASK_MAPPING = {
-            Task: PairedJob,
-            RegistrationTask: SoloJob,
-            PricedTask: PairedJob
+    # Use the Task Class to map to the correct Workflow.
+    WORKFLOW_TASK_MAPPING = {
+            Task: PairedWorkflow,
+            RegistrationTask: SoloWorkflow,
+            PricedTask: PairedWorkflow
             }
 
 
     @classmethod
-    def instantiate_job_from_employer(
+    def instantiate_from_employer(
             class_,
             employer,
             employer_task,
             foreman):
-        print "jobfactory instantiating..."
+        print "workflow instantiating..."
         task_class = type(employer_task)
-        job_constructor = class_.JOB_TASK_MAPPING.get(task_class)
-        job = job_constructor(employer, employer_task, foreman)
+        workflow_constructor = class_.WORKFLOW_TASK_MAPPING.get(task_class)
+        workflow = workflow_constructor(employer, employer_task, foreman)
 
-        return job
+        return workflow
 
 
-class JobError(Exception):
+class WorkflowError(Exception):
 
 
     def __init__(self):
-        self.reason = "JobError: You're using this Job incorrectly."
+        self.reason = "WorkflowError: You're using this Workflow incorrectly."
