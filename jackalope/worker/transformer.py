@@ -449,6 +449,7 @@ class TaskTransformer(object):
     def _get_field_name_map(self):
         """ Return a dict keyed on Jackalope's field name and valued on the
         service's field name. """
+        print "DB-VENDOR-TODO: Remove last_synched/reciprocal_id in transformer. EVERYWHERE."
         return {
                 FIELD.CATEGORY: FIELD.CATEGORY,
                 FIELD.ID: FIELD.ID,

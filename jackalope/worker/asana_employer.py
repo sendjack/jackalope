@@ -389,6 +389,7 @@ class AsanaTaskTransformer(TaskTransformer):
 
     def _embedded_fields(self):
         """ Return a list of embedded fields as Jackalope field names. """
+        print "DB-VENDOR-TODO: Remove reciprocal_id and last_synched_ts from asana worker."
         return [
                 FIELD.DESCRIPTION,
                 FIELD.PRICE,

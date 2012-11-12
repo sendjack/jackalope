@@ -81,10 +81,10 @@ class Foreman(object):
         employer_tasks = {}
         for employer in self._employers:
             employer_tasks = employer.read_tasks()
-            self.process_employer_tasks(employer, employer_tasks)
+            self._process_employer_tasks(employer, employer_tasks)
 
 
-    def process_employer_tasks(self, employer, tasks):
+    def _process_employer_tasks(self, employer, tasks):
         """Process a dict of `Employer` service `Task` keyed on id."""
         for task in tasks.values():
             if task:
@@ -106,7 +106,7 @@ class Foreman(object):
                     count = count + 1
 
 
-    def process_employee_tasks(self, employee, tasks):
+    def _process_employee_tasks(self, employee, tasks):
         """Process a dict of `Employee` service `Task` keyed on id."""
         raise NotImplementedError()
 

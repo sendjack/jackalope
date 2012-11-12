@@ -445,6 +445,7 @@ class TaskRabbitTaskTransformer(TaskTransformer):
 
     def _embedded_fields(self):
         """ Return a list of embedded fields as Jackalope field names. """
+        print "DB-VENDOR-TODO: Remove last_synched_ts from tr worker."
         return [
                 FIELD.LAST_SYNCHED_TS
                 ]

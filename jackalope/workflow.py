@@ -48,6 +48,23 @@ class Workflow(object):
     def process(self):
         """Evaluate the tasks and then use the Workers to process the Tasks,
         returning a Task if it's been updated or None if it hasn't."""
+        print "WORKFLOW: PROCESS"
+        self._jack_task = self._fetch_jack_task(self._task.id())
+        if self._jack_task is None:
+            self._jack_task = self._task
+            print "DB-TASK-TODO: create - write task to db"
+        self._reconcile_state()
+
+
+    def _fetch_jack_task(self, task_id):
+        """Fetch Jackalope version of Task from the DB and return it."""
+        print "DB-TASK-TODO: read - read task from db"
+        return None
+
+
+    def _reconcile_state(self):
+        """Evaluate the Tasks, update them appropriately, and return a Task if
+        it's been updated or None if it hasn't."""
         raise OverrideRequiredError()
 
 
@@ -56,17 +73,16 @@ class SoloWorkflow(Workflow):
     """Evaluate a Task from an Employer but only handle workflows where there
     is not an additional service or Task."""
 
-    def process(self):
-        """Evaluate the tasks and then use the Workers to process the Tasks,
-        returning a Task if it's been updated or None if it hasn't."""
+    def _reconcile_state(self):
+        """Evaluate the Tasks, update them appropriately, and return a Task if
+        it's been updated or None if it hasn't."""
         # only process SoloWorkflows from Employers.
         if not self._is_employer_workflow:
             raise WorkflowError()
 
-        print "getting here"
-
         # if posted, then complete.
         if self._task.is_posted():
+            print "DB-TASK-TODO: update - update jack task to completed"
             self._task = self._worker.update_task_to_completed(self._task)
             self._worker.add_comment(
                     self._task.id(),
@@ -111,10 +127,9 @@ class PairedWorkflow(Workflow):
         self._set_reciprocal_task()
 
 
-    def process(self):
-        """Evaluate the tasks and then use the Workers to process the Tasks,
-        returning a Task if it's been updated or None if it hasn't."""
-        print "PROCESS THE WORKFLOW"
+    def _reconcile_state(self):
+        """Evaluate the Tasks, update them appropriately, and return a Task if
+        it's been updated or None if it hasn't."""
         # check to see if Status is in sync and act.
         # both states are the same. do nothing.
         if self._are_same_states(
@@ -127,6 +142,7 @@ class PairedWorkflow(Workflow):
                 self._get_employer_task().is_posted()
                 ):
             print "assigned update"
+            print "DB-TASK-TODO: update - update jack task to assigned"
             updated_task = self._get_employer().update_task_to_assigned(
                     self._get_employer_task())
             self._update_employer_task(updated_task)
@@ -137,12 +153,14 @@ class PairedWorkflow(Workflow):
                 self._get_employer_task().is_posted()
                 ):
             print "completed update"
+            print "DB-TASK-TODO: update - update jack task to completed"
             updated_task = self._get_employer().update_task_to_completed(
                     self._get_employer_task())
             self._update_employer_task(updated_task)
         # employer task is approved. update employee task.
         elif self._get_employer_task().is_approved():
             print "approved update"
+            print "DB-TASK-TODO: update - update jack task to approced"
             updated_task = self._get_employee().update_task_to_approved(
                     self._get_employee_task())
             self._update_employee_task(updated_task)
@@ -161,6 +179,8 @@ class PairedWorkflow(Workflow):
                 self._task.is_approved()):
             comments = self._worker.read_comments(self._task.id())
             self._task.set_comments(comments)
+            print "DB-VENDOR-TODO: get_last_synched_ts()"
+            print "DB-VENDOR-TODO: self._task for is and service"
             new_comments = self._task.get_new_comments_list()
             if new_comments:
                 self._task_changed = True
@@ -172,9 +192,15 @@ class PairedWorkflow(Workflow):
         # if either task has changed make sure synch ts is updated and pushed.
         updated_task = None
         if self._task_changed:
+            print "DB-VENDOR-TODO: update_vendor_last_synched_ts()"
+            print "DB-VENDOR-TODO: vendor_task_pk = task id + service"
+            print "DB-VENDOR-TODO: Remove following line."
             self._task.push_current_to_last_synched()
             updated_task = self._worker.update_task(self._task)
         if self._reciprocal_task_changed:
+            print "DB-VENDOR-TODO: update_vendor_last_synched_ts()"
+            print "DB-VENDOR-TODO: vendor_task_pk = reciprocal id + service"
+            print "DB-VENDOR-TODO: Remove following line."
             self._reciprocal_task.push_current_to_last_synched()
             # TODO: uncomment this line when TaskRabbitWorker.update_task works
             #self._reciprocal_worker.update_task(self._reciprocal_task)
@@ -260,6 +286,10 @@ class PairedWorkflow(Workflow):
     def _set_reciprocal_task(self):
         """Set the *_reciprocal_task* and create it first if it doesn't
         exist."""
+        print "DB-VENDOR-TODO: get_reciprocal_pk(task id + name)"
+        print "DB-VENDOR-TODO: if this fails, then create_vendor_task()"
+        print "DB-VENDOR-TODO: task id, worker name, last ts=now, reciprocal=0"
+        print "DB-VENDOR-TODO: Remove line below."
         reciprocal_id = self._task.reciprocal_id()
         # if it exists, just store it.
         if reciprocal_id:
@@ -279,6 +309,11 @@ class PairedWorkflow(Workflow):
         """Create a Task to be the recipricol of the Workflow's *_task*, link
         the two Tasks, and return the new one."""
         reciprocal_task = self._reciprocal_worker.create_task(self._task)
+        print "DB-VENDOR-TODO: create_vendor_task("
+        print "vendor is reciprocal, reciprocal is task, last_ts is None"
+        print "DB-VENDOR-TODO: update_reciprocal_id("
+        print "vendor is task, and we're adding the reciprocal id"
+        print "DB-VENDOR-TODO: remove following line"
         self._task.set_reciprocal_id(reciprocal_task.id())
         self._task = self._worker.update_task(self._task)
         #self._worker.add_comment(
@@ -325,7 +360,7 @@ class WorkflowFactory(object):
             employer,
             employer_task,
             foreman):
-        print "workflow instantiating..."
+        print "WORKFLOW: INSTANTIATE"
         task_class = type(employer_task)
         workflow_constructor = class_.WORKFLOW_TASK_MAPPING.get(task_class)
         workflow = workflow_constructor(employer, employer_task, foreman)

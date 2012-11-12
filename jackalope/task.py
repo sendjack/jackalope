@@ -16,6 +16,32 @@
 from time import time
 
 from util.decorators import constant
+from util.base_type import to_integer
+
+
+class _Field(object):
+
+    @constant
+    def STATUS(self):
+        return "status"
+
+    @constant
+    def DESCRIPTION(self):
+        return "description"
+
+    @constant
+    def EMAIL(self):
+        return "email"
+
+    @constant
+    def PRICE(self):
+        return "price"
+
+    @constant
+    def LOCATION(self):
+        return "location"
+
+FIELD = _Field()
 
 
 class _Status(object):
@@ -56,41 +82,45 @@ class Task(object):
 
     Attributes
     ----------
-    _current_synched_ts : `int`
-        The timestamp of the current synch that is being processed.
-    _worker : `ServiceWorker`
     _category : `str`
     _id : `int`
-    _status : `str`
     _name : `str`
-    _comments : {id, `Comment`}, optional
+
+    _current_synched_ts : `int`
+        The timestamp of the current synch that is being processed.
     _last_synched_ts : `int`, optional
         The timestamp of the last time a synch occurred with the service.
     _reciprocal_id : `int`, optional
-        The Tasks's complementary Task's id.
-    _description : `str`, optional
-    _email : `str`, optional
-    _price : `int`, optional
-    _location : `int`, optional
-        An id (currently using TaskRabbit's) that represents the city.
+
+    _properties : `dict`
+    _comments : {id, `Comment`}, optional
+    _updated : `bool`
+        True if the Task has an updated property.
 
     """
 
 
     def __init__(self, category, id, name):
-        self._current_synched_ts = int(time())
         self._category = category
         self._id = id
-        self._status = None  # doesn't get created until it's in the DB
         self._name = name
 
-        self._comments = {}
+        self._current_synched_ts = int(time())
         self._last_synched_ts = None
+        print "DB-VENDOR-TODO: Remove line 111 in task.py and reciprocal_id"
         self._reciprocal_id = None
-        self._description = None
-        self._email = None
-        self._price = None
-        self._location = None
+
+        # doesn't get created until it's in the DB
+        self._properties = {}
+        self._set_status(None)
+        self.set_description(None)
+        self.set_email(None)
+        self.set_price(None)
+        self.set_location(None)
+
+        self._comments = {}
+
+        self._updated = False
 
 
     def category(self):
@@ -101,53 +131,109 @@ class Task(object):
         return self._id
 
 
+    def name(self):
+        return self._name
+
+
+    def last_synched_ts(self):
+        return self._last_synched_ts
+
+
+    def set_last_synched_ts(self, last_synched_ts):
+        if last_synched_ts:
+            self._last_synched_ts = int(last_synched_ts)
+
+
+    def push_current_to_last_synched(self):
+        """Update the last synched ts to the current synch."""
+        print "DB-VENDOR-TODO: Delete this method and last_synced_ts"
+        self.set_last_synched_ts(self._current_synched_ts)
+
+
+    def reciprocal_id(self):
+        return self._reciprocal_id
+
+
+    def set_reciprocal_id(self, id):
+        self._reciprocal_id = id
+
+
     def has_status(self):
         """If the Task has any status then return True."""
-        return self._status is not None
+        return self._get_status() is not None
 
 
     def is_created(self):
-        return self._status == STATUS.CREATED
+        return self._get_status() == STATUS.CREATED
 
 
     def set_status_to_created(self):
-        self._status = STATUS.CREATED
+        self._set_status(STATUS.CREATED)
 
 
     def is_posted(self):
-        return self._status == STATUS.POSTED
+        return self._get_status() == STATUS.POSTED
 
 
     def set_status_to_posted(self):
-        self._status = STATUS.POSTED
+        self._set_status(STATUS.POSTED)
 
 
     def is_assigned(self):
-        return self._status == STATUS.ASSIGNED
+        return self._get_status() == STATUS.ASSIGNED
 
 
     def set_status_to_assigned(self):
-        self._status = STATUS.ASSIGNED
+        self._set_status(STATUS.ASSIGNED)
 
 
     def is_completed(self):
-        return self._status == STATUS.COMPLETED
+        return self._get_status() == STATUS.COMPLETED
 
 
     def set_status_to_completed(self):
-        self._status = STATUS.COMPLETED
+        self._set_status(STATUS.COMPLETED)
 
 
     def is_approved(self):
-        return self._status == STATUS.APPROVED
+        return self._get_status() == STATUS.APPROVED
 
 
     def set_status_to_approved(self):
-        self._status = STATUS.APPROVED
+        self._set_status(STATUS.APPROVED)
 
 
-    def name(self):
-        return self._name
+    def description(self):
+        return self._get_property(FIELD.DESCRIPTION)
+
+
+    def set_description(self, description):
+        self._set_property(FIELD.DESCRIPTION, description)
+
+
+    def price(self):
+        return self._get_property(FIELD.PRICE)
+
+
+    def set_price(self, price):
+        int_price = to_integer(price)
+        self._set_property(FIELD.PRICE, int_price)
+
+    def email(self):
+        return self._get_property(FIELD.EMAIL)
+
+
+    def set_email(self, email):
+        self._set_property(FIELD.EMAIL, email)
+
+
+    def location(self):
+        return self._get_property(FIELD.LOCATION)
+
+
+    def set_location(self, location_id):
+        int_location = to_integer(location_id)
+        self._set_property(FIELD.LOCATION, int_location)
 
 
     def get_comments(self):
@@ -163,6 +249,8 @@ class Task(object):
     def get_new_comments_list(self):
         """Return a list of Comments that have been created since the last
         synch time."""
+        print "DB-VENDOR-TODO: add last_synched_ts as a parameter"
+        print "in get_new_comments_list, and remove it from task"
         new_comments = [
                 comment
                 for comment in self.get_comments().values()
@@ -172,60 +260,14 @@ class Task(object):
         return sorted(new_comments, key=lambda c: c.created_ts())
 
 
-    def price(self):
-        return self._price
+    def is_updated(self):
+        """Return True if the Task has been updated since creation."""
+        return self._updated
 
 
-    def set_price(self, price):
-        if price:
-            self._price = int(price)
-
-
-    def email(self):
-        return self._email
-
-
-    def set_email(self, email):
-        self._email = email
-
-
-    def last_synched_ts(self):
-        return self._last_synched_ts
-
-
-    def set_last_synched_ts(self, last_synched_ts):
-        if last_synched_ts:
-            self._last_synched_ts = int(last_synched_ts)
-
-
-    def push_current_to_last_synched(self):
-        """Update the last synched ts to the current synch."""
-        self.set_last_synched_ts(self._current_synched_ts)
-
-
-    def reciprocal_id(self):
-        return self._reciprocal_id
-
-
-    def set_reciprocal_id(self, id):
-        self._reciprocal_id = id
-
-
-    def description(self):
-        return self._description
-
-
-    def set_description(self, description):
-        self._description = description
-
-
-    def location(self):
-        return self._location
-
-
-    def set_location(self, location_id):
-        if location_id:
-            self._location = int(location_id)
+    def reset_updated(self):
+        """Reset's the Task's updated state to False."""
+        self._updated = False
 
 
     def is_spec_ready(self):
@@ -243,18 +285,37 @@ class Task(object):
 
 
     def _print_task(self):
-        print "\nTASK\n--------"
-        print "id:", self._id
-        print "name:", self._name
-        print "price:", self._price
-        print "email:", self._email
-        print "category:", self._category
-        print "reciprocal_id", self._reciprocal_id
-        print "status:", self._status
-        print "location:", self._location
+        print "\ntask\n--------"
+        print "id:", self.id()
+        print "name:", self.name()
+        print "category:", self.category()
+        print "price:", self.price()
+        print "email:", self.email()
+        print "reciprocal_id", self.reciprocal_id()
+        print "status:", self._get_status()
+        print "location:", self.location()
         print "description:", self.description()
         print "spec ready?:", self.is_spec_ready()
+        print "updated?:", self.is_updated()
         print ""
+
+
+    def _get_property(self, key):
+        return self._properties.get(key)
+
+
+    def _set_property(self, key, value):
+        self._properties[key] = value
+        self._updated = True
+        return self._properties.get(key)
+
+
+    def _get_status(self):
+        return self._get_property(FIELD.STATUS)
+
+
+    def _set_status(self, status):
+        self._set_property(FIELD.STATUS, status)
 
 
 class RegistrationTask(Task):
@@ -307,6 +368,6 @@ class TaskFactory(object):
     def instantiate_task(class_, category, task_id, name):
         task_constructor = class_.TASK_CATEGORY_MAPPING.get(category, Task)
         if type(task_constructor) == Task:
-            print "oh yeah, we got one of them tasks"
+            print "Task, Abstract Superclass instantiated."
 
         return task_constructor(category, task_id, name)
