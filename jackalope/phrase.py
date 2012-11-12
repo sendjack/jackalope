@@ -30,31 +30,34 @@ class _Phrase(object):
 
     @property
     def new_comment_subject(self):
-        return "A New Comment"
+        return unicode("A New Comment")
 
     @property
     def registration_confirmation(self):
-        return "You're registered!"
+        return unicode("You're registered!")
 
     @property
     def task_posted_note(self):
-        return "We posted the task to TaskRabbit."
+        return unicode("We posted the task to TaskRabbit.")
 
     @property
     def task_assigned_note(self):
-        return "Your task is being worked on by a real live Jackalope."
+        return unicode(
+                "Your task is being worked on by a real live Jackalope.")
 
     @property
     def task_completed_note(self):
-        return "Your task has been completed. Way to get it done."
+        return unicode("Your task has been completed. Way to get it done.")
 
     @property
     def task_approved_note(self):
-        return "You approved your task. Hope you enjoyed using Jackalope."
+        return unicode(
+                "You approved your task. Hope you enjoyed using Jackalope.")
 
     @property
     def jackalope_intro(self):
-        return ("This task has been sent to you by a service called "
+        return unicode(
+                "This task has been sent to you by a service called "
                 "Jackalope. Jackalope pulls tasks from a number of sources. "
                 "Please check us out at http://sendjack.com. \n\nMost "
                 "importantly, we'd like to be able to communicate with the "

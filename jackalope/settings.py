@@ -12,12 +12,14 @@ import tornado
 #import tornado.template
 from tornado.options import define, options
 
+from util import environment
+
 # Make filepaths relative to settings.
 path = lambda root, *a: os.path.join(root, *a)
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 # Tornado
-PORT = os.environ.get("PORT", 5000)
+PORT = environment.get_integer(unicode("PORT"))
 define("port", default=PORT, help="run on the given port", type=int)
 
 define("config", default=None, help="tornado config file")

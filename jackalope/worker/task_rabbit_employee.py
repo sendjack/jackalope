@@ -4,13 +4,13 @@ TaskRabbitEmployee subclasses Employee and handles all interaction between
 Jackalope and TaskRabbit.
 
 """
-import os
 import copy
 import re
 import json
 import requests
 
 from jackalope.util.decorators import constant
+from jackalope.util import environment
 from jackalope.phrase import Phrase
 from jackalope import mailer
 from jackalope.worker.client import REQUEST
@@ -101,7 +101,7 @@ class _TaskRabbit(object):
 
     @constant
     def DOMAIN(self):
-        return os.environ.get("TASK_RABBIT_DOMAIN")
+        return environment.get_unicode(unicode("TASK_RABBIT_DOMAIN"))
 
     @constant
     def AUTHORIZE_URL(self):
@@ -121,19 +121,19 @@ class _TaskRabbit(object):
 
     @constant
     def KEY(self):
-        return os.environ.get("TASK_RABBIT_KEY")
+        return environment.get_unicode(unicode("TASK_RABBIT_KEY"))
 
     @constant
     def SECRET(self):
-        return os.environ.get("TASK_RABBIT_SECRET")
+        return environment.get_unicode(unicode("TASK_RABBIT_SECRET"))
 
     @constant
     def ACCESS_TOKEN(self):
-        return os.environ.get("TASK_RABBIT_ACCESS_TOKEN")
+        return environment.get_unicode(unicode("TASK_RABBIT_ACCESS_TOKEN"))
 
     @constant
     def REDIRECT_URI(self):
-        return os.environ.get("TASK_RABBIT_REDIRECT_URI")
+        return environment.get_unicode(unicode("TASK_RABBIT_REDIRECT_URI"))
 
 TASK_RABBIT = _TaskRabbit()
 
@@ -157,7 +157,7 @@ class TaskRabbitEmployee(Employee):
 
     def read_task(self, task_id):
         """Connect to the ServiceWorker's service and return a Task."""
-        path = "{}/{}".format(TASK_RABBIT.TASKS_PATH, str(task_id))
+        path = unicode("{}/{}").format(TASK_RABBIT.TASKS_PATH, str(task_id))
         raw_task = self._get(path)
 
         transformer = TaskRabbitTaskTransformer()
@@ -224,7 +224,7 @@ class TaskRabbitEmployee(Employee):
 
         """
         id = task.id()
-        close_path = "{}/{}{}".format(
+        close_path = unicode("{}/{}{}").format(
                 TASK_RABBIT.TASKS_PATH,
                 str(id),
                 TASK_RABBIT.CLOSE_TASK_ACTION)
@@ -238,9 +238,10 @@ class TaskRabbitEmployee(Employee):
 
     def add_comment(self, task_id, message):
         """Create a comment in the service on a task."""
-        raw_task = self._get("{}/{}".format(
-            TASK_RABBIT.TASKS_PATH,
-            str(task_id)))
+        task_path = unicode("{}/{}").format(
+                TASK_RABBIT.TASKS_PATH,
+                str(task_id))
+        raw_task = self._get(task_path)
         runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
                 TASK_RABBIT_FIELD.EMAIL)
 
@@ -248,7 +249,8 @@ class TaskRabbitEmployee(Employee):
         # TODO: pull this from the DB, or make this an optional parameter
         # or pull it from the Task.
         description = raw_task.get(TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION, "")
-        from_email = re.search(r"[\w.-]+@[\w.-]+[\w]", description).group()
+        match = re.search(unicode(r"[\w.-]+@[\w.-]+[\w]"), description)
+        from_email = match.group()
 
         if runner_email:
             mailer.send_message_as_jack(
@@ -282,7 +284,7 @@ class TaskRabbitEmployee(Employee):
         #            )
         #    comments[comment.id()] = comment
         print "fake comment coming from task rabbit"
-        comment = Comment(-1, -1, "partnership is key.")
+        comment = Comment(-1, -1, unicode("partnership is key."))
         comments = {comment.id(): comment}
         return comments
 

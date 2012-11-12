@@ -292,8 +292,8 @@ class TaskFactory(object):
 
     """Construct a Task with the subclass dependent on category."""
 
-    REGISTRATION = "registration"  # RegistrationTask
-    PRICED = "priced"  # PricedTask
+    REGISTRATION = unicode("registration")  # RegistrationTask
+    PRICED = unicode("priced")  # PricedTask
 
 
     # Used to map string task categories with Task constructor functions.

@@ -209,7 +209,7 @@ class ServiceWorker(object):
     def _retrieve_id(self, raw_task):
         """ Get the 'id' from the raw_task. """
         # FIXME: This needs to got through the field map
-        return raw_task["id"]
+        return raw_task[unicode("id")]
 
 
 class Employer(ServiceWorker):

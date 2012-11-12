@@ -7,29 +7,29 @@
 
 """
 
-import os
 import requests
 
 from jackalope.util.decorators import constant
+from jackalope.util import environment
 from jackalope.phrase import NAME
 
-MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
-MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN")
-MAILGUN_API_URL = "https://api.mailgun.net/v2"
-MAILGUN_MESSAGES_SUFFIX = "messages"
+MAILGUN_API_KEY = environment.get_unicode(unicode("MAILGUN_API_KEY"))
+MAILGUN_DOMAIN = environment.get_unicode(unicode("MAILGUN_DOMAIN"))
+MAILGUN_API_URL = unicode("https://api.mailgun.net/v2")
+MAILGUN_MESSAGES_SUFFIX = unicode("messages")
 
-ENVIRONMENT = os.environ.get("ENVIRONMENT")
-DEFAULT_NAME = ""
-if ENVIRONMENT == "PRODUCTION":
+ENVIRONMENT = environment.get_unicode(unicode("ENVIRONMENT"))
+DEFAULT_NAME = unicode("")
+if ENVIRONMENT == unicode("PRODUCTION"):
     DEFAULT_NAME = NAME.PRODUCTION
-elif ENVIRONMENT == "STAGING":
+elif ENVIRONMENT == unicode("STAGING"):
     DEFAULT_NAME = NAME.STAGING
-elif ENVIRONMENT == "DEV":
+elif ENVIRONMENT == unicode("DEV"):
     DEFAULT_NAME = NAME.DEV
 
-DEFAULT_SENDER = "{} <{}>".format(
+DEFAULT_SENDER = unicode("{} <{}>").format(
         DEFAULT_NAME,
-        os.environ.get("JACKS_EMAIL"))
+        environment.get_unicode(unicode("JACKS_EMAIL")))
 
 
 class _Mail(object):
@@ -147,7 +147,7 @@ def send_message_as_jack(sender_email, recipient, subject, body):
     body : `str`
 
     """
-    sender = "{} <{}>".format(DEFAULT_NAME, sender_email)
+    sender = unicode("{} <{}>").format(DEFAULT_NAME, sender_email)
     return send_message(sender, recipient, subject, body)
 
 
@@ -170,7 +170,7 @@ def send_message(sender, recipient, subject, body):
             MAIL.SUBJECT: subject,
             MAIL.TEXT: body
             }
-    url = "{}/{}/{}".format(
+    url = unicode("{}/{}/{}").format(
             MAILGUN_API_URL,
             MAILGUN_DOMAIN,
             MAILGUN_MESSAGES_SUFFIX)

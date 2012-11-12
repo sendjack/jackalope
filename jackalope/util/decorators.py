@@ -6,8 +6,11 @@
 
 """
 
+from base_type import ByteError
+
 
 def constant(f):
+
     """Convert function to a constant variable."""
 
 
@@ -18,6 +21,15 @@ def constant(f):
 
     def fget(self):
         """Overload constant function's get."""
-        return f(self)
+        value = f(self)
+
+        if type(value) is int or type(value) is unicode:
+            pass
+        elif type(value) is str:
+            value = unicode(value)
+        else:
+            raise ByteError()
+
+        return value
 
     return property(fget, fset)

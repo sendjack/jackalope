@@ -12,7 +12,7 @@ import re
 import tornado.web
 
 from jackalope.errors import OverrideRequiredError, OverrideNotAllowedError
-from jackalope.util import string, integer
+from jackalope.util.base_type import to_integer
 from jackalope.mailer import MAIL
 from jackalope.mailer import MAILGUN_API_KEY as API_KEY
 from jackalope.foreman import Foreman
@@ -44,10 +44,11 @@ class MailHandler(tornado.web.RequestHandler):
 
 
     def verify(self, api_key, token, timestamp, signature):
-            return signature == hmac.new(
-                    key=api_key,
-                    msg='{}{}'.format(timestamp, token),
-                    digestmod=hashlib.sha256).hexdigest()
+        # hmac requires byte strings
+        return signature == hmac.new(
+                key=str(api_key),
+                msg='{}{}'.format(timestamp, token),
+                digestmod=hashlib.sha256).hexdigest()
 
 
     def _process_request(self):
@@ -56,19 +57,22 @@ class MailHandler(tornado.web.RequestHandler):
 
 class MailToHandler(MailHandler):
 
-    email_regex = r"(.+)\-(\d+)@"
+    email_regex = unicode(r"(.+)\-(\d+)@")
     email_pattern = re.compile(email_regex)
 
 
     def _process_request(self):
+        # Tornado's get_argument returns unicode
         # http://docs.python.org/2/library/httplib.html
         sender = self.get_argument(MAIL.SENDER)
         recipient = self.get_argument(MAIL.RECIPIENT)
-        subject = self.get_argument(MAIL.SUBJECT, "")
+        subject = self.get_argument(MAIL.SUBJECT, unicode(""))
         # body = self.get_argument(MAIL.BODY_TEXT)
         # recent body text; not html; no quoted next; no signature
         most_recent_body = self.get_argument(MAIL.BODY_TEXT_STRIPPED)
-        stripped_signature = self.get_argument(MAIL.STRIPPED_SIGNATURE, "")
+        stripped_signature = self.get_argument(
+                MAIL.STRIPPED_SIGNATURE,
+                unicode(""))
 
         print "\nMAIL\n--------"
         print "sender:", sender
@@ -76,12 +80,12 @@ class MailToHandler(MailHandler):
         print "subject:", subject
 
         match = self.email_pattern.match(recipient)
-        service = string.to_string(match.group(1))
-        task_id = integer.to_integer(match.group(2))
+        service = match.group(1)
+        task_id = to_integer(match.group(2))
 
         if service and task_id:
             foreman = Foreman()
-            message = "{}:\n{}\n{}".format(
+            message = unicode("{}:\n{}\n{}").format(
                     subject,
                     most_recent_body,
                     stripped_signature)

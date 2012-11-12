@@ -1,3 +1,4 @@
 #!/bin/bash
-python jackalope/mail_receiver.py &
-python jackalope/poller.py 
+#python jackalope/mail_receiver.py &
+#python jackalope/poller.py
+python jackalope/foreman.py

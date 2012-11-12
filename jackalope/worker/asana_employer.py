@@ -4,14 +4,14 @@ AsanaEmployer subclasses Employer and handles all interaction between Jackalope
 and Asana.
 
 """
-import os
+
 import time
-from util import integer
 import dateutil.parser
 import dateutil.tz
 from asana import asana
 
 from jackalope.util.decorators import constant
+from jackalope.util import environment
 from jackalope.errors import OverrideNotAllowedError
 from jackalope.phrase import Phrase
 
@@ -75,15 +75,15 @@ class _Asana(object):
 
     @constant
     def API_KEY(self):
-        return os.environ.get("ASANA_API_KEY")
+        return environment.get_unicode(unicode("ASANA_API_KEY"))
 
     @constant
     def JACK_USER_ID(self):
-        return integer.to_integer(os.environ.get("ASANA_USER_ID"))
+        return environment.get_integer(unicode("ASANA_USER_ID"))
 
     @constant
     def WORKSPACE_ID(self):
-        return integer.to_integer(os.environ.get("ASANA_WORKSPACE_ID"))
+        return environment.get_integer(unicode("ASANA_WORKSPACE_ID"))
 
 ASANA = _Asana()
 
@@ -111,6 +111,8 @@ class AsanaEmployer(Employer):
         """Connect to the ServiceWorker's service and return a Task."""
         raw_task = self._asana_api.get_task(task_id)
 
+        print "EVAN"
+        print raw_task
         transformer = AsanaTaskTransformer()
         transformer.set_raw_task(raw_task)
         return self._ready_spec(transformer.get_task())
@@ -183,8 +185,8 @@ class AsanaEmployer(Employer):
         # FIXME update all the fields instead of just status
         # task.set_email("")
 
-        preface = "Please include the following fields in the Notes: "
-        comment = "{}{}".format(preface, "; ".join(fields_to_request))
+        preface = unicode("Please include the following fields in the Notes: ")
+        comment = unicode("{}{}").format(preface, "; ".join(fields_to_request))
 
         return all([
                 self.update_task(task),

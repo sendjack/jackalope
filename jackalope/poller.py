@@ -8,18 +8,17 @@
 
 """
 
-import os
 from apscheduler.scheduler import Scheduler
 
+from util import environment
 from foreman import Foreman
-from util import integer
 
-
+INTERVAL_SECONDS = unicode("INTERVAL_SECONDS")
 sched = Scheduler()
-interval = integer.to_integer(os.environ.get("INTERVAL_SECONDS", 10000))
+interval = environment.get_integer(INTERVAL_SECONDS)
 # actually_running: fulfills ApScheduler True requirement and doesn't loop
 # indefintiely while Sphinx generates documentation.
-actually_running = os.environ.get("INTERVAL_SECONDS")
+actually_running = environment.get_integer(INTERVAL_SECONDS)
 
 
 @sched.interval_schedule(seconds=interval)

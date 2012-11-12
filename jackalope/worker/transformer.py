@@ -9,7 +9,7 @@
 import re
 from copy import deepcopy
 
-from jackalope.util import string
+from jackalope.util.base_type import to_unicode
 from jackalope.util.decorators import constant
 from jackalope.errors import OverrideRequiredError
 from jackalope.phrase import Phrase
@@ -191,8 +191,11 @@ class TaskTransformer(object):
         task_id : `int`
 
         """
-        email = "{}-{}@{}".format(service_name, task_id, mailer.MAILGUN_DOMAIN)
-        jackalope_blurb = "\n--\n{}\n{}".format(
+        email = unicode("{}-{}@{}").format(
+                service_name,
+                task_id,
+                mailer.MAILGUN_DOMAIN)
+        jackalope_blurb = unicode("\n--\n{}\n{}").format(
                 Phrase.jackalope_intro,
                 email)
 
@@ -512,9 +515,11 @@ class Tokenizer(object):
     """ Tokenize a text blob into key value pairs and reconstruct that blob.
     """
 
-    delimiter = ":"
-    regex = r"^(\w+?){}\s?(.*?)(?=^\w+?{}|\Z)".format(delimiter, delimiter)
-    key_pattern = re.compile(regex, re.DOTALL + re.MULTILINE)
+    delimiter = unicode(":")
+    regex = unicode(r"^(\w+?){}\s?(.*?)(?=^\w+?{}|\Z)").format(
+            delimiter,
+            delimiter)
+    key_pattern = re.compile(regex, re.DOTALL + re.MULTILINE + re.UNICODE)
 
 
     @classmethod
@@ -530,22 +535,22 @@ class Tokenizer(object):
     def convert_dict_to_blob(class_, field_dict):
         """ Convert a field dict to a text blob. """
         # convert field dict into a list of entries for sorting
+        # to_unicode(v) makes sure NoneType is not printed "None"
         new_entries = [
-                "{}{} {}".format(
-                        string.to_string(k),
+                unicode("{}{} {}").format(
+                        k,
                         class_.delimiter,
-                        string.to_string(v))
+                        to_unicode(v))
                 for k, v in field_dict.items()
                 ]
         new_entries.sort()
 
-        return "\n".join(new_entries)
+        return unicode("\n").join(new_entries)
 
 
 class BadTransformationError(Exception):
 
-    """ Raise this Exception when Transformer is not being used correctly. """
+    REASON = unicode("Misused the Transformer.")
 
     def __init__(self):
-        """ Construct a BadTransformationError. """
-        self.reason = "Don't use Transformer like that."
+        super(BadTransformationError, self).__init__(self.REASON)
