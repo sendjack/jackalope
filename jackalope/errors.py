@@ -9,7 +9,8 @@
 
 class OverrideRequiredError(NotImplementedError):
 
-    REASON = unicode("Subclass and override.")
+    REASON = unicode(
+            "This member must be overridden (usually with a subclass).")
 
     def __init__(self):
         super(OverrideRequiredError, self).__init__(self.REASON)
@@ -17,7 +18,7 @@ class OverrideRequiredError(NotImplementedError):
 
 class OverrideNotAllowedError(NotImplementedError):
 
-    REASON = unicode("This method cannot be overridden by a subclass.")
+    REASON = unicode("This member cannot be overridden.")
 
     def __init__(self, context=""):
         super(OverrideNotAllowedError, self).__init__(
@@ -30,3 +31,11 @@ class InterfaceNotInstantiableError(OverrideNotAllowedError):
 
     def __init__(self):
         super(InterfaceNotInstantiableError, self).__init__(self.REASON)
+
+
+class AlreadySetError(OverrideNotAllowedError):
+
+    REASON = "Once set, it is considered final and uneditable."
+
+    def __init__(self):
+        super(AlreadySetError, self).__init__(self.REASON)
