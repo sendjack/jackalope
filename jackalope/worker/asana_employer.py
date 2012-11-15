@@ -111,8 +111,6 @@ class AsanaEmployer(Employer):
         """Connect to the ServiceWorker's service and return a Task."""
         raw_task = self._asana_api.get_task(task_id)
 
-        print "EVAN"
-        print raw_task
         transformer = AsanaTaskTransformer()
         transformer.set_raw_task(raw_task)
         return self._ready_spec(transformer.get_task())

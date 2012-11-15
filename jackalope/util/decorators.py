@@ -6,8 +6,6 @@
 
 """
 
-from base_type import ByteError
-
 
 def constant(f):
 
@@ -27,8 +25,6 @@ def constant(f):
             pass
         elif type(value) is str:
             value = unicode(value)
-        else:
-            raise ByteError()
 
         return value
 

@@ -21,6 +21,10 @@ General
 - `Requests <http://docs.python-requests.org>`_: HTTP for Humans
 - `Labix dateutil <http://labix.org/python-dateutil>`_: datetime Wrapper
 
+Database
+++++++++
+- `Psycopg <http://www.initd.org/psycopg>`_: Python PostgreSQL Adapter
+
 Partners
 ++++++++
 - `Python Asana API <https://github.com/pandemicsyn/asana>`_: Asana API Wrapper

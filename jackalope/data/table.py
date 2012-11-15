@@ -43,6 +43,7 @@ class Table(object):
     def __init__(self, name, columns, primary_key, cursor=None):
         self._name = name
         self._columns = columns
+        self._primary_key = None
         self._set_primary_key(primary_key)
 
         # TODO: find the right place to disallow access to the cursor until we
@@ -229,9 +230,15 @@ class Table(object):
 
 
     def _query_one(self, sql, parameters):
+        parameters = tuple(parameters)
+        print sql
+        print parameters
         self._cursor.execute(sql, parameters)
+        print self._cursor.query
+        print self._cursor.statusmessage
         # TODO FIXME XXX: work on this! why the zero-indexing?
-        return self._cursor.fetchone()[0]
+        result = self._cursor.fetchone()
+        return result
 
 
     def _query_many(self, sql, parameters):

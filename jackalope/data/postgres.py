@@ -20,6 +20,7 @@
 """
 
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
 from util.decorators import constant
 from util import environment
@@ -33,27 +34,27 @@ class _Postgres(object):
 
     @constant
     def URL(self):
-        return environment.get_unicode("DATABASE_URL")
+        return environment.get_unicode(unicode("DATABASE_URL"))
 
     @constant
     def HOST(self):
-        return environment.get_unicode("PGHOST")
+        return environment.get_unicode(unicode("PGHOST"))
 
     @constant
     def PORT(self):
-        return environment.get_integer("PGPORT")
+        return environment.get_integer(unicode("PGPORT"))
 
     @constant
     def DATABASE(self):
-        return environment.get_unicode("PGDATABASE")
+        return environment.get_unicode(unicode("PGDATABASE"))
 
     @constant
     def USER(self):
-        return environment.get_unicode("PGUSER")
+        return environment.get_unicode(unicode("PGUSER"))
 
     @constant
     def PASSWORD(self):
-        return environment.get_unicode("PGPASSWORD")
+        return environment.get_unicode(unicode("PGPASSWORD"))
 
 POSTGRES = _Postgres()
 
@@ -75,7 +76,7 @@ class Postgres(Database):
 
     def _create_cursor(self):
         self._cursor = self._connection.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor)
+                cursor_factory=RealDictCursor)
 
 
     def _load_tables(self):

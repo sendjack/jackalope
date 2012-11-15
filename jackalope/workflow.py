@@ -13,6 +13,7 @@
 
 from jackalope.errors import OverrideRequiredError
 from jackalope.phrase import Phrase
+from jackalope.data.db_worker import DbWorker
 from jackalope.task import Task, PricedTask, RegistrationTask
 
 
@@ -34,6 +35,7 @@ class Workflow(object):
 
 
     def __init__(self, worker, task, foreman, is_employer_workflow=True):
+        self._db_worker = DbWorker()
         self._worker = worker
         self._task = task
         self._foreman = foreman
@@ -49,7 +51,7 @@ class Workflow(object):
         """Evaluate the tasks and then use the Workers to process the Tasks,
         returning a Task if it's been updated or None if it hasn't."""
         print "WORKFLOW: PROCESS"
-        self._jack_task = self._fetch_jack_task(self._task.id())
+        self._jack_task = self._fetch_jack_task(self._task.id(), )
         if self._jack_task is None:
             self._jack_task = self._task
             print "DB-TASK-TODO: create - write task to db"
@@ -60,7 +62,6 @@ class Workflow(object):
         """Fetch Jackalope version of Task from the DB and return it."""
         print "DB-TASK-TODO: read - read task from db"
         return None
-
 
     def _reconcile_state(self):
         """Evaluate the Tasks, update them appropriately, and return a Task if
@@ -287,10 +288,10 @@ class PairedWorkflow(Workflow):
         """Set the *_reciprocal_task* and create it first if it doesn't
         exist."""
         print "DB-VENDOR-TODO: get_reciprocal_pk(task id + name)"
-        print "DB-VENDOR-TODO: if this fails, then create_vendor_task()"
-        print "DB-VENDOR-TODO: task id, worker name, last ts=now, reciprocal=0"
-        print "DB-VENDOR-TODO: Remove line below."
-        reciprocal_id = self._task.reciprocal_id()
+        (reciprocal_id, reciprocal_service_name) = (
+                self._db_worker.get_reciprocal_task_info(
+                        self._task.id(),
+                        "asana"))
         # if it exists, just store it.
         if reciprocal_id:
             self._reciprocal_task = self._reciprocal_worker.read_task(
@@ -309,12 +310,20 @@ class PairedWorkflow(Workflow):
         """Create a Task to be the recipricol of the Workflow's *_task*, link
         the two Tasks, and return the new one."""
         reciprocal_task = self._reciprocal_worker.create_task(self._task)
-        print "DB-VENDOR-TODO: create_vendor_task("
-        print "vendor is reciprocal, reciprocal is task, last_ts is None"
-        print "DB-VENDOR-TODO: update_reciprocal_id("
-        print "vendor is task, and we're adding the reciprocal id"
-        print "DB-VENDOR-TODO: remove following line"
-        self._task.set_reciprocal_id(reciprocal_task.id())
+        self._db_worker.create_vendor_task(
+                self._task.id(),
+                "asana",
+                0,
+                reciprocal_task.id(),
+                "taskrabbit")
+
+        self._db_worker.create_vendor_task(
+                reciprocal_task.id(),
+                "taskrabbit",
+                0,
+                self._task.id(),
+                "asana")
+
         self._task = self._worker.update_task(self._task)
         #self._worker.add_comment(
         #        self._task.id(),
