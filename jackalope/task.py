@@ -291,7 +291,7 @@ class Task(object):
         print "category:", self.category()
         print "price:", self.price()
         print "email:", self.email()
-        print "reciprocal_id", self.reciprocal_id()
+        print "reciprocal_id:", self.reciprocal_id()
         print "status:", self._get_status()
         print "location:", self.location()
         print "description:", self.description()
