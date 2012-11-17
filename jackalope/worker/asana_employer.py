@@ -153,13 +153,13 @@ class AsanaEmployer(Employer):
         transformer.set_task(task)
 
         new_raw_task_dict = self._asana_api.update_task(
-                task.id(),  # task id
-                task.name(),  # task name
+                task.id(),
+                task.name(),
                 None,  # updated assignee
                 None,  # assignee status
-                transformer.is_asana_completed(),  # update completed status
+                transformer.is_asana_completed(),
                 None,  # updated due date
-                transformer.get_embedded_field_value())  # update notes
+                transformer.get_embedding_field_value())  # update notes
 
         new_transformer = AsanaTaskTransformer()
         new_transformer.set_raw_task(new_raw_task_dict)
@@ -396,7 +396,7 @@ class AsanaTaskTransformer(TaskTransformer):
                 FIELD.CATEGORY,
                 FIELD.LOCATION,
                 FIELD.STATUS,
-                FIELD.LAST_SYNCHED_TS
+                FIELD.LAST_SYNCHED_TS,
                 ]
 
 

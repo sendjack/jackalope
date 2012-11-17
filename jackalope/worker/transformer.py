@@ -168,7 +168,7 @@ class TaskTransformer(object):
             self._raw_task = raw_task
 
 
-    def get_embedded_field_value(self):
+    def get_embedding_field_value(self):
         """ Return the value of the Task's embedded field. """
         return self.get_raw_task().get(self._embedding_field)
 
@@ -302,7 +302,7 @@ class TaskTransformer(object):
 
 
     def _populate_task(self, task, raw_task):
-        """ Add the rest of the fields form the raw task to the Task.
+        """ Add the rest of the fields from the raw task to the Task.
 
         Required:
         Task task           The Task to finish constructing.
