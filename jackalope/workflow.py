@@ -182,10 +182,9 @@ class PairedWorkflow(Workflow):
                 self._task.is_approved()):
             comments = self._worker.read_comments(self._task.id())
             self._task.set_comments(comments)
-            # FIXME XXX: "asana" string shouldn't be here.
             synched_ts = self._db_worker.get_synched_ts(
                     self._task.id(),
-                    "asana")
+                    self._worker.name())
             new_comments = self._task.get_comments_since_ts(synched_ts)
             if new_comments:
                 self._task_changed = True
@@ -197,17 +196,16 @@ class PairedWorkflow(Workflow):
         # if either task has changed make sure synch ts is updated and pushed.
         updated_task = None
         current_ts = int(time())
-        # TODO: FIXME XXX
         if self._task_changed:
             self._db_worker.update_vendor_synched_ts(
                     self._task.id(),
-                    "asana",
+                    self._worker.name(),
                     current_ts)
             updated_task = self._worker.update_task(self._task)
         if self._reciprocal_task_changed:
             self._db_worker.update_vendor_synched_ts(
                     self._reciprocal_task.id(),
-                    "taskrabbit",
+                    self._reciprocal_worker.name(),
                     current_ts)
             # TODO: uncomment this line when TaskRabbitWorker.update_task works
             #self._reciprocal_worker.update_task(self._reciprocal_task)
@@ -293,11 +291,10 @@ class PairedWorkflow(Workflow):
     def _set_reciprocal_task(self):
         """Set the *_reciprocal_task* and create it first if it doesn't
         exist."""
-        # FIXME XXX "asana" string shouldn't be here.
         (reciprocal_id, reciprocal_service_name) = (
                 self._db_worker.get_reciprocal_task_info(
                         self._task.id(),
-                        "asana"))
+                        self._worker.name()))
         # if it exists, just store it.
         if reciprocal_id:
             self._reciprocal_task = self._reciprocal_worker.read_task(
@@ -316,22 +313,19 @@ class PairedWorkflow(Workflow):
         """Create a Task to be the recipricol of the Workflow's *_task*, link
         the two Tasks, and return the new one."""
         reciprocal_task = self._reciprocal_worker.create_task(self._task)
-        # FIXME XXX "taskrabbit" and "asana" string shouldn't be here.
-        print "EVEN"
-        print reciprocal_task.id()
         self._db_worker.create_vendor_task(
                 self._task.id(),
-                u"asana",
+                self._worker.name(),
                 0,
                 reciprocal_task.id(),
-                u"taskrabbit")
+                self._reciprocal_worker.name())
 
         self._db_worker.create_vendor_task(
                 reciprocal_task.id(),
-                u"taskrabbit",
+                self._reciprocal_worker.name(),
                 0,
                 self._task.id(),
-                u"asana")
+                self._worker.name())
 
         self._task = self._worker.update_task(self._task)
         #self._worker.add_comment(

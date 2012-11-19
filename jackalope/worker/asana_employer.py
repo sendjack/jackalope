@@ -86,6 +86,10 @@ class _Asana(object):
     def WORKSPACE_ID(self):
         return environment.get_integer(unicode("ASANA_WORKSPACE_ID"))
 
+    @constant
+    def ASANA(self):
+        return "asana"
+
 ASANA = _Asana()
 
 
@@ -106,6 +110,11 @@ class AsanaEmployer(Employer):
                 debug=True)
         self._workspaces = self._produce_dict(
                 self._asana_api.list_workspaces())
+
+
+    def name(self):
+        """Return the name of the vendor."""
+        return ASANA.ASANA
 
 
     def read_task(self, task_id):

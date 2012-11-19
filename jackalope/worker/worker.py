@@ -32,6 +32,11 @@ class ServiceWorker(object):
         raise OverrideRequiredError()
 
 
+    def name(self):
+        """Return the name of the vendor."""
+        raise OverrideRequiredError()
+
+
     def create_task(self, task):
         """Use the Task to create a task in the Worker's service and then
         return the new Task."""
