@@ -44,10 +44,6 @@ class _Field(object):
         return "description"
 
     @constant
-    def RECIPROCAL_ID(self):
-        return "reciprocal_id"
-
-    @constant
     def CATEGORY(self):
         return "category"
 
@@ -58,10 +54,6 @@ class _Field(object):
     @constant
     def STATUS(self):
         return "status"
-
-    @constant
-    def LAST_SYNCHED_TS(self):
-        return "last_synched_ts"
 
     @constant
     def MESSAGE(self):
@@ -449,7 +441,6 @@ class TaskTransformer(object):
     def _get_field_name_map(self):
         """ Return a dict keyed on Jackalope's field name and valued on the
         service's field name. """
-        print "DB-VENDOR-TODO: Remove last_synched/reciprocal_id in transformer. EVERYWHERE."
         return {
                 FIELD.CATEGORY: FIELD.CATEGORY,
                 FIELD.ID: FIELD.ID,
@@ -457,10 +448,8 @@ class TaskTransformer(object):
                 FIELD.PRICE: FIELD.PRICE,
                 FIELD.EMAIL: FIELD.EMAIL,
                 FIELD.DESCRIPTION: FIELD.DESCRIPTION,
-                FIELD.RECIPROCAL_ID: FIELD.RECIPROCAL_ID,
                 FIELD.LOCATION: FIELD.LOCATION,
                 FIELD.STATUS: FIELD.STATUS,
-                FIELD.LAST_SYNCHED_TS: FIELD.LAST_SYNCHED_TS
                 }
 
 
@@ -474,13 +463,7 @@ class TaskTransformer(object):
                 FIELD.PRICE: (task.price, task.set_price),
                 FIELD.EMAIL: (task.email, task.set_email),
                 FIELD.DESCRIPTION: (task.description, task.set_description),
-                FIELD.RECIPROCAL_ID: (
-                        task.reciprocal_id,
-                        task.set_reciprocal_id),
                 FIELD.LOCATION: (task.location, task.set_location),
-                FIELD.LAST_SYNCHED_TS: (
-                        task.last_synched_ts,
-                        task.set_last_synched_ts)
                 }
 
 

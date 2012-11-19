@@ -13,10 +13,8 @@
 
 """
 
-from time import time
-
 from util.decorators import constant
-from util.base_type import to_integer
+from util.base_type import to_integer, to_unicode
 
 
 class _Field(object):
@@ -83,14 +81,8 @@ class Task(object):
     Attributes
     ----------
     _category : `str`
-    _id : `int`
-    _name : `str`
-
-    _current_synched_ts : `int`
-        The timestamp of the current synch that is being processed.
-    _last_synched_ts : `int`, optional
-        The timestamp of the last time a synch occurred with the service.
-    _reciprocal_id : `int`, optional
+    _id : `unicode`
+    _name : `unicode`
 
     _properties : `dict`
     _comments : {id, `Comment`}, optional
@@ -102,13 +94,8 @@ class Task(object):
 
     def __init__(self, category, id, name):
         self._category = category
-        self._id = id
+        self._id = to_unicode(id)
         self._name = name
-
-        self._current_synched_ts = int(time())
-        self._last_synched_ts = None
-        print "DB-VENDOR-TODO: Remove line 111 in task.py and reciprocal_id"
-        self._reciprocal_id = None
 
         # doesn't get created until it's in the DB
         self._properties = {}
@@ -133,29 +120,6 @@ class Task(object):
 
     def name(self):
         return self._name
-
-
-    def last_synched_ts(self):
-        return self._last_synched_ts
-
-
-    def set_last_synched_ts(self, last_synched_ts):
-        if last_synched_ts:
-            self._last_synched_ts = int(last_synched_ts)
-
-
-    def push_current_to_last_synched(self):
-        """Update the last synched ts to the current synch."""
-        print "DB-VENDOR-TODO: Delete this method and last_synced_ts"
-        self.set_last_synched_ts(self._current_synched_ts)
-
-
-    def reciprocal_id(self):
-        return self._reciprocal_id
-
-
-    def set_reciprocal_id(self, id):
-        self._reciprocal_id = id
 
 
     def has_status(self):
@@ -246,15 +210,13 @@ class Task(object):
         self._comments = comments
 
 
-    def get_new_comments_list(self):
+    def get_comments_since_ts(self, synched_ts):
         """Return a list of Comments that have been created since the last
         synch time."""
-        print "DB-VENDOR-TODO: add last_synched_ts as a parameter"
-        print "in get_new_comments_list, and remove it from task"
         new_comments = [
                 comment
                 for comment in self.get_comments().values()
-                if comment.created_ts() > self.last_synched_ts()
+                if comment.created_ts() > synched_ts
                 ]
 
         return sorted(new_comments, key=lambda c: c.created_ts())
@@ -291,7 +253,6 @@ class Task(object):
         print "category:", self.category()
         print "price:", self.price()
         print "email:", self.email()
-        print "reciprocal_id:", self.reciprocal_id()
         print "status:", self._get_status()
         print "location:", self.location()
         print "description:", self.description()

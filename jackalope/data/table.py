@@ -150,6 +150,7 @@ class Table(object):
 
 
     def _create_row(self, properties):
+        print "in _create_row"
         # properties shouldn't include the primary key if it's an auto-key
         if self._uses_auto_key:
             if self._has_primary_key(properties):
@@ -172,11 +173,11 @@ class Table(object):
         parameters = properties.values()
         placeholders = ["%s" for i in range(len(parameters))]
 
-        # TODO: add RETURNING <pk1, pk2, ...>?
-        sql = "INSERT INTO {} ({}) VALUES ({})".format(
+        sql = "INSERT INTO {} ({}) VALUES ({}) RETURNING *".format(
                 self._name,
                 ", ".join(columns),
                 ", ".join(placeholders))
+
 
         return self._query_one(sql, parameters)
 
@@ -187,6 +188,7 @@ class Table(object):
 
 
     def _read_row(self, unique_key):
+        print "in _read_row"
         (condition, parameters) = self._all_equal(unique_key)
 
         sql = "SELECT {} FROM {} WHERE {}".format(
@@ -207,20 +209,20 @@ class Table(object):
             # TODO: maybe make this error more helpful?
             raise KeyError()
 
-        # TODO FIXME XXX: make sure this doesn't screw up properties
+        # TODO FIXME: make sure this doesn't screw up properties
         if self._has_primary_key(properties):
             for column in unique_key.keys():
                 properties.pop(column)
 
-        # TODO FIXME XXX: FILL ME IN WITH STUFF LIKE in _create_row!
+        set_expressions = [columns + " = %s" for columns in properties.keys()]
+        set_parameters = properties.values()
+        (where_condition, where_parameters) = self._all_equal(unique_key)
+        parameters = set_parameters + where_parameters
 
-        sql = "UPDATE {} SET {} WHERE {}".format(
+        sql = "UPDATE {} SET {} WHERE {} RETURNING *".format(
                 self._name,
-                expressions,
-                condition)
-
-        # TODO FIXME XXX: be sure to carefully construct the parameters in
-        # order since this will be the concatenation of two lists.
+                ", ".join(set_expressions),
+                where_condition)
 
         return self._query_one(sql, parameters)
 
@@ -231,12 +233,7 @@ class Table(object):
 
     def _query_one(self, sql, parameters):
         parameters = tuple(parameters)
-        print sql
-        print parameters
         self._cursor.execute(sql, parameters)
-        print self._cursor.query
-        print self._cursor.statusmessage
-        # TODO FIXME XXX: work on this! why the zero-indexing?
         result = self._cursor.fetchone()
         return result
 
@@ -274,7 +271,7 @@ class Table(object):
 
         # ["x=%s", "y=%s", "z=%s",]
         expressions = [
-                "{}{}{}".format(column, comparator.strip(), "%s")
+                "{} {} {}".format(column, comparator.strip(), "%s")
                 for column in columns
                 ]
 

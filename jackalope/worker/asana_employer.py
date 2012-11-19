@@ -13,6 +13,7 @@ from asana import asana
 from jackalope.util.decorators import constant
 from jackalope.util import environment
 from jackalope.errors import OverrideNotAllowedError
+from jackalope.util.base_type import to_integer
 from jackalope.phrase import Phrase
 
 from worker import Employer
@@ -281,7 +282,7 @@ class AsanaEmployer(Employer):
 
     def add_comment(self, task_id, message):
         """Create a comment in the service on a task."""
-        return self._asana_api.add_story(task_id, message)
+        return self._asana_api.add_story(to_integer(task_id), message)
 
 
     def read_comments(self, task_id):
@@ -314,7 +315,7 @@ class AsanaEmployer(Employer):
 
     def _read_stories(self, task_id):
         """Read Asana raw stories for a task and return them as a list."""
-        return self._asana_api.list_stories(task_id)
+        return self._asana_api.list_stories(to_integer(task_id))
 
 
 class AsanaTaskTransformer(TaskTransformer):
@@ -387,16 +388,13 @@ class AsanaTaskTransformer(TaskTransformer):
 
     def _embedded_fields(self):
         """ Return a list of embedded fields as Jackalope field names. """
-        print "DB-VENDOR-TODO: Remove reciprocal_id and last_synched_ts from asana worker."
         return [
                 FIELD.DESCRIPTION,
                 FIELD.PRICE,
                 FIELD.EMAIL,
-                FIELD.RECIPROCAL_ID,
                 FIELD.CATEGORY,
                 FIELD.LOCATION,
                 FIELD.STATUS,
-                FIELD.LAST_SYNCHED_TS,
                 ]
 
 

@@ -60,21 +60,20 @@ class DbWorker(object):
                 unicode(vendor_task_id),
                 unicode(vendor_name))
 
-        task_id = None
-        vendor_name = None
+        task_exists = False
         if result_dict:
-            task_id = result_dict.get(
-                    JACK_FIELD.VENDOR_TASK_ID)
-            vendor_name = result_dict.get(
-                    JACK_FIELD.VENDOR_NAME)
+            task_exists = all([
+                    result_dict.get(JACK_FIELD.VENDOR_TASK_ID),
+                    result_dict.get(JACK_FIELD.VENDOR_NAME)
+                    ])
 
-        return task_id is not None and vendor_name is not None
+        return task_exists
 
 
     def get_reciprocal_task_info(self, vendor_task_id, vendor_name):
         result_dict = self._vendor_tasks_table.read_by_pk(
-                unicode(vendor_task_id),
-                unicode(vendor_name))
+                vendor_task_id,
+                vendor_name)
 
         reciprocal_task_id = None
         reciprocal_vendor_name = None
@@ -84,9 +83,19 @@ class DbWorker(object):
             reciprocal_vendor_name = result_dict.get(
                     JACK_FIELD.RECIPROCAL_VENDOR_NAME)
 
-        print "RESULT", result_dict
         return (reciprocal_task_id, reciprocal_vendor_name)
 
+
+    def get_synched_ts(self, vendor_task_id, vendor_name):
+        result_dict = self._vendor_tasks_table.read_by_pk(
+                vendor_task_id,
+                vendor_name)
+
+        synched_ts = None
+        if result_dict:
+            synched_ts = result_dict.get(JACK_FIELD.SYNCHED_TS)
+
+        return synched_ts
 
     def create_vendor_task(
             self,
@@ -96,13 +105,30 @@ class DbWorker(object):
             reciprocal_task_id,
             reciprocal_vendor_name):
         properties = {
-                JACK_FIELD.VENDOR_TASK_ID: unicode(vendor_task_id),
-                JACK_FIELD.VENDOR_NAME: unicode(vendor_name),
+                JACK_FIELD.VENDOR_TASK_ID: vendor_task_id,
+                JACK_FIELD.VENDOR_NAME: vendor_name,
                 JACK_FIELD.SYNCHED_TS: synched_ts,
+                JACK_FIELD.RECIPROCAL_VENDOR_TASK_ID: reciprocal_task_id,
+                JACK_FIELD.RECIPROCAL_VENDOR_NAME: reciprocal_vendor_name
                 }
 
-        # TODO: XXX XXX
-        result = self._vendor_tasks_table.create(properties)
-        print result
+        return self._vendor_tasks_table.create(properties)
 
-        return result
+
+    def update_vendor_synched_ts(
+            self,
+            vendor_task_id,
+            vendor_name,
+            synched_ts):
+        properties = {
+                JACK_FIELD.SYNCHED_TS: synched_ts
+                }
+
+        return self._vendor_tasks_table.update_by_pk(
+                vendor_task_id,
+                vendor_name,
+                properties)
+
+
+#update_reciprocal_vendor_task_pk(reciprocal_vendor_task_pk)
+#get_vendor_name(vendor_task_id)

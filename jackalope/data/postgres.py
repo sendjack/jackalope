@@ -73,6 +73,9 @@ class Postgres(Database):
                 user=POSTGRES.USER,
                 password=POSTGRES.PASSWORD)
 
+        # So we can immediately fetch INSERTS without calling commit manually
+        self._connection.autocommit = True
+
 
     def _create_cursor(self):
         self._cursor = self._connection.cursor(

@@ -11,6 +11,8 @@
 
 """
 
+from time import time
+
 from jackalope.errors import OverrideRequiredError
 from jackalope.phrase import Phrase
 from jackalope.data.db_worker import DbWorker
@@ -180,9 +182,11 @@ class PairedWorkflow(Workflow):
                 self._task.is_approved()):
             comments = self._worker.read_comments(self._task.id())
             self._task.set_comments(comments)
-            print "DB-VENDOR-TODO: get_last_synched_ts()"
-            print "DB-VENDOR-TODO: self._task for is and service"
-            new_comments = self._task.get_new_comments_list()
+            # FIXME XXX: "asana" string shouldn't be here.
+            synched_ts = self._db_worker.get_synched_ts(
+                    self._task.id(),
+                    "asana")
+            new_comments = self._task.get_comments_since_ts(synched_ts)
             if new_comments:
                 self._task_changed = True
             for comment in new_comments:
@@ -192,17 +196,19 @@ class PairedWorkflow(Workflow):
 
         # if either task has changed make sure synch ts is updated and pushed.
         updated_task = None
+        current_ts = int(time())
+        # TODO: FIXME XXX
         if self._task_changed:
-            print "DB-VENDOR-TODO: update_vendor_last_synched_ts()"
-            print "DB-VENDOR-TODO: vendor_task_pk = task id + service"
-            print "DB-VENDOR-TODO: Remove following line."
-            self._task.push_current_to_last_synched()
+            self._db_worker.update_vendor_synched_ts(
+                    self._task.id(),
+                    "asana",
+                    current_ts)
             updated_task = self._worker.update_task(self._task)
         if self._reciprocal_task_changed:
-            print "DB-VENDOR-TODO: update_vendor_last_synched_ts()"
-            print "DB-VENDOR-TODO: vendor_task_pk = reciprocal id + service"
-            print "DB-VENDOR-TODO: Remove following line."
-            self._reciprocal_task.push_current_to_last_synched()
+            self._db_worker.update_vendor_synched_ts(
+                    self._reciprocal_task.id(),
+                    "taskrabbit",
+                    current_ts)
             # TODO: uncomment this line when TaskRabbitWorker.update_task works
             #self._reciprocal_worker.update_task(self._reciprocal_task)
         return updated_task
@@ -287,7 +293,7 @@ class PairedWorkflow(Workflow):
     def _set_reciprocal_task(self):
         """Set the *_reciprocal_task* and create it first if it doesn't
         exist."""
-        print "DB-VENDOR-TODO: get_reciprocal_pk(task id + name)"
+        # FIXME XXX "asana" string shouldn't be here.
         (reciprocal_id, reciprocal_service_name) = (
                 self._db_worker.get_reciprocal_task_info(
                         self._task.id(),
@@ -310,19 +316,22 @@ class PairedWorkflow(Workflow):
         """Create a Task to be the recipricol of the Workflow's *_task*, link
         the two Tasks, and return the new one."""
         reciprocal_task = self._reciprocal_worker.create_task(self._task)
+        # FIXME XXX "taskrabbit" and "asana" string shouldn't be here.
+        print "EVEN"
+        print reciprocal_task.id()
         self._db_worker.create_vendor_task(
                 self._task.id(),
-                "asana",
+                u"asana",
                 0,
                 reciprocal_task.id(),
-                "taskrabbit")
+                u"taskrabbit")
 
         self._db_worker.create_vendor_task(
                 reciprocal_task.id(),
-                "taskrabbit",
+                u"taskrabbit",
                 0,
                 self._task.id(),
-                "asana")
+                u"asana")
 
         self._task = self._worker.update_task(self._task)
         #self._worker.add_comment(

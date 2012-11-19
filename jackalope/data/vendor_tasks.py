@@ -112,12 +112,3 @@ class VendorTasksTable(Table):
     def delete_by_pk(self, vendor_task_id, vendor_name):
         pk = self._primary_key_properties(vendor_task_id, vendor_name)
         return self._delete_row(pk)
-
-
-#(vendor_task_id, vendor_name)
-#create_vendor_task(vendor_task_pk, last_synched_ts, reciprocal_vendor_task_pk)
-#update_vendor_ts(vendor_task_pk, last_synched_ts)
-#update_reciprocal_vendor_task_pk(reciprocal_vendor_task_pk)
-#get_last_synched_ts(vendor_task_pk)
-#get_reciprocal_pk(vendor_task_id)
-#get_vendor_name(vendor_task_id)
