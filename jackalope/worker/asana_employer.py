@@ -52,6 +52,10 @@ class _AsanaField(object):
     def TYPE(self):
         return "type"
 
+    @constant
+    def PROJECTS(self):
+        return "projects"
+
 ASANA_FIELD = _AsanaField()
 
 
@@ -85,6 +89,10 @@ class _Asana(object):
     @constant
     def WORKSPACE_ID(self):
         return environment.get_integer(unicode("ASANA_WORKSPACE_ID"))
+
+    @constant
+    def DEV_PROJECT_ID(self):
+        return environment.get_integer(unicode("ASANA_DEV_PROJECT_ID"))
 
     @constant
     def ASANA(self):
@@ -141,10 +149,19 @@ class AsanaEmployer(Employer):
 
         tasks = {}
         for asana_task_id in short_asana_tasks.keys():
+            process_task = True
             raw_task = self._asana_api.get_task(asana_task_id)
-            transformer = AsanaTaskTransformer()
-            transformer.set_raw_task(raw_task)
-            tasks[asana_task_id] = self._ready_spec(transformer.get_task())
+
+            if ASANA.DEV_PROJECT_ID:
+                print "here"
+                process_task = AsanaTaskTransformer.is_task_in_project(
+                        raw_task,
+                        ASANA.DEV_PROJECT_ID)
+                print "process task", process_task
+            if process_task:
+                transformer = AsanaTaskTransformer()
+                transformer.set_raw_task(raw_task)
+                tasks[asana_task_id] = self._ready_spec(transformer.get_task())
 
         return tasks
 
@@ -340,6 +357,18 @@ class AsanaTaskTransformer(TaskTransformer):
 
     def __init__(self):
         super(AsanaTaskTransformer, self).__init__(ASANA_FIELD.NOTES)
+
+
+    @classmethod
+    def is_task_in_project(class_, raw_task, project_id):
+        """Check to see if the project id is associated with the raw task."""
+        is_task_in_project = False
+        raw_projects_list = raw_task.get(ASANA_FIELD.PROJECTS)
+        for p in raw_projects_list:
+            if p.get(FIELD.ID) == project_id:
+                is_task_in_project = True
+
+        return is_task_in_project
 
 
     def is_asana_completed(self):
