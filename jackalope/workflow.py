@@ -139,6 +139,15 @@ class PairedWorkflow(Workflow):
                 self._get_employer_task(),
                 self._get_employee_task()):
             print "same state"
+        # employee task is posted and employer task is created, then update
+        elif (
+                self._get_employee_task().is_posted() and
+                self._get_employer_task().is_created()
+                ):
+            print "posted update"
+            updated_task = self._get_employer().update_task_to_posted(
+                    self._get_employer_task())
+            self._update_employee_task(updated_task)
         # employee task is assigned and employer task is posted, then update
         elif (
                 self._get_employee_task().is_assigned() and

@@ -327,7 +327,9 @@ class TaskFactory(object):
 
     @classmethod
     def instantiate_task(class_, category, task_id, name):
-        task_constructor = class_.TASK_CATEGORY_MAPPING.get(category, Task)
+        task_constructor = class_.TASK_CATEGORY_MAPPING.get(
+                category,
+                PricedTask)
         if type(task_constructor) == Task:
             print "Task, Abstract Superclass instantiated."
 

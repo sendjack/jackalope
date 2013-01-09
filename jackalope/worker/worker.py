@@ -188,10 +188,9 @@ class ServiceWorker(object):
         """ Check to make sure task has a ready spec before handing it over to
         the Foreman. """
         if task.is_spec_ready():
+            print "SPEC READY!"
             if not task.has_status():
                 self.update_task_to_created(task)
-            elif task.is_created():
-                self.update_task_to_posted(task)
         else:
             if task.is_created():
                 # TODO: some diff here to see if things have changed
