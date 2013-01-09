@@ -429,9 +429,9 @@ class AsanaTaskTransformer(TaskTransformer):
         return [
                 FIELD.DESCRIPTION,
                 FIELD.PRICE,
-                FIELD.EMAIL,
-                FIELD.CATEGORY,
-                FIELD.LOCATION,
+                #FIELD.EMAIL,
+                #FIELD.CATEGORY,
+                #FIELD.LOCATION,
                 FIELD.STATUS,
                 ]
 

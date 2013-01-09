@@ -250,7 +250,7 @@ class TaskTransformer(object):
                         service_field)
 
         # take a service specific raw task and pull additional fields from it
-        # based on its special fields (e.g., grabbing "completed" from asasna)
+        # based on its special fields (e.g., grabbing "completed" from asana)
         raw_task = self._pull_service_quirks(raw_task)
 
         return raw_task
