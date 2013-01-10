@@ -288,9 +288,8 @@ class RegistrationTask(Task):
     def get_required_accessors(self):
         """Return a list of required fields' accessors."""
         accessors = super(RegistrationTask, self).get_required_accessors()
-        accessors.extend(
-                [
-                    self.email
+        accessors.extend([
+                self.email,
                 ])
         return accessors
 
@@ -303,9 +302,9 @@ class PricedTask(Task):
     def get_required_accessors(self):
         """Return a list of required fields' accessors."""
         accessors = super(PricedTask, self).get_required_accessors()
-        accessors.extend(
-                [
-                    self.price
+        accessors.extend([
+                self.price,
+                self.description,
                 ])
         return accessors
 
