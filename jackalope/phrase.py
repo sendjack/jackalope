@@ -57,13 +57,15 @@ class _Phrase(object):
     @property
     def jackalope_intro(self):
         return unicode(
-                "This task has been sent to you by a service called "
-                "Jackalope. Jackalope pulls tasks from a number of sources. "
-                "Please check us out at http://sendjack.com. \n\nMost "
-                "importantly, we'd like to be able to communicate with the "
-                "person who created this task, so we've created a unique "
-                "email address to reach him or her. Please send all task "
-                "related email to:"
+                "This task was posted to TaskRabbit by a third party service "
+                "called Jackalope. Jackalope is the easiest way for small "
+                "businesses to get their work done. To learn more, visit "
+                "http://sendjack.com. \n\nIn order for you to communicate "
+                "directly with the person who posted this task, we've created "
+                "a unique email address just for the two of you. This should "
+                "help things go more smoothly.\n\nInstead of using the email "
+                "TaskRabbit lists for Jack, the task poster, please send all "
+                "task-related email to:\n\n"
                 )
 
 Phrase = _Phrase()
