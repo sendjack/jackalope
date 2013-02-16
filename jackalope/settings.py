@@ -12,7 +12,7 @@ import tornado
 #import tornado.template
 from tornado.options import define, options
 
-from util import environment
+from jutil import environment
 
 # Make filepaths relative to settings.
 path = lambda root, *a: os.path.join(root, *a)

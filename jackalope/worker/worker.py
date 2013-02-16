@@ -20,7 +20,7 @@
 
 """
 
-from jackalope.errors import OverrideRequiredError, OverrideNotAllowedError
+from jutil.errors import OverrideRequiredError, OverrideNotAllowedError
 
 
 class ServiceWorker(object):

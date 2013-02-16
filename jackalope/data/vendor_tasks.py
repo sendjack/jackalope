@@ -18,7 +18,7 @@
 
 """
 
-from util.decorators import constant
+from jutil.decorators import constant
 
 from table import _Table, Table
 

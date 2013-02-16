@@ -9,8 +9,8 @@
 
 import requests
 
-from jackalope.util.decorators import constant
-from jackalope.util import environment
+from jutil.decorators import constant
+from jutil import environment
 from jackalope.phrase import NAME
 
 MAILGUN_API_KEY = environment.get_unicode(unicode("MAILGUN_API_KEY"))

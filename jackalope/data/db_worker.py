@@ -11,7 +11,7 @@
 
 """
 
-from jackalope.util.decorators import constant
+from jutil.decorators import constant
 from jackalope.data.db import db
 
 

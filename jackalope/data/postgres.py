@@ -22,8 +22,8 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from util.decorators import constant
-from util import environment
+from jutil.decorators import constant
+from jutil import environment
 
 from database import Database
 from vendor_tasks import VENDOR_TASKS, VendorTasksTable

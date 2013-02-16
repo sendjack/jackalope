@@ -7,7 +7,7 @@
 
 """
 
-from jackalope.errors import OverrideRequiredError
+from jutil.errors import OverrideRequiredError
 
 
 class Database(object):

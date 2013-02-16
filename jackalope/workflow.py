@@ -13,7 +13,7 @@
 
 from time import time
 
-from jackalope.errors import OverrideRequiredError
+from jutil.errors import OverrideRequiredError
 from jackalope.phrase import Phrase
 from jackalope.data.db_worker import DbWorker
 from jackalope.task import Task, PricedTask, RegistrationTask

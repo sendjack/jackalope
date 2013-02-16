@@ -13,8 +13,8 @@
 
 """
 
-from util.decorators import constant
-from util.base_type import to_integer, to_unicode
+from jutil.decorators import constant
+from jutil.base_type import to_integer, to_unicode
 
 
 class _Field(object):

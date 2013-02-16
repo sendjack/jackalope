@@ -9,9 +9,9 @@
 import re
 from copy import deepcopy
 
-from jackalope.util.base_type import to_unicode
-from jackalope.util.decorators import constant
-from jackalope.errors import OverrideRequiredError
+from jutil.base_type import to_unicode
+from jutil.decorators import constant
+from jutil.errors import OverrideRequiredError
 from jackalope.phrase import Phrase
 from jackalope import mailer
 from jackalope.task import TaskFactory

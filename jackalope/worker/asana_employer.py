@@ -10,10 +10,10 @@ import dateutil.parser
 import dateutil.tz
 from asana import asana
 
-from jackalope.util.decorators import constant
-from jackalope.util import environment
-from jackalope.errors import OverrideNotAllowedError
-from jackalope.util.base_type import to_integer
+from jutil.decorators import constant
+from jutil import environment
+from jutil.errors import OverrideNotAllowedError
+from jutil.base_type import to_integer
 from jackalope.phrase import Phrase
 
 from worker import Employer

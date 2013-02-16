@@ -9,8 +9,8 @@ import re
 import json
 import requests
 
-from jackalope.util.decorators import constant
-from jackalope.util import environment
+from jutil.decorators import constant
+from jutil import environment
 from jackalope.phrase import Phrase
 from jackalope import mailer
 from jackalope.worker.client import REQUEST

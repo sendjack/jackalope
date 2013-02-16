@@ -10,7 +10,7 @@
 
 from apscheduler.scheduler import Scheduler
 
-from util import environment
+from jutil import environment
 from foreman import Foreman
 
 INTERVAL_SECONDS = unicode("INTERVAL_SECONDS")

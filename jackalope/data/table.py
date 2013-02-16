@@ -10,8 +10,8 @@
 
 """
 
-from util.decorators import constant
-from jackalope.errors import OverrideRequiredError, AlreadySetError
+from jutil.decorators import constant
+from jutil.errors import OverrideRequiredError, AlreadySetError
 
 
 class _Table(object):
