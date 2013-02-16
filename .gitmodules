@@ -1,3 +1,6 @@
 [submodule "jackalope/jutil"]
 	path = jackalope/jutil
 	url = https://github.com/sendjack/jutil.git
+[submodule "jackalope/redflag"]
+	path = jackalope/redflag
+	url = https://github.com/sendjack/redflag.git
