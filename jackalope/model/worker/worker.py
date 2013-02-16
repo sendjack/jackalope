@@ -19,7 +19,6 @@
     CommentTransformer subclasses.
 
 """
-
 from jutil.errors import OverrideRequiredError, OverrideNotAllowedError
 
 
@@ -188,18 +187,19 @@ class ServiceWorker(object):
         """ Check to make sure task has a ready spec before handing it over to
         the Foreman. """
         if task.is_spec_ready():
-            print "SPEC READY!"
+            print "task", task.id(), "is ready"
             if not task.has_status():
                 self.update_task_to_created(task)
         else:
+            print "task", task.id(), "is not spec ready"
             if task.is_created():
                 # TODO: some diff here to see if things have changed
-                print "is created already"
+                print "but has already been created."
             else:
+                print "but has not been created. creating now..."
                 task.set_status_to_created()
                 self.request_required_fields(task)
             task = None
-            print "spec incomplete"
 
         return task
 

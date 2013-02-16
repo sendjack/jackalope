@@ -12,7 +12,6 @@ import tornado.web
 #from jutil.decorators import constant
 
 
-
 class VendorHandler(tornado.web.RequestHandler):
 
     """Handle incoming requests from vendors.

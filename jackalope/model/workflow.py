@@ -15,8 +15,9 @@ from time import time
 
 from jutil.errors import OverrideRequiredError
 from jackalope.phrase import Phrase
-from jackalope.data.db_worker import DbWorker
-from jackalope.task import Task, PricedTask, RegistrationTask
+
+from .data.db_worker import DbWorker
+from .task import Task, PricedTask, RegistrationTask
 
 
 class Workflow(object):
@@ -52,17 +53,16 @@ class Workflow(object):
     def process(self):
         """Evaluate the tasks and then use the Workers to process the Tasks,
         returning a Task if it's been updated or None if it hasn't."""
-        print "WORKFLOW: PROCESS"
         self._jack_task = self._fetch_jack_task(self._task.id(), )
         if self._jack_task is None:
             self._jack_task = self._task
-            print "DB-TASK-TODO: create - write task to db"
+            print "\tDB-TASK-TODO: create - write task to db"
         self._reconcile_state()
 
 
     def _fetch_jack_task(self, task_id):
         """Fetch Jackalope version of Task from the DB and return it."""
-        print "DB-TASK-TODO: read - read task from db"
+        print "\tDB-TASK-TODO: read - read task from db"
         return None
 
     def _reconcile_state(self):
@@ -85,7 +85,7 @@ class SoloWorkflow(Workflow):
 
         # if posted, then complete.
         if self._task.is_posted():
-            print "DB-TASK-TODO: update - update jack task to completed"
+            print "\tDB-TASK-TODO: update - update jack task to completed"
             self._task = self._worker.update_task_to_completed(self._task)
             self._worker.add_comment(
                     self._task.id(),
@@ -154,7 +154,7 @@ class PairedWorkflow(Workflow):
                 self._get_employer_task().is_posted()
                 ):
             print "assigned update"
-            print "DB-TASK-TODO: update - update jack task to assigned"
+            print "\tDB-TASK-TODO: update - update jack task to assigned"
             updated_task = self._get_employer().update_task_to_assigned(
                     self._get_employer_task())
             self._update_employer_task(updated_task)
@@ -165,14 +165,14 @@ class PairedWorkflow(Workflow):
                 self._get_employer_task().is_posted()
                 ):
             print "completed update"
-            print "DB-TASK-TODO: update - update jack task to completed"
+            print "\tDB-TASK-TODO: update - update jack task to completed"
             updated_task = self._get_employer().update_task_to_completed(
                     self._get_employer_task())
             self._update_employer_task(updated_task)
         # employer task is approved. update employee task.
         elif self._get_employer_task().is_approved():
             print "approved update"
-            print "DB-TASK-TODO: update - update jack task to approced"
+            print "\tDB-TASK-TODO: update - update jack task to approced"
             updated_task = self._get_employee().update_task_to_approved(
                     self._get_employee_task())
             self._update_employee_task(updated_task)
@@ -381,10 +381,11 @@ class WorkflowFactory(object):
             employer,
             employer_task,
             foreman):
-        print "WORKFLOW: INSTANTIATE"
         task_class = type(employer_task)
         workflow_constructor = class_.WORKFLOW_TASK_MAPPING.get(task_class)
         workflow = workflow_constructor(employer, employer_task, foreman)
+
+        print "Task", employer_task.id(), ": WORKFLOW OF", workflow_constructor
 
         return workflow
 

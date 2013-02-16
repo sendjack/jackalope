@@ -14,12 +14,11 @@ from jutil import environment
 import redflag
 
 from jackalope.phrase import Phrase
-from jackalope.worker.client import REQUEST
-# TODO: remove this after TR has messaging.
-from jackalope.comment import Comment
+from model.comment import Comment
 
-from worker import Employee
-from transformer import TaskTransformer, FIELD, VALUE
+from .client import REQUEST
+from .worker import Employee
+from .transformer import TaskTransformer, FIELD, VALUE
 
 
 class _TaskRabbitField(object):
@@ -88,6 +87,10 @@ class _TaskRabbitValue(object):
     @constant
     def CLOSED(self):
         return "closed"
+
+    @constant
+    def EXPIRED(self):
+        return "expired"
 
 TASK_RABBIT_VALUE = _TaskRabbitValue()
 
@@ -386,6 +389,7 @@ class TaskRabbitTaskTransformer(TaskTransformer):
         assigned_cond = status == TASK_RABBIT_VALUE.ASSIGNED
         completed_cond = status == TASK_RABBIT_VALUE.COMPLETED
         approved_cond = status == TASK_RABBIT_VALUE.CLOSED
+        expired_cond = status == TASK_RABBIT_VALUE.EXPIRED
 
         if posted_cond:
             raw_task[status_service_field] = VALUE.POSTED
@@ -395,9 +399,13 @@ class TaskRabbitTaskTransformer(TaskTransformer):
             raw_task[status_service_field] = VALUE.COMPLETED
         elif approved_cond:
             raw_task[status_service_field] = VALUE.APPROVED
+        elif expired_cond:
+            # FIXME XXX: Clearly this is a lie
+            raw_task[status_service_field] = VALUE.APPROVED
+            print "TR Task", raw_task.get("id"), "is Expired"
         else:
             # todo handle State = "expired"
-            print "error in pull service quirks"
+            print "ERROR in pull service quirks"
             raw_task[status_service_field] = VALUE.POSTED
 
         return raw_task

@@ -12,11 +12,11 @@ from copy import deepcopy
 from jutil.base_type import to_unicode
 from jutil.decorators import constant
 from jutil.errors import OverrideRequiredError
-import redflag
 
+import settings
 from jackalope.phrase import Phrase
-from jackalope.task import TaskFactory
-from jackalope.comment import Comment
+from model.task import TaskFactory
+from model.comment import Comment
 
 
 class _Field(object):
@@ -187,7 +187,7 @@ class TaskTransformer(object):
         email = unicode("{}-{}@{}").format(
                 service_name,
                 task_id,
-                redflag.MAILGUN_DOMAIN)
+                settings.MAILGUN_DOMAIN)
         jackalope_blurb = unicode("\n--\n{}\n{}").format(
                 Phrase.jackalope_intro,
                 email)

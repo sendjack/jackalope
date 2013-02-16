@@ -12,6 +12,7 @@
     functionality.
 
 """
+from pprint import pprint
 
 from jutil.decorators import constant
 from jutil.base_type import to_integer, to_unicode
@@ -247,18 +248,20 @@ class Task(object):
 
 
     def _print_task(self):
-        print "\ntask\n--------"
-        print "id:", self.id()
-        print "name:", self.name()
-        print "category:", self.category()
-        print "price:", self.price()
-        print "email:", self.email()
-        print "status:", self._get_status()
-        print "location:", self.location()
-        print "description:", self.description()
-        print "spec ready?:", self.is_spec_ready()
-        print "updated?:", self.is_updated()
-        print ""
+        task_dict = {
+                "id": self.id(),
+                "name": self.name(),
+                "category": self.category(),
+                "price": self.price(),
+                "email": self.email(),
+                "status": self._get_status(),
+                "location": self.location(),
+                "description": self.description(),
+                "spec ready?": self.is_spec_ready(),
+                "updated?": self.is_updated()
+                }
+
+        pprint(task_dict)
 
 
     def _get_property(self, key):
