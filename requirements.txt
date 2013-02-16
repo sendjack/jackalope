@@ -14,6 +14,3 @@ git+git://github.com/pandemicsyn/asana.git
 # docs
 sphinx==1.1.3
 numpydoc==0.4
-
-# others
-APScheduler==2.0.3

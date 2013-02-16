@@ -13,7 +13,6 @@ import tornado
 from tornado.options import define, options
 
 from jutil import environment
-from jackalope.phrase import NAME
 
 
 # Make filepaths relative to settings.
@@ -45,15 +44,6 @@ settings['ui_modules'] = {}
 if options.config:
     tornado.options.parse_config_file(options.config)
 
-
+# SERVICES
 MAILGUN_API_KEY = environment.get_unicode(unicode("MAILGUN_API_KEY"))
 MAILGUN_DOMAIN = environment.get_unicode(unicode("MAILGUN_DOMAIN"))
-
-ENVIRONMENT = environment.get_unicode(unicode("ENVIRONMENT"))
-DEFAULT_NAME = unicode("")
-if ENVIRONMENT == unicode("PRODUCTION"):
-    DEFAULT_NAME = NAME.PRODUCTION
-elif ENVIRONMENT == unicode("STAGING"):
-    DEFAULT_NAME = NAME.STAGING
-elif ENVIRONMENT == unicode("DEV"):
-    DEFAULT_NAME = NAME.DEV
