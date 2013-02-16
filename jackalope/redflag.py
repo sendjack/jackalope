@@ -2,34 +2,22 @@
     Mailgun Mailer
     --------------
 
-    Send outgoing mail using requests and mailgun. This is a basic
-    implementation to test integration.
+    Send outgoing mail using requests, jutil, and mailgun.
 
 """
 
 import requests
 
 from jutil.decorators import constant
-from jutil import environment
-from jackalope.phrase import NAME
 
-MAILGUN_API_KEY = environment.get_unicode(unicode("MAILGUN_API_KEY"))
-MAILGUN_DOMAIN = environment.get_unicode(unicode("MAILGUN_DOMAIN"))
+
 MAILGUN_API_URL = unicode("https://api.mailgun.net/v2")
 MAILGUN_MESSAGES_SUFFIX = unicode("messages")
 
-ENVIRONMENT = environment.get_unicode(unicode("ENVIRONMENT"))
-DEFAULT_NAME = unicode("")
-if ENVIRONMENT == unicode("PRODUCTION"):
-    DEFAULT_NAME = NAME.PRODUCTION
-elif ENVIRONMENT == unicode("STAGING"):
-    DEFAULT_NAME = NAME.STAGING
-elif ENVIRONMENT == unicode("DEV"):
-    DEFAULT_NAME = NAME.DEV
-
-DEFAULT_SENDER = unicode("{} <{}>").format(
-        DEFAULT_NAME,
-        environment.get_unicode(unicode("JACKS_EMAIL")))
+_mailgun_api_key = None
+_mailgun_domain = None
+_default_name = ""
+_default_email = ""
 
 
 class _Mail(object):
@@ -119,6 +107,19 @@ class _Mail(object):
 MAIL = _Mail()
 
 
+def initialize(api_key, domain, name="", email=""):
+    """Set the api key and domain for the mailgun account to use."""
+    global _mailgun_api_key
+    global _mailgun_domain
+    global _default_name
+    global _default_email
+
+    _mailgun_api_key = api_key
+    _mailgun_domain = domain
+    _default_name = name
+    _default_email = email
+
+
 def send_message_from_jack(recipient, subject, body):
     """Send a smtp message using Mailgun's API with 'Jack Lope' as the sender
     and return the response dict.
@@ -131,7 +132,7 @@ def send_message_from_jack(recipient, subject, body):
     body : `str`
 
     """
-    return send_message(DEFAULT_SENDER, recipient, subject, body)
+    return send_message(_get_default_sender, recipient, subject, body)
 
 
 def send_message_as_jack(sender_email, recipient, subject, body):
@@ -147,7 +148,7 @@ def send_message_as_jack(sender_email, recipient, subject, body):
     body : `str`
 
     """
-    sender = unicode("{} <{}>").format(DEFAULT_NAME, sender_email)
+    sender = _get_sender(_default_name, sender_email)
     return send_message(sender, recipient, subject, body)
 
 
@@ -172,11 +173,19 @@ def send_message(sender, recipient, subject, body):
             }
     url = unicode("{}/{}/{}").format(
             MAILGUN_API_URL,
-            MAILGUN_DOMAIN,
+            _mailgun_domain,
             MAILGUN_MESSAGES_SUFFIX)
     response = requests.post(
             url,
-            auth=(MAIL.API, MAILGUN_API_KEY),
+            auth=(MAIL.API, _mailgun_api_key),
             data=data_dict)
 
     return response.text
+
+
+def _get_default_sender():
+    return _get_sender(_default_name, _default_email())
+
+
+def _get_sender(name, email):
+    return unicode("{} <{}>").format(name, email)

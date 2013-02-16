@@ -11,8 +11,9 @@ import requests
 
 from jutil.decorators import constant
 from jutil import environment
+import redflag
+
 from jackalope.phrase import Phrase
-from jackalope import mailer
 from jackalope.worker.client import REQUEST
 # TODO: remove this after TR has messaging.
 from jackalope.comment import Comment
@@ -258,7 +259,7 @@ class TaskRabbitEmployee(Employee):
         from_email = match.group()
 
         if runner_email:
-            mailer.send_message_as_jack(
+            redflag.send_message_as_jack(
                     from_email,
                     runner_email,
                     Phrase.new_comment_subject,
