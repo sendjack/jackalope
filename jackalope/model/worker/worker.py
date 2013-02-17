@@ -19,7 +19,13 @@
     CommentTransformer subclasses.
 
 """
+import copy
+import json
+import requests
+
 from jutil.errors import OverrideRequiredError, OverrideNotAllowedError
+
+from .client import REQUEST
 
 
 class ServiceWorker(object):
@@ -156,31 +162,26 @@ class ServiceWorker(object):
         raise OverrideRequiredError()
 
 
-    def _get(self, path):
-        """ Connect to a service with a GET request.
+    def _get(self, domain, path):
+        """ Connect to a service with a GET request."""
+        url = domain + path
+        response = requests.get(url, headers=self._headers)
 
-        Required:
-        str     path to desired action
-
-        Return:
-        str     The parsed response
-
-        """
-        raise OverrideRequiredError()
+        return response.json
 
 
-    def _post(self, path, data):
-        """ Connect to a service with a POST request.
+    def _post(self, domain, path, data_dict):
+        """ Connect to a service with a POST request and return a dict."""
+        url = domain + path
+        post_headers = copy.copy(self._headers)  # don't update reusable dict
+        post_headers[REQUEST.CONTENT_TYPE] = REQUEST.APP_JSON
 
-        Required:
-        str     path to desired action
-        str     data to post
+        response = requests.post(
+                url,
+                data=json.dumps(data_dict),
+                headers=post_headers)
 
-        Return:
-        str     The parsed response
-
-        """
-        raise OverrideRequiredError()
+        return response.json
 
 
     def _ready_spec(self, task):

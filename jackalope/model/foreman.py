@@ -7,6 +7,7 @@
 """
 
 from worker.asana_employer import AsanaEmployer
+from worker.send_jack_employer import SendJackEmployer
 from worker.task_rabbit_employee import TaskRabbitEmployee
 
 from workflow import WorkflowFactory
@@ -26,7 +27,8 @@ class Foreman(object):
 
     def __init__(self):
         self._employers = [
-                AsanaEmployer()
+                AsanaEmployer(),
+                SendJackEmployer()
                 ]
 
         self._employees = [

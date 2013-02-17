@@ -4,7 +4,6 @@ AsanaEmployer subclasses Employer and handles all interaction between Jackalope
 and Asana.
 
 """
-
 import time
 import dateutil.parser
 import dateutil.tz

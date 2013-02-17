@@ -155,6 +155,9 @@ class TaskTransformer(object):
     def set_raw_task(self, raw_task):
         """ Set the raw task dict for this Transformation and make it
         uneditable. """
+        print "EVAN"
+        from pprint import pprint
+        pprint(raw_task)
         if self._raw_task or self._task:
             raise BadTransformationError()
         else:

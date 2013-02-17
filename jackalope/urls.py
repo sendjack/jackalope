@@ -13,5 +13,5 @@ from handlers.test import ForemanHandler
 url_patterns = [
         (r"/sendjack/task/?([0-9]+)?", SendJackTaskHandler),
         (r"/taskrabbit/comment/?([0-9]+)?", TaskRabbitCommentHandler),
-        (r"/", ForemanHandler),
+        (r"/?([0-9]+)?", ForemanHandler),
         ]

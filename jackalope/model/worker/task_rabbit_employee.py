@@ -4,10 +4,7 @@ TaskRabbitEmployee subclasses Employee and handles all interaction between
 Jackalope and TaskRabbit.
 
 """
-import copy
 import re
-import json
-import requests
 
 from jutil.decorators import constant
 from jutil import environment
@@ -167,7 +164,7 @@ class TaskRabbitEmployee(Employee):
     def read_task(self, task_id):
         """Connect to the ServiceWorker's service and return a Task."""
         path = unicode("{}/{}").format(TASK_RABBIT.TASKS_PATH, str(task_id))
-        raw_task = self._get(path)
+        raw_task = self._get(TASK_RABBIT.DOMAIN, path)
 
         transformer = TaskRabbitTaskTransformer()
         transformer.set_raw_task(raw_task)
@@ -181,7 +178,7 @@ class TaskRabbitEmployee(Employee):
         dict    all the Tasks keyed on id
 
         """
-        items_dict = self._get(TASK_RABBIT.TASKS_PATH)
+        items_dict = self._get(TASK_RABBIT.DOMAIN, TASK_RABBIT.TASKS_PATH)
         task_rabbit_tasks = self._produce_dict(
                 items_dict[TASK_RABBIT_FIELD.ITEMS])
 
@@ -214,7 +211,10 @@ class TaskRabbitEmployee(Employee):
         # TODO: do this check in the base class
         raw_task_dict.get(TASK_RABBIT_FIELD.TASK).pop(FIELD.ID)
 
-        new_raw_task_dict = self._post(TASK_RABBIT.TASKS_PATH, raw_task_dict)
+        new_raw_task_dict = self._post(
+                TASK_RABBIT.DOMAIN,
+                TASK_RABBIT.TASKS_PATH,
+                raw_task_dict)
         new_transformer = TaskRabbitTaskTransformer()
         new_transformer.set_raw_task(new_raw_task_dict)
 
@@ -238,7 +238,7 @@ class TaskRabbitEmployee(Employee):
                 str(id),
                 TASK_RABBIT.CLOSE_TASK_ACTION)
 
-        closed_task_dict = self._post(close_path, {})
+        closed_task_dict = self._post(TASK_RABBIT.DOMAIN, close_path, {})
         closed_transformer = TaskRabbitTaskTransformer()
         closed_transformer.set_raw_task(closed_task_dict)
 
@@ -250,7 +250,7 @@ class TaskRabbitEmployee(Employee):
         task_path = unicode("{}/{}").format(
                 TASK_RABBIT.TASKS_PATH,
                 str(task_id))
-        raw_task = self._get(task_path)
+        raw_task = self._get(TASK_RABBIT.DOMAIN, task_path)
         runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
                 TASK_RABBIT_FIELD.EMAIL)
 
@@ -296,47 +296,6 @@ class TaskRabbitEmployee(Employee):
         comment = Comment(-1, -1, unicode("partnership is key."))
         comments = {comment.id(): comment}
         return comments
-
-
-    def _get(self, path):
-        """ Connect to TaskRabbit and issue a GET to the path.
-
-        See: http://support.taskrabbit.com/entries/22024476
-
-        Required:
-        str     path to desired action
-
-        Return:
-        str         The parsed response.
-
-        """
-        url = TASK_RABBIT.DOMAIN + path
-        response = requests.get(url, headers=self._headers)
-
-        return response.json
-
-
-    def _post(self, path, data_dict):
-        """ Connect to Employee's service with a POST request.
-
-        Required:
-        str path        path to desired action
-        dict data_dict  data to post
-
-        Return:
-        str     The parsed response
-
-        """
-        url = TASK_RABBIT.DOMAIN + path
-        post_headers = copy.copy(self._headers)  # don't update reusable dict
-        post_headers[REQUEST.CONTENT_TYPE] = REQUEST.APP_JSON
-
-        response = requests.post(
-                url,
-                data=json.dumps(data_dict),
-                headers=post_headers)
-
-        return response.json
 
 
 class TaskRabbitTaskTransformer(TaskTransformer):
