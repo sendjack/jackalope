@@ -10,9 +10,9 @@
     is for another day.
 
 """
-
 from jutil.decorators import constant
-from jackalope.data.db import db
+
+from .db import db
 
 
 class _JackField(object):

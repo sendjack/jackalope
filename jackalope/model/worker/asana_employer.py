@@ -4,7 +4,6 @@ AsanaEmployer subclasses Employer and handles all interaction between Jackalope
 and Asana.
 
 """
-
 import time
 import dateutil.parser
 import dateutil.tz
@@ -95,7 +94,11 @@ class _Asana(object):
         return environment.get_integer(unicode("ASANA_DEV_PROJECT_ID"))
 
     @constant
-    def ASANA(self):
+    def VENDOR(self):
+        return "asana"
+
+    @constant
+    def VENDOR_IN_HTML(self):
         return "asana"
 
 ASANA = _Asana()
@@ -115,14 +118,14 @@ class AsanaEmployer(Employer):
     def __init__(self):
         self._asana_api = asana.AsanaAPI(
                 ASANA.API_KEY,
-                debug=True)
+                debug=False)
         self._workspaces = self._produce_dict(
                 self._asana_api.list_workspaces())
 
 
     def name(self):
         """Return the name of the vendor."""
-        return ASANA.ASANA
+        return ASANA.VENDOR
 
 
     def read_task(self, task_id):
@@ -141,6 +144,8 @@ class AsanaEmployer(Employer):
         dict    all the Tasks keyed on id
 
         """
+        print "\nSTEP 1: READ ALL ASANA TASKS ------>\n"
+
         test_workspace_id = self._retrieve_id(
                 self._workspaces.get(ASANA.WORKSPACE_ID))
 
@@ -152,16 +157,18 @@ class AsanaEmployer(Employer):
             process_task = True
             raw_task = self._asana_api.get_task(asana_task_id)
 
+            # only process tasks in the project
             if ASANA.DEV_PROJECT_ID:
-                print "here"
                 process_task = AsanaTaskTransformer.is_task_in_project(
                         raw_task,
                         ASANA.DEV_PROJECT_ID)
-                print "process task", process_task
+
             if process_task:
                 transformer = AsanaTaskTransformer()
                 transformer.set_raw_task(raw_task)
                 tasks[asana_task_id] = self._ready_spec(transformer.get_task())
+
+        print "-------> ASANA TASKS READ. Return:", [k for k in tasks.keys()]
 
         return tasks
 
