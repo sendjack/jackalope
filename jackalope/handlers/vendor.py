@@ -9,7 +9,7 @@
 import json
 import tornado.web
 
-#from jutil.decorators import constant
+from model.foreman import Foreman
 
 
 class VendorHandler(tornado.web.RequestHandler):
@@ -31,10 +31,30 @@ class VendorHandler(tornado.web.RequestHandler):
         self.id = id
         self._process_request()
 
+
     def _process_request(self):
-        print(self.vendor)
-        print(self._get_request_parameters())
+        raise NotImplementedError()
 
 
     def _get_request_parameters(self):
         return json.loads(self.request.body)
+
+
+class TaskVendorHandler(VendorHandler):
+
+    """Handle incoming task requests."""
+
+    def _process_request(self):
+        foreman = Foreman()
+        foreman.send_jack_for_employer_task(self.vendor, self.id)
+        #print(self._get_request_parameters())
+
+
+class CommentVendorHandler(VendorHandler):
+
+    """Handle incoming comment requests."""
+
+    def _process_request(self):
+        self.write("TODO")
+        #foreman.send_jack_for_employer_task(self.vendor, self.id)
+        #print(self._get_request_parameters())

@@ -94,7 +94,11 @@ class _Asana(object):
         return environment.get_integer(unicode("ASANA_DEV_PROJECT_ID"))
 
     @constant
-    def ASANA(self):
+    def VENDOR(self):
+        return "asana"
+
+    @constant
+    def VENDOR_IN_HTML(self):
         return "asana"
 
 ASANA = _Asana()
@@ -121,7 +125,7 @@ class AsanaEmployer(Employer):
 
     def name(self):
         """Return the name of the vendor."""
-        return ASANA.ASANA
+        return ASANA.VENDOR
 
 
     def read_task(self, task_id):

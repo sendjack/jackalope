@@ -5,10 +5,16 @@
     Callback handlers for any notifications from Task Rabbit.
 
 """
-from vendor import VendorHandler
+from model.worker.task_rabbit_employee import TASK_RABBIT
+
+from .vendor import TaskVendorHandler, CommentVendorHandler
 
 
-class TaskRabbitCommentHandler(VendorHandler):
+class TaskRabbitTaskHandler(TaskVendorHandler):
 
-    def _process_request(self):
-        print(self.id)
+    vendor = TASK_RABBIT.VENDOR
+
+
+class TaskRabbitCommentHandler(CommentVendorHandler):
+
+    vendor = TASK_RABBIT.VENDOR

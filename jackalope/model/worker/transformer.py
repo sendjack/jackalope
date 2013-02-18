@@ -155,9 +155,6 @@ class TaskTransformer(object):
     def set_raw_task(self, raw_task):
         """ Set the raw task dict for this Transformation and make it
         uneditable. """
-        print "EVAN"
-        from pprint import pprint
-        pprint(raw_task)
         if self._raw_task or self._task:
             raise BadTransformationError()
         else:
@@ -212,6 +209,7 @@ class TaskTransformer(object):
 
         # build task
         if not raw_task.get(self._get_service_field_name(FIELD.ID)):
+            print "raw_task has no ID"
             print raw_task
         id = raw_task[self._get_service_field_name(FIELD.ID)]
         name = raw_task[self._get_service_field_name(FIELD.NAME)]

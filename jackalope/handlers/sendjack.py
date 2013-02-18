@@ -5,10 +5,16 @@
     Callback handlers for any notifications from sendjack.
 
 """
-from vendor import VendorHandler
+from model.worker.send_jack_employer import SEND_JACK
+
+from .vendor import TaskVendorHandler, CommentVendorHandler
 
 
-class SendJackTaskHandler(VendorHandler):
+class SendJackTaskHandler(TaskVendorHandler):
 
-    def _process_request(self):
-        print(self.id)
+    vendor = SEND_JACK.VENDOR
+
+
+class SendJackCommentHandler(CommentVendorHandler):
+
+    vendor = SEND_JACK.VENDOR

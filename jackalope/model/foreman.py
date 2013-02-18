@@ -6,9 +6,9 @@
 
 """
 
-from worker.asana_employer import AsanaEmployer
-from worker.send_jack_employer import SendJackEmployer
-from worker.task_rabbit_employee import TaskRabbitEmployee
+from worker.asana_employer import AsanaEmployer, ASANA
+from worker.send_jack_employer import SendJackEmployer, SEND_JACK
+from worker.task_rabbit_employee import TaskRabbitEmployee, TASK_RABBIT
 
 from workflow import WorkflowFactory
 
@@ -19,31 +19,31 @@ class Foreman(object):
 
     Attributes
     ----------
-    employers : list of `Employer`
-    employees : list of `Employee`
+    employers : dict
+    employees : dict
 
     """
 
 
     def __init__(self):
-        self._employers = [
-                AsanaEmployer(),
-                SendJackEmployer()
-                ]
+        self._employers = {
+                ASANA.VENDOR: AsanaEmployer(),
+                SEND_JACK.VENDOR: SendJackEmployer()
+                }
 
-        self._employees = [
-                TaskRabbitEmployee()
-                ]
+        self._employees = {
+                TASK_RABBIT.VENDOR: TaskRabbitEmployee()
+                }
 
 
     def get_task_rabbit_worker(self):
         """Return an instance of the `TaskRabbitEmployee`."""
-        return self._employees[0]
+        return self._employees[TASK_RABBIT.VENDOR]
 
 
     def get_asana_worker(self):
         """Return an instance of the `AsanaEmployer`."""
-        return self._employers[0]
+        return self._employers[ASANA.VENDOR]
 
 
     def ferry_comment(self, service, from_task_id, message):
@@ -84,6 +84,12 @@ class Foreman(object):
             employer_tasks = employer.read_tasks()
             # employer_tasks[id] = None when the task is not spec ready
             self._process_employer_tasks(employer, employer_tasks)
+
+
+    def send_jack_for_employer_task(self, vendor_name, task_id):
+        employer = self._employers.get(vendor_name)
+        employer_tasks = {task_id: employer.read_task(task_id)}
+        self._process_employer_tasks(employer, employer_tasks)
 
 
     def _process_employer_tasks(self, employer, tasks):

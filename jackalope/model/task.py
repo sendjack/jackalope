@@ -72,6 +72,17 @@ class _Status(object):
         out."""
         return "approved"
 
+    @constant
+    def EXPIRED(self):
+        """Task's deadline has passed without being in a completed state."""
+        return "expired"
+
+    @constant
+    def CANCELED(self):
+        """The work has been canceled by the customer before completion."""
+        return "canceled"
+
+
 STATUS = _Status()
 
 

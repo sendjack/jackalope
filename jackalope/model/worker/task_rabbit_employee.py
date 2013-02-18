@@ -97,8 +97,12 @@ class _TaskRabbit(object):
     """Constants for interacting with Task Rabbit service."""
 
     @constant
-    def TASK_RABBIT(self):
-        return "task-rabbit"
+    def VENDOR(self):
+        return "task_rabbit"
+
+    @constant
+    def VENDOR_IN_HTML(self):
+        return "taskrabbit"
 
     @constant
     def DOMAIN(self):
@@ -158,7 +162,7 @@ class TaskRabbitEmployee(Employee):
 
     def name(self):
         """Return the name of the vendor."""
-        return TASK_RABBIT.TASK_RABBIT
+        return TASK_RABBIT.VENDOR
 
 
     def read_task(self, task_id):
@@ -203,7 +207,7 @@ class TaskRabbitEmployee(Employee):
         # FIXME: the task id should actually be the reciprocal id (or our
         # internal id) but we can't do that yet so it's the Asana ID.
         blurb = TaskRabbitTaskTransformer.get_jackalope_blurb(
-                self.name(),
+                TASK_RABBIT.VENDOR_IN_HTML,
                 task.id())
         private_desc_field = TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION
         raw_task_dict[TASK_RABBIT_FIELD.TASK][private_desc_field] = blurb

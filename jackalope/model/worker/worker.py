@@ -184,6 +184,19 @@ class ServiceWorker(object):
         return response.json
 
 
+    def _put(self, domain, path, data_dict):
+        url = domain + path
+        put_headers = copy.copy(self._headers)  # don't update reusable dict
+        put_headers[REQUEST.CONTENT_TYPE] = REQUEST.APP_JSON
+
+        response = requests.put(
+                url,
+                data=json.dumps(data_dict),
+                headers=put_headers)
+
+        return response.json
+
+
     def _ready_spec(self, task):
         """ Check to make sure task has a ready spec before handing it over to
         the Foreman. """
