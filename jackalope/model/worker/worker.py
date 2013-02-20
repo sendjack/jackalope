@@ -164,7 +164,10 @@ class ServiceWorker(object):
 
     def _get(self, domain, path):
         """ Connect to a service with a GET request."""
-        url = domain + path
+        url = unicode("{}{}{}").format(
+                "http://",
+                domain,
+                path)
         response = requests.get(url, headers=self._headers)
 
         return response.json
