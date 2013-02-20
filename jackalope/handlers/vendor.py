@@ -47,7 +47,7 @@ class TaskVendorHandler(VendorHandler):
     def _process_request(self):
         foreman = Foreman()
         foreman.send_jack_for_employer_task(self.vendor, self.id)
-        #print(self._get_request_parameters())
+        #print(self.request.body)
 
 
 class CommentVendorHandler(VendorHandler):
@@ -55,6 +55,6 @@ class CommentVendorHandler(VendorHandler):
     """Handle incoming comment requests."""
 
     def _process_request(self):
-        self.write("TODO")
+        self.write("TODO: " + self.vendor + "-" + self.id)
         #foreman.send_jack_for_employer_task(self.vendor, self.id)
-        #print(self._get_request_parameters())
+        print(self.request.body)

@@ -89,6 +89,14 @@ class SendJackEmployer(Employer):
         return self._ready_spec(updated_transformer.get_task())
 
 
+    def update_task_to_created(self, task):
+        # Don't do anything here because Send Jack already has the status as
+        # created
+        task.set_status_to_created()
+
+        return task
+
+
     def update_task_to_posted(self, task):
         task.set_status_to_posted()
         updated_task = self.update_task(task)
