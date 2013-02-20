@@ -105,6 +105,10 @@ class _TaskRabbit(object):
         return "taskrabbit"
 
     @constant
+    def PROTOCOL(self):
+        return "https"
+
+    @constant
     def DOMAIN(self):
         return environment.get_unicode(unicode("TASK_RABBIT_DOMAIN"))
 
@@ -168,7 +172,10 @@ class TaskRabbitEmployee(Employee):
     def read_task(self, task_id):
         """Connect to the ServiceWorker's service and return a Task."""
         path = unicode("{}/{}").format(TASK_RABBIT.TASKS_PATH, str(task_id))
-        raw_task = self._get(TASK_RABBIT.DOMAIN, path)
+        raw_task = self._get(
+                TASK_RABBIT.PROTOCOL,
+                TASK_RABBIT.DOMAIN,
+                path)
 
         transformer = TaskRabbitTaskTransformer()
         transformer.set_raw_task(raw_task)
@@ -182,7 +189,10 @@ class TaskRabbitEmployee(Employee):
         dict    all the Tasks keyed on id
 
         """
-        items_dict = self._get(TASK_RABBIT.DOMAIN, TASK_RABBIT.TASKS_PATH)
+        items_dict = self._get(
+                TASK_RABBIT.PROTOCOL,
+                TASK_RABBIT.DOMAIN,
+                TASK_RABBIT.TASKS_PATH)
         task_rabbit_tasks = self._produce_dict(
                 items_dict[TASK_RABBIT_FIELD.ITEMS])
 
@@ -216,6 +226,7 @@ class TaskRabbitEmployee(Employee):
         raw_task_dict.get(TASK_RABBIT_FIELD.TASK).pop(FIELD.ID)
 
         new_raw_task_dict = self._post(
+                TASK_RABBIT.PROTOCOL,
                 TASK_RABBIT.DOMAIN,
                 TASK_RABBIT.TASKS_PATH,
                 raw_task_dict)
@@ -242,7 +253,11 @@ class TaskRabbitEmployee(Employee):
                 str(id),
                 TASK_RABBIT.CLOSE_TASK_ACTION)
 
-        closed_task_dict = self._post(TASK_RABBIT.DOMAIN, close_path, {})
+        closed_task_dict = self._post(
+                TASK_RABBIT.PROTOCOL,
+                TASK_RABBIT.DOMAIN,
+                close_path,
+                {})
         closed_transformer = TaskRabbitTaskTransformer()
         closed_transformer.set_raw_task(closed_task_dict)
 
@@ -254,7 +269,10 @@ class TaskRabbitEmployee(Employee):
         task_path = unicode("{}/{}").format(
                 TASK_RABBIT.TASKS_PATH,
                 str(task_id))
-        raw_task = self._get(TASK_RABBIT.DOMAIN, task_path)
+        raw_task = self._get(
+                TASK_RABBIT.PROTOCOL,
+                TASK_RABBIT.DOMAIN,
+                task_path)
         runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
                 TASK_RABBIT_FIELD.EMAIL)
 
