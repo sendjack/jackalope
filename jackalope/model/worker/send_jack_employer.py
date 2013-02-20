@@ -40,6 +40,10 @@ class _SendJack(object):
         return "sendjack"
 
     @constant
+    def PROTOCOL(self):
+        return "http"
+
+    @constant
     def DOMAIN(self):
         return environment.get_unicode(unicode("SEND_JACK_DOMAIN"))
 
@@ -64,7 +68,7 @@ class SendJackEmployer(Employer):
         path = unicode("{}/{}").format(
                 SEND_JACK.TASK_PATH,
                 task_id)
-        raw_task = self._get(SEND_JACK.DOMAIN, path)
+        raw_task = self._get(SEND_JACK.PROTOCOL, SEND_JACK.DOMAIN, path)
 
         transformer = SendJackTaskTransformer()
         transformer.set_raw_task(raw_task)
@@ -81,7 +85,11 @@ class SendJackEmployer(Employer):
         raw_task_dict = transformer.get_raw_task()
 
         path = unicode("{}/{}").format(SEND_JACK.TASK_PATH, task.id())
-        updated_task_dict = self._put(SEND_JACK.DOMAIN, path, raw_task_dict)
+        updated_task_dict = self._put(
+                SEND_JACK.PROTOCOL,
+                SEND_JACK.DOMAIN,
+                path,
+                raw_task_dict)
 
         updated_transformer = SendJackTaskTransformer()
         updated_transformer.set_raw_task(updated_task_dict)

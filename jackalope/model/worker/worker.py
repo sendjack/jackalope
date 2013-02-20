@@ -162,10 +162,10 @@ class ServiceWorker(object):
         raise OverrideRequiredError()
 
 
-    def _get(self, domain, path):
+    def _get(self, protocol, domain, path):
         """ Connect to a service with a GET request."""
-        url = unicode("{}{}{}").format(
-                "http://",
+        url = unicode("{}://{}{}").format(
+                protocol,
                 domain,
                 path)
         response = requests.get(url, headers=self._headers)
@@ -173,9 +173,12 @@ class ServiceWorker(object):
         return response.json
 
 
-    def _post(self, domain, path, data_dict):
+    def _post(self, protocol, domain, path, data_dict):
         """ Connect to a service with a POST request and return a dict."""
-        url = domain + path
+        url = unicode("{}://{}{}").format(
+                protocol,
+                domain,
+                path)
         post_headers = copy.copy(self._headers)  # don't update reusable dict
         post_headers[REQUEST.CONTENT_TYPE] = REQUEST.APP_JSON
 
@@ -187,8 +190,11 @@ class ServiceWorker(object):
         return response.json
 
 
-    def _put(self, domain, path, data_dict):
-        url = domain + path
+    def _put(self, protocol, domain, path, data_dict):
+        url = unicode("{}://{}{}").format(
+                protocol,
+                domain,
+                path)
         put_headers = copy.copy(self._headers)  # don't update reusable dict
         put_headers[REQUEST.CONTENT_TYPE] = REQUEST.APP_JSON
 
