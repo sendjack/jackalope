@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
     foreman
     -------
@@ -7,8 +6,9 @@
 
 """
 
-from worker.asana_employer import AsanaEmployer
-from worker.task_rabbit_employee import TaskRabbitEmployee
+from worker.asana_employer import AsanaEmployer, ASANA
+from worker.send_jack_employer import SendJackEmployer, SEND_JACK
+from worker.task_rabbit_employee import TaskRabbitEmployee, TASK_RABBIT
 
 from workflow import WorkflowFactory
 
@@ -19,30 +19,31 @@ class Foreman(object):
 
     Attributes
     ----------
-    employers : list of `Employer`
-    employees : list of `Employee`
+    employers : dict
+    employees : dict
 
     """
 
 
     def __init__(self):
-        self._employers = [
-                AsanaEmployer()
-                ]
+        self._employers = {
+                ASANA.VENDOR: AsanaEmployer(),
+                SEND_JACK.VENDOR: SendJackEmployer()
+                }
 
-        self._employees = [
-                TaskRabbitEmployee()
-                ]
+        self._employees = {
+                TASK_RABBIT.VENDOR: TaskRabbitEmployee()
+                }
 
 
     def get_task_rabbit_worker(self):
         """Return an instance of the `TaskRabbitEmployee`."""
-        return self._employees[0]
+        return self._employees[TASK_RABBIT.VENDOR]
 
 
     def get_asana_worker(self):
         """Return an instance of the `AsanaEmployer`."""
-        return self._employers[0]
+        return self._employers[ASANA.VENDOR]
 
 
     def ferry_comment(self, service, from_task_id, message):
@@ -81,38 +82,44 @@ class Foreman(object):
         employer_tasks = {}
         for employer in self._employers:
             employer_tasks = employer.read_tasks()
+            # employer_tasks[id] = None when the task is not spec ready
             self._process_employer_tasks(employer, employer_tasks)
+
+
+    def send_jack_for_employer_task(self, vendor_name, task_id):
+        employer = self._employers.get(vendor_name)
+        employer_tasks = {task_id: employer.read_task(task_id)}
+        self._process_employer_tasks(employer, employer_tasks)
 
 
     def _process_employer_tasks(self, employer, tasks):
         """Process a dict of `Employer` service `Task` keyed on id."""
+        print "\n STEP 2: PROCESS THE TASKS ------>\n"
+
         for task in tasks.values():
-            if task:
-                print ""
-                print task.id
+            if task is not None:
                 # hand the Tasks over to a Workflow and evaluate the statuses.
                 # keep on processing Task until it doesn't change.
                 task_to_process = task
-                count = 0
+                id = task.id()
+                process_iterations = 0
+                print "START processing task", id
+
                 while task_to_process:
-                    print "count:", count
                     task_to_process._print_task()
+                    print "\t processed task", process_iterations, "times\n"
+
                     workflow = WorkflowFactory.instantiate_from_employer(
                             employer,
                             task_to_process,
                             self)
                     task_to_process = workflow.process()
 
-                    count = count + 1
+                    process_iterations = process_iterations + 1
+
+                print "END proccessing task", id, "\n"
 
 
     def _process_employee_tasks(self, employee, tasks):
         """Process a dict of `Employee` service `Task` keyed on id."""
         raise NotImplementedError()
-
-
-if __name__ == "__main__":
-    print "Running a single test loop..."
-    foreman = Foreman()
-    foreman.send_jack()
-    print "end"

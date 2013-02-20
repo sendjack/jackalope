@@ -19,8 +19,13 @@
     CommentTransformer subclasses.
 
 """
+import copy
+import json
+import requests
 
 from jutil.errors import OverrideRequiredError, OverrideNotAllowedError
+
+from .client import REQUEST
 
 
 class ServiceWorker(object):
@@ -157,49 +162,58 @@ class ServiceWorker(object):
         raise OverrideRequiredError()
 
 
-    def _get(self, path):
-        """ Connect to a service with a GET request.
+    def _get(self, domain, path):
+        """ Connect to a service with a GET request."""
+        url = domain + path
+        response = requests.get(url, headers=self._headers)
 
-        Required:
-        str     path to desired action
-
-        Return:
-        str     The parsed response
-
-        """
-        raise OverrideRequiredError()
+        return response.json
 
 
-    def _post(self, path, data):
-        """ Connect to a service with a POST request.
+    def _post(self, domain, path, data_dict):
+        """ Connect to a service with a POST request and return a dict."""
+        url = domain + path
+        post_headers = copy.copy(self._headers)  # don't update reusable dict
+        post_headers[REQUEST.CONTENT_TYPE] = REQUEST.APP_JSON
 
-        Required:
-        str     path to desired action
-        str     data to post
+        response = requests.post(
+                url,
+                data=json.dumps(data_dict),
+                headers=post_headers)
 
-        Return:
-        str     The parsed response
+        return response.json
 
-        """
-        raise OverrideRequiredError()
+
+    def _put(self, domain, path, data_dict):
+        url = domain + path
+        put_headers = copy.copy(self._headers)  # don't update reusable dict
+        put_headers[REQUEST.CONTENT_TYPE] = REQUEST.APP_JSON
+
+        response = requests.put(
+                url,
+                data=json.dumps(data_dict),
+                headers=put_headers)
+
+        return response.json
 
 
     def _ready_spec(self, task):
         """ Check to make sure task has a ready spec before handing it over to
         the Foreman. """
         if task.is_spec_ready():
-            print "SPEC READY!"
+            print "task", task.id(), "is ready"
             if not task.has_status():
                 self.update_task_to_created(task)
         else:
+            print "task", task.id(), "is not spec ready"
             if task.is_created():
                 # TODO: some diff here to see if things have changed
-                print "is created already"
+                print "but has already been created."
             else:
+                print "but has not been created. creating now..."
                 task.set_status_to_created()
                 self.request_required_fields(task)
             task = None
-            print "spec incomplete"
 
         return task
 
