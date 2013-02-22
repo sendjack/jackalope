@@ -25,6 +25,14 @@ class _SendJackField(object):
     def CUSTOMER_DESCRIPTION(self):
         return "customer_description"
 
+    @constant
+    def TASK_ID(self):
+        return "task_id"
+
+    @constant
+    def IS_FROM_CUSTOMER(self):
+        return "is_from_customer"
+
 
 SEND_JACK_FIELD = _SendJackField()
 
@@ -50,6 +58,10 @@ class _SendJack(object):
     @constant
     def TASK_PATH(self):
         return "/a/task"
+
+    @constant
+    def COMMENT_PATH(self):
+        return "/a/comment"
 
 SEND_JACK = _SendJack()
 
@@ -140,8 +152,20 @@ class SendJackEmployer(Employer):
 
 
     def add_comment(self, task_id, message):
-        # FIXME: This does nothing and it should.
-        return False
+        """Create a comment in the service on a task."""
+        comment_dict = {
+                SEND_JACK_FIELD.TASK_ID: task_id,
+                FIELD.MESSAGE: message,
+                SEND_JACK_FIELD.IS_FROM_CUSTOMER: False
+                }
+
+        new_comment_dict = self._post(
+                SEND_JACK.PROTOCOL,
+                SEND_JACK.DOMAIN,
+                SEND_JACK.COMMENT_PATH,
+                comment_dict)
+
+        return new_comment_dict is not None
 
 
     def read_comments(self, task_id):

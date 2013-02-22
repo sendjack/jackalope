@@ -4,13 +4,10 @@ TaskRabbitEmployee subclasses Employee and handles all interaction between
 Jackalope and TaskRabbit.
 
 """
-import re
-
 from jutil.decorators import constant
 from jutil import environment
-import redflag
+from redflag import redflag
 
-from jackalope.phrase import Phrase
 from model.comment import Comment
 
 from .client import REQUEST
@@ -213,15 +210,6 @@ class TaskRabbitEmployee(Employee):
         transformer.set_task(task)
         raw_task_dict = transformer.get_raw_task()
 
-        # add a blurb for the runner to know about Jackalope and who to email.
-        # FIXME: the task id should actually be the reciprocal id (or our
-        # internal id) but we can't do that yet so it's the Asana ID.
-        blurb = TaskRabbitTaskTransformer.get_jackalope_blurb(
-                TASK_RABBIT.VENDOR_IN_HTML,
-                task.id())
-        private_desc_field = TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION
-        raw_task_dict[TASK_RABBIT_FIELD.TASK][private_desc_field] = blurb
-
         # TODO: do this check in the base class
         raw_task_dict.get(TASK_RABBIT_FIELD.TASK).pop(FIELD.ID)
 
@@ -230,6 +218,20 @@ class TaskRabbitEmployee(Employee):
                 TASK_RABBIT.DOMAIN,
                 TASK_RABBIT.TASKS_PATH,
                 raw_task_dict)
+
+        # now update private description with TR's task id
+        tr_id = new_raw_task_dict.get(FIELD.ID)
+        path = unicode("{}/{}").format(TASK_RABBIT.TASKS_PATH, tr_id)
+        blurb = TaskRabbitTaskTransformer.get_jackalope_blurb(
+                TASK_RABBIT.VENDOR_IN_HTML,
+                tr_id)
+        updated_fields_dict = {TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION: blurb}
+        new_raw_task_dict = self._put(
+                TASK_RABBIT.PROTOCOL,
+                TASK_RABBIT.DOMAIN,
+                path,
+                updated_fields_dict)
+
         new_transformer = TaskRabbitTaskTransformer()
         new_transformer.set_raw_task(new_raw_task_dict)
 
@@ -266,6 +268,7 @@ class TaskRabbitEmployee(Employee):
 
     def add_comment(self, task_id, message):
         """Create a comment in the service on a task."""
+        # Get the runner_email from Task Rabbit using the task_id
         task_path = unicode("{}/{}").format(
                 TASK_RABBIT.TASKS_PATH,
                 str(task_id))
@@ -276,18 +279,12 @@ class TaskRabbitEmployee(Employee):
         runner_email = raw_task.get(TASK_RABBIT_FIELD.RUNNER, {}).get(
                 TASK_RABBIT_FIELD.EMAIL)
 
-        # pull the task-specific email from the private description
-        # TODO: pull this from the DB, or make this an optional parameter
-        # or pull it from the Task.
-        description = raw_task.get(TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION, "")
-        match = re.search(unicode(r"[\w.-]+@[\w.-]+[\w]"), description)
-        from_email = match.group()
-
+        # If successful, send the runner an email.
         if runner_email:
-            redflag.send_message_as_jack(
-                    from_email,
+            redflag.send_comment_on_task(
+                    TASK_RABBIT.VENDOR_IN_HTML,
+                    task_id,
                     runner_email,
-                    Phrase.new_comment_subject,
                     message)
 
         return True

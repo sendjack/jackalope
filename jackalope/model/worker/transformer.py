@@ -184,7 +184,7 @@ class TaskTransformer(object):
         task_id : `int`
 
         """
-        email = unicode("{}-{}@{}").format(
+        email = unicode("{}-{}-comment@{}").format(
                 service_name,
                 task_id,
                 settings.MAILGUN_DOMAIN)

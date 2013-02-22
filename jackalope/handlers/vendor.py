@@ -10,6 +10,7 @@ import json
 import tornado.web
 
 from model.foreman import Foreman
+from model.comment import COMMENT
 
 
 class VendorHandler(tornado.web.RequestHandler):
@@ -47,7 +48,6 @@ class TaskVendorHandler(VendorHandler):
     def _process_request(self):
         foreman = Foreman()
         foreman.send_jack_for_employer_task(self.vendor, self.id)
-        #print(self.request.body)
 
 
 class CommentVendorHandler(VendorHandler):
@@ -55,6 +55,8 @@ class CommentVendorHandler(VendorHandler):
     """Handle incoming comment requests."""
 
     def _process_request(self):
-        self.write("TODO: " + self.vendor + "-" + self.id)
-        #foreman.send_jack_for_employer_task(self.vendor, self.id)
-        print(self.request.body)
+        body = self._get_request_parameters()
+        message = body.get(COMMENT.MESSAGE)
+
+        foreman = Foreman()
+        foreman.ferry_comment(self.vendor, self.id, message)
