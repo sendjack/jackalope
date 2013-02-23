@@ -64,90 +64,12 @@ class ServiceWorker(object):
 
 
     def update_task(self, task):
-        """ Connect to Worker's service and udpate the task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - updated Task.
-
-        """
+        """Connect to worker's service and update the task."""
         raise OverrideRequiredError()
 
 
     def request_fields(self, task):
         """ Request from the service additional fields. """
-        raise OverrideRequiredError()
-
-
-    def update_task_to_created(self, task):
-        """ Update the service's task's status to CREATED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - udpated Task.
-
-        """
-        raise OverrideRequiredError()
-
-
-    def update_task_to_posted(self, task):
-        """ Update the service's task's status to POSTED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - udpated Task.
-
-        """
-        raise OverrideRequiredError()
-
-
-    def update_task_to_assigned(self, task):
-        """ Update the service's task's status to ASSIGNED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - udpated Task.
-
-        """
-        raise OverrideRequiredError()
-
-
-    def update_task_to_completed(self, task):
-        """ Update the service's task's status to COMPLETED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - udpated Task.
-
-        """
-        raise OverrideRequiredError()
-
-
-    def update_task_to_approved(self, task):
-        """ Update the service's task's status to APPROVED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - udpated Task.
-
-        """
         raise OverrideRequiredError()
 
 
@@ -212,7 +134,8 @@ class ServiceWorker(object):
         if task.is_spec_ready():
             print "task", task.id(), "is ready"
             if not task.has_status():
-                self.update_task_to_created(task)
+                task.set_status_to_created()
+                self.update_task(task)
         else:
             print "task", task.id(), "is not spec ready"
             if task.is_created():

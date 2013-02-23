@@ -86,6 +86,10 @@ class _TaskRabbitValue(object):
     def EXPIRED(self):
         return "expired"
 
+    @constant
+    def CANCELED(self):
+        return "canceled"
+
 TASK_RABBIT_VALUE = _TaskRabbitValue()
 
 
@@ -166,6 +170,41 @@ class TaskRabbitEmployee(Employee):
         return TASK_RABBIT.VENDOR
 
 
+    def create_task(self, task):
+        """Use Task to create a task in the Worker's service and then return
+        the new Task."""
+        transformer = TaskRabbitTaskTransformer()
+        transformer.set_task(task)
+        raw_task_dict = transformer.get_raw_task()
+
+        # TODO: do this check in the base class
+        raw_task_dict.get(TASK_RABBIT_FIELD.TASK).pop(FIELD.ID)
+
+        new_raw_task_dict = self._post(
+                TASK_RABBIT.PROTOCOL,
+                TASK_RABBIT.DOMAIN,
+                TASK_RABBIT.TASKS_PATH,
+                raw_task_dict)
+
+        # now update private description with TR's task id
+        tr_id = new_raw_task_dict.get(FIELD.ID)
+        path = unicode("{}/{}").format(TASK_RABBIT.TASKS_PATH, tr_id)
+        blurb = TaskRabbitTaskTransformer.get_jackalope_blurb(
+                TASK_RABBIT.VENDOR_IN_HTML,
+                tr_id)
+        updated_fields_dict = {TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION: blurb}
+        new_raw_task_dict = self._put(
+                TASK_RABBIT.PROTOCOL,
+                TASK_RABBIT.DOMAIN,
+                path,
+                updated_fields_dict)
+
+        new_transformer = TaskRabbitTaskTransformer()
+        new_transformer.set_raw_task(new_raw_task_dict)
+
+        return self._ready_spec(new_transformer.get_task())
+
+
     def read_task(self, task_id):
         """Connect to the ServiceWorker's service and return a Task."""
         path = unicode("{}/{}").format(TASK_RABBIT.TASKS_PATH, str(task_id))
@@ -203,52 +242,32 @@ class TaskRabbitEmployee(Employee):
         return tasks
 
 
-    def create_task(self, task):
-        """Use Task to create a task in the Worker's service and then return
-        the new Task."""
-        transformer = TaskRabbitTaskTransformer()
-        transformer.set_task(task)
-        raw_task_dict = transformer.get_raw_task()
-
-        # TODO: do this check in the base class
-        raw_task_dict.get(TASK_RABBIT_FIELD.TASK).pop(FIELD.ID)
-
-        new_raw_task_dict = self._post(
-                TASK_RABBIT.PROTOCOL,
-                TASK_RABBIT.DOMAIN,
+    def update_task(self, task):
+        """Connect to worker's service and update the task."""
+        # TODO: make update_task work for the general case.
+        # Get the task status from Task Rabbit using the task_id
+        task_path = unicode("{}/{}").format(
                 TASK_RABBIT.TASKS_PATH,
-                raw_task_dict)
-
-        # now update private description with TR's task id
-        tr_id = new_raw_task_dict.get(FIELD.ID)
-        path = unicode("{}/{}").format(TASK_RABBIT.TASKS_PATH, tr_id)
-        blurb = TaskRabbitTaskTransformer.get_jackalope_blurb(
-                TASK_RABBIT.VENDOR_IN_HTML,
-                tr_id)
-        updated_fields_dict = {TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION: blurb}
-        new_raw_task_dict = self._put(
+                str(task.id()))
+        raw_task = self._get(
                 TASK_RABBIT.PROTOCOL,
                 TASK_RABBIT.DOMAIN,
-                path,
-                updated_fields_dict)
+                task_path)
 
-        new_transformer = TaskRabbitTaskTransformer()
-        new_transformer.set_raw_task(new_raw_task_dict)
+        transformer = TaskRabbitTaskTransformer()
+        transformer.set_raw_task(raw_task)
+        tr_task = transformer.get_task()
 
-        return self._ready_spec(new_transformer.get_task())
+        updated_task = None
+        if not tr_task.is_approved() and task.is_approved():
+            updated_task = self._close_task(task)
+
+        return updated_task
 
 
-    def update_task_to_approved(self, task):
-        """ Update the service's task's status to APPROVED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - updated Task.
-
-        """
+    def _close_task(self, task):
+        """Close an approved Task Rabbit the way TR makes us and return updated
+        Task."""
         id = task.id()
         close_path = unicode("{}/{}{}").format(
                 TASK_RABBIT.TASKS_PATH,
@@ -368,6 +387,7 @@ class TaskRabbitTaskTransformer(TaskTransformer):
         completed_cond = status == TASK_RABBIT_VALUE.COMPLETED
         approved_cond = status == TASK_RABBIT_VALUE.CLOSED
         expired_cond = status == TASK_RABBIT_VALUE.EXPIRED
+        canceled_cond = status == TASK_RABBIT_VALUE.CANCELED
 
         if posted_cond:
             raw_task[status_service_field] = VALUE.POSTED
@@ -378,11 +398,10 @@ class TaskRabbitTaskTransformer(TaskTransformer):
         elif approved_cond:
             raw_task[status_service_field] = VALUE.APPROVED
         elif expired_cond:
-            # FIXME XXX: Clearly this is a lie
-            raw_task[status_service_field] = VALUE.APPROVED
-            print "TR Task", raw_task.get("id"), "is Expired"
+            raw_task[status_service_field] = VALUE.EXPIRED
+        elif canceled_cond:
+            raw_task[status_service_field] = VALUE.CANCELED
         else:
-            # todo handle State = "expired"
             print "ERROR in pull service quirks"
             raw_task[status_service_field] = VALUE.POSTED
 
@@ -405,6 +424,8 @@ class TaskRabbitTaskTransformer(TaskTransformer):
         assigned_cond = status == VALUE.ASSIGNED
         completed_cond = status == VALUE.COMPLETED
         approved_cond = status == VALUE.APPROVED
+        expired_cond = status == VALUE.EXPIRED
+        canceled_cond = status == VALUE.CANCELED
 
         if posted_cond:
             raw_task[status_service_field] = TASK_RABBIT_VALUE.OPENED
@@ -414,6 +435,10 @@ class TaskRabbitTaskTransformer(TaskTransformer):
             raw_task[status_service_field] = TASK_RABBIT_VALUE.COMPLETED
         elif approved_cond:
             raw_task[status_service_field] = TASK_RABBIT_VALUE.CLOSED
+        elif expired_cond:
+            raw_task[status_service_field] = TASK_RABBIT_VALUE.EXPIRED
+        elif canceled_cond:
+            raw_task[status_service_field] = TASK_RABBIT_VALUE.CANCELED
         elif created_cond:
             print "there shouldn't be a created status state but there is."
         else:

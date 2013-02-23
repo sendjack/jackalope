@@ -57,7 +57,7 @@ class Workflow(object):
         if self._jack_task is None:
             self._jack_task = self._task
             print "\tDB-TASK-TODO: create - write task to db"
-        self._reconcile_state()
+        self._reconcile_tasks()
 
 
     def _fetch_jack_task(self, task_id):
@@ -65,7 +65,7 @@ class Workflow(object):
         print "\tDB-TASK-TODO: read - read task from db"
         return None
 
-    def _reconcile_state(self):
+    def _reconcile_tasks(self):
         """Evaluate the Tasks, update them appropriately, and return a Task if
         it's been updated or None if it hasn't."""
         raise OverrideRequiredError()
@@ -76,7 +76,7 @@ class SoloWorkflow(Workflow):
     """Evaluate a Task from an Employer but only handle workflows where there
     is not an additional service or Task."""
 
-    def _reconcile_state(self):
+    def _reconcile_tasks(self):
         """Evaluate the Tasks, update them appropriately, and return a Task if
         it's been updated or None if it hasn't."""
         # only process SoloWorkflows from Employers.
@@ -86,7 +86,8 @@ class SoloWorkflow(Workflow):
         # if posted, then complete.
         if self._task.is_posted():
             print "\tDB-TASK-TODO: update - update jack task to completed"
-            self._task = self._worker.update_task_to_completed(self._task)
+            self._task.set_status_to_completed()
+            self._task = self._worker.update_task()
             self._worker.add_comment(
                     self._task.id(),
                     Phrase.registration_confirmation)
@@ -130,77 +131,13 @@ class PairedWorkflow(Workflow):
         self._set_reciprocal_task()
 
 
-    def _reconcile_state(self):
+    def _reconcile_tasks(self):
         """Evaluate the Tasks, update them appropriately, and return a Task if
         it's been updated or None if it hasn't."""
-        # check to see if Status is in sync and act.
-        # both states are the same. do nothing.
-        if self._are_same_states(
-                self._get_employer_task(),
-                self._get_employee_task()):
-            print "same state"
-        # employee task is posted and employer task is created, then update
-        elif (
-                self._get_employee_task().is_posted() and
-                self._get_employer_task().is_created()
-                ):
-            print "posted update"
-            updated_task = self._get_employer().update_task_to_posted(
-                    self._get_employer_task())
-            self._update_employee_task(updated_task)
-        # employee task is assigned and employer task is posted, then update
-        elif (
-                self._get_employee_task().is_assigned() and
-                self._get_employer_task().is_posted()
-                ):
-            print "assigned update"
-            print "\tDB-TASK-TODO: update - update jack task to assigned"
-            updated_task = self._get_employer().update_task_to_assigned(
-                    self._get_employer_task())
-            self._update_employer_task(updated_task)
-        # employee task is completed and employer task is assigned, then update
-        elif (
-                self._get_employee_task().is_completed() and
-                self._get_employer_task().is_assigned() or
-                self._get_employer_task().is_posted()
-                ):
-            print "completed update"
-            print "\tDB-TASK-TODO: update - update jack task to completed"
-            updated_task = self._get_employer().update_task_to_completed(
-                    self._get_employer_task())
-            self._update_employer_task(updated_task)
-        # employer task is approved. update employee task.
-        elif self._get_employer_task().is_approved():
-            print "approved update"
-            print "\tDB-TASK-TODO: update - update jack task to approced"
-            updated_task = self._get_employee().update_task_to_approved(
-                    self._get_employee_task())
-            self._update_employee_task(updated_task)
-        # error state.
-        else:
-            raise WorkflowError()
 
-        # check to see if Content is in sync and act.
-
-        # sync comments between the services when they've been paired
-        # FIXME: Currently only pulls comments from workflow initiator
-        # (employer)
-        if (
-                self._task.is_assigned() or
-                self._task.is_completed() or
-                self._task.is_approved()):
-            comments = self._worker.read_comments(self._task.id())
-            self._task.set_comments(comments)
-            synched_ts = self._db_worker.get_synched_ts(
-                    self._task.id(),
-                    self._worker.name())
-            new_comments = self._task.get_comments_since_ts(synched_ts)
-            if new_comments:
-                self._task_changed = True
-            for comment in new_comments:
-                self._reciprocal_worker.add_comment(
-                        self._reciprocal_task.id(),
-                        comment.message())
+        self._reconcile_statuses()
+        # self._reconcile_content_between_tasks()
+        self._reconcile_comments()
 
         # if either task has changed make sure synch ts is updated and pushed.
         updated_task = None
@@ -219,6 +156,95 @@ class PairedWorkflow(Workflow):
             # TODO: uncomment this line when TaskRabbitWorker.update_task works
             #self._reciprocal_worker.update_task(self._reciprocal_task)
         return updated_task
+
+
+    def _reconcile_statuses(self):
+        # this assignment makes the code way more readable
+        employer = self._get_employer()
+        employer_task = self._get_employer_task()
+        employee = self._get_employee()
+        employee_task = self._get_employee_task()
+
+        print "employer status:", employer_task._get_status()
+        print "employee status:", employee_task._get_status()
+
+        # same state
+        if employer_task.has_same_status(employee_task):
+            print "same state"
+
+        # employer created / employee posted
+        elif employer_task.is_created() and employee_task.is_posted():
+            print "Task just POSTED to employee"
+            employer_task.set_status_to_posted()
+            updated_task = employer.update_task(employer_task)
+            self._update_employee_task(updated_task)
+
+        # employer posted / employee assigned
+        elif employer_task.is_posted() and employee_task.is_assigned():
+            print "Task just ASSIGNED to employee."
+            employer_task.set_status_to_assigned()
+            updated_task = employer.update_task(employer_task)
+            self._update_employer_task(updated_task)
+
+        # employee task is completed and employer task is assigned, then update
+        elif (
+                (employer_task.is_posted or employer_task.is_assigned()) and
+                employee_task.is_completed()
+                ):
+            print "Task just COMPLETED by employee."
+            employer_task.set_status_to_completed()
+            updated_task = employer.update_task(employer_task)
+            self._update_employer_task(updated_task)
+
+        # employer approved / employee completed
+        elif employer_task.is_approved() and employee_task.is_completed():
+            print "Task just APPROVED by employer."
+            employee_task.set_status_to_approved()
+            updated_task = employee.update_task(employee_task)
+            self._update_employee_task(updated_task)
+
+        # employee expired
+        elif employee_task.is_expired():
+            print "Task just EXPIRED by employee."
+            employer_task.set_status_to_expired()
+            updated_task = employer.update_task(employer_task)
+            self._update_employer_task(updated_task)
+
+        # employer canceled
+        elif employer_task.is_canceled():
+            print "Task just CANCELED by employer."
+            employee_task.set_status_to_canceled()
+            updated_task = employee.update_task(employee_task)
+            self._update_employee_task(updated_task)
+
+        # error state.
+        else:
+            raise WorkflowError()
+
+
+    def _reconcile_comments(self):
+        # sync comments between the services when they've been paired
+        # FIXME: Currently only pulls comments from workflow initiator
+        # (employer)
+
+        # this assignment makes the code way more readable
+        task = self._task
+        worker = self._worker
+        db_worker = self._db_worker
+        reciprocal_task = self._reciprocal_task
+        reciprocal_worker = self._reciprocal_worker
+
+        if task.is_assigned() or task.is_completed() or task.is_approved():
+            comments = worker.read_comments(task.id())
+            task.set_comments(comments)
+            synched_ts = db_worker.get_synched_ts(task.id(), worker.name())
+            new_comments = task.get_comments_since_ts(synched_ts)
+            if new_comments:
+                self._task_changed = True
+            for comment in new_comments:
+                reciprocal_worker.add_comment(
+                        reciprocal_task.id(),
+                        comment.message())
 
 
     def _get_employer(self):
@@ -343,23 +369,6 @@ class PairedWorkflow(Workflow):
         self._task_changed = True
 
         return reciprocal_task
-
-
-    @staticmethod
-    def _are_same_states(task1, task2):
-        """If both Tasks have the same status, then return True."""
-        are_same_states = False
-
-        if task1.is_posted() and task2.is_posted():
-            are_same_states = True
-        elif task1.is_assigned() and task2.is_assigned():
-            are_same_states = True
-        elif task1.is_completed() and task2.is_completed():
-            are_same_states = True
-        elif task1.is_approved() and task2.is_approved():
-            are_same_states = True
-
-        return are_same_states
 
 
 class WorkflowFactory(object):

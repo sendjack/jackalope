@@ -139,6 +139,10 @@ class Task(object):
         return self._get_status() is not None
 
 
+    def has_same_status(self, other_task):
+        return self._get_status() == other_task._get_status()
+
+
     def is_created(self):
         return self._get_status() == STATUS.CREATED
 
@@ -177,6 +181,22 @@ class Task(object):
 
     def set_status_to_approved(self):
         self._set_status(STATUS.APPROVED)
+
+
+    def is_expired(self):
+        return self._get_status() == STATUS.EXPIRED
+
+
+    def set_status_to_expired(self):
+        self._set_status(STATUS.EXPIRED)
+
+
+    def is_canceled(self):
+        return self._get_status() == STATUS.CANCELED
+
+
+    def set_status_to_canceled(self):
+        self._set_status(STATUS.CANCELED)
 
 
     def description(self):
