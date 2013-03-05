@@ -6,6 +6,16 @@
     to ferry messages between services.
 
 """
+from jutil.decorators import constant
+
+
+class _Comment(object):
+
+    @constant
+    def MESSAGE(self):
+        return "message"
+
+COMMENT = _Comment()
 
 
 class Comment(object):

@@ -91,6 +91,14 @@ class _Value(object):
     def APPROVED(self):
         return "approved"
 
+    @constant
+    def EXPIRED(self):
+        return "expired"
+
+    @constant
+    def CANCELED(self):
+        return "canceled"
+
 VALUE = _Value()
 
 
@@ -184,7 +192,7 @@ class TaskTransformer(object):
         task_id : `int`
 
         """
-        email = unicode("{}-{}@{}").format(
+        email = unicode("{}-{}-comment@{}").format(
                 service_name,
                 task_id,
                 settings.MAILGUN_DOMAIN)
@@ -331,6 +339,10 @@ class TaskTransformer(object):
             task.set_status_to_completed()
         elif status == VALUE.APPROVED:
             task.set_status_to_approved()
+        elif status == VALUE.EXPIRED:
+            task.set_status_to_expired()
+        elif status == VALUE.CANCELED:
+            task.set_status_to_canceled()
         else:
             print "No status yet"
 
@@ -359,6 +371,10 @@ class TaskTransformer(object):
             status = VALUE.COMPLETED
         elif task.is_approved():
             status = VALUE.APPROVED
+        elif task.is_expired():
+            status = VALUE.EXPIRED
+        elif task.is_canceled():
+            status = VALUE.CANCELED
         raw_task[self._get_service_field_name(FIELD.STATUS)] = status
 
         return raw_task

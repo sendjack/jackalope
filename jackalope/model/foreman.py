@@ -10,7 +10,8 @@ from worker.asana_employer import AsanaEmployer, ASANA
 from worker.send_jack_employer import SendJackEmployer, SEND_JACK
 from worker.task_rabbit_employee import TaskRabbitEmployee, TASK_RABBIT
 
-from workflow import WorkflowFactory
+from .data.db_worker import DbWorker
+from .workflow import WorkflowFactory
 
 
 class Foreman(object):
@@ -21,6 +22,7 @@ class Foreman(object):
     ----------
     employers : dict
     employees : dict
+    workers : dict
 
     """
 
@@ -35,6 +37,10 @@ class Foreman(object):
                 TASK_RABBIT.VENDOR: TaskRabbitEmployee()
                 }
 
+        self._workers = {}
+        self._workers.update(self._employers)
+        self._workers.update(self._employees)
+
 
     def get_task_rabbit_worker(self):
         """Return an instance of the `TaskRabbitEmployee`."""
@@ -46,33 +52,21 @@ class Foreman(object):
         return self._employers[ASANA.VENDOR]
 
 
-    def ferry_comment(self, service, from_task_id, message):
+    def ferry_comment(self, sender_vendor, sender_vendor_task_id, message):
         """Add the comment to the reciprocal task."""
-        new_comment = None
 
-        if service == "taskrabbit":
-            # when the reciprocal id is in the tr task
-            # tr_worker = self.get_task_rabbit_worker()
-            # from_task = tr_worker.read_task(from_task_id)
-            # to_task_id = from_task.reciprocal_id()
+        # look up the corresponding vendor and vendor_task_id
+        db_worker = DbWorker()
+        (recipient_vendor_task_id, recipient_vendor_name) = (
+                db_worker.get_reciprocal_task_info(
+                    sender_vendor_task_id,
+                    sender_vendor))
+        recipient_worker = self._workers.get(recipient_vendor_name)
 
-            asana_worker = self.get_asana_worker()
-
-            # FIXME: the 'from_task_id' is actually the to_task_id' because we
-            # don't have the from_task_id when this is set.
-            to_task_id = from_task_id
-            # remove when reciprocal id comes from tr
-            #tasks = asana_worker.read_tasks()
-            #to_task_id = -1
-            #for id, to_task in tasks.items():
-            #    if to_task.reciprocal_id() == from_task_id:
-            #        to_task_id = id
-
-            new_comment = asana_worker.add_comment(
-                    to_task_id,
-                    message)
-        else:
-            print "only handling comments from taskrabbit"
+        # send out the comment to the recipient
+        new_comment = recipient_worker.add_comment(
+                recipient_vendor_task_id,
+                message)
 
         return new_comment is not None
 

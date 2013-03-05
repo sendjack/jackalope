@@ -10,10 +10,6 @@
 class _Phrase(object):
 
     @property
-    def new_comment_subject(self):
-        return unicode("A New Comment")
-
-    @property
     def registration_confirmation(self):
         return unicode("You're registered!")
 

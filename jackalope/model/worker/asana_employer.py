@@ -1,7 +1,8 @@
-""" Module: asana_employer
+"""
+    asana_employer
+    --------------
 
-AsanaEmployer subclasses Employer and handles all interaction between Jackalope
-and Asana.
+    Handle all interactions with Asana server and data transformations.
 
 """
 import time
@@ -11,9 +12,8 @@ from asana import asana
 
 from jutil.decorators import constant
 from jutil import environment
-from jutil.errors import OverrideNotAllowedError
 from jutil.base_type import to_integer
-from jackalope.phrase import Phrase
+#from jackalope.phrase import Phrase
 
 from worker import Employer
 from transformer import TaskTransformer, CommentTransformer, FIELD, VALUE
@@ -106,14 +106,14 @@ ASANA = _Asana()
 
 class AsanaEmployer(Employer):
 
-    """ Connect with Asana to allow requests.
+    """Connect with Asana to allow requests.
 
-    Required:
-    AsanaAPI _asana_api     a connection to the asana api
-    dict _workspaces        all the user's workspaces, keyed on id
+    Attributes
+    ----------
+    _asana_api : AsanaAPI
+    _workspaces : dict
 
     """
-
 
     def __init__(self):
         self._asana_api = asana.AsanaAPI(
@@ -129,7 +129,7 @@ class AsanaEmployer(Employer):
 
 
     def read_task(self, task_id):
-        """Connect to the ServiceWorker's service and return a Task."""
+        """Return a Task from the vendor."""
         raw_task = self._asana_api.get_task(task_id)
 
         transformer = AsanaTaskTransformer()
@@ -138,12 +138,7 @@ class AsanaEmployer(Employer):
 
 
     def read_tasks(self):
-        """ Connect to Worker's service and return all tasks.
-
-        Return:
-        dict    all the Tasks keyed on id
-
-        """
+        """Read all tasks from vendor and return Tasks as dict."""
         print "\nSTEP 1: READ ALL ASANA TASKS ------>\n"
 
         test_workspace_id = self._retrieve_id(
@@ -174,15 +169,7 @@ class AsanaEmployer(Employer):
 
 
     def update_task(self, task):
-        """ Connect to Worker's service and update the task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - updated Task.
-
-        """
+        """Connect to Worker's service and update the task."""
         transformer = AsanaTaskTransformer()
         transformer.set_task(task)
 
@@ -197,6 +184,12 @@ class AsanaEmployer(Employer):
 
         new_transformer = AsanaTaskTransformer()
         new_transformer.set_raw_task(new_raw_task_dict)
+
+        # FIXME XXX: These need to be queued somewhere
+        #self.add_comment(task.id(), Phrase.task_posted_note)
+        #self.add_comment(task.id(), Phrase.task_assigned_note)
+        #self.add_comment(task.id(), Phrase.task_completed_note)
+
         return self._ready_spec(new_transformer.get_task())
 
 
@@ -224,93 +217,6 @@ class AsanaEmployer(Employer):
                 self.update_task(task),
                 self.add_comment(task.id(), comment),
                 ])
-
-
-    def update_task_to_created(self, task):
-        """ Update the service's task's status to CREATED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - updated Task.
-
-        """
-        task.set_status_to_created()
-        updated_task = self.update_task(task)
-        # no add_comment with created
-
-        return updated_task
-
-
-    def update_task_to_posted(self, task):
-        """ Update the service's task's status to POSTED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - updated Task.
-
-        """
-        task.set_status_to_posted()
-        updated_task = self.update_task(task)
-        self.add_comment(task.id(), Phrase.task_posted_note)
-
-        return updated_task
-
-
-    def update_task_to_assigned(self, task):
-        """ Update the service's task's status to ASSIGNED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - updated Task.
-
-        """
-        task.set_status_to_assigned()
-        updated_task = self.update_task(task)
-        self.add_comment(task.id(), Phrase.task_assigned_note)
-
-        return updated_task
-
-
-    def update_task_to_completed(self, task):
-        """ Update the service's task's status to COMPLETED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - updated Task.
-
-        """
-        task.set_status_to_completed()
-        updated_task = self.update_task(task)
-        self.add_comment(task.id(), Phrase.task_completed_note)
-
-        return updated_task
-
-
-    def update_task_to_approved(self, task):
-        """ Update the service's task's status to APPROVED and return this
-        updated Task.
-
-        Required:
-        Task task   The Task to update.
-
-        Return:
-        Task - updated Task.
-
-        """
-        # Asana shouldn't be getting approved notices but sending them.
-        raise OverrideNotAllowedError()
 
 
     def add_comment(self, task_id, message):

@@ -25,6 +25,14 @@ class _SendJackField(object):
     def CUSTOMER_DESCRIPTION(self):
         return "customer_description"
 
+    @constant
+    def TASK_ID(self):
+        return "task_id"
+
+    @constant
+    def IS_FROM_CUSTOMER(self):
+        return "is_from_customer"
+
 
 SEND_JACK_FIELD = _SendJackField()
 
@@ -50,6 +58,10 @@ class _SendJack(object):
     @constant
     def TASK_PATH(self):
         return "/a/task"
+
+    @constant
+    def COMMENT_PATH(self):
+        return "/a/comment"
 
 SEND_JACK = _SendJack()
 
@@ -97,38 +109,6 @@ class SendJackEmployer(Employer):
         return self._ready_spec(updated_transformer.get_task())
 
 
-    def update_task_to_created(self, task):
-        # Don't do anything here because Send Jack already has the status as
-        # created
-        task.set_status_to_created()
-
-        return task
-
-
-    def update_task_to_posted(self, task):
-        task.set_status_to_posted()
-        updated_task = self.update_task(task)
-        # self.add_comment(task.id(), Phrase.task_posted_note)
-
-        return updated_task
-
-
-    def update_task_to_assigned(self, task):
-        task.set_status_to_assigned()
-        updated_task = self.update_task(task)
-        # self.add_comment(task.id(), Phrase.task_assigned_note)
-
-        return updated_task
-
-
-    def update_task_to_completed(self, task):
-        task.set_status_to_completed()
-        updated_task = self.update_task(task)
-        #self.add_comment(task.id(), Phrase.task_completed_note)
-
-        return updated_task
-
-
     def request_required_fields(self, task):
         """Request unfilled but required fields."""
         # FIXME: Send Jack has no way to notify that they need additional
@@ -140,8 +120,20 @@ class SendJackEmployer(Employer):
 
 
     def add_comment(self, task_id, message):
-        # FIXME: This does nothing and it should.
-        return False
+        """Create a comment in the service on a task."""
+        comment_dict = {
+                SEND_JACK_FIELD.TASK_ID: task_id,
+                FIELD.MESSAGE: message,
+                SEND_JACK_FIELD.IS_FROM_CUSTOMER: False
+                }
+
+        new_comment_dict = self._post(
+                SEND_JACK.PROTOCOL,
+                SEND_JACK.DOMAIN,
+                SEND_JACK.COMMENT_PATH,
+                comment_dict)
+
+        return new_comment_dict is not None
 
 
     def read_comments(self, task_id):
