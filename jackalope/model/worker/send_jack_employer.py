@@ -115,7 +115,7 @@ class SendJackEmployer(Employer):
         # fields. Unless we send out an email...but that doesn't seem to be a
         # good idea.
         raise NotImplementedError(
-                "SendJack cannot be notified that additiona fields are needed")
+                "SendJack can't be notified that additional fields are needed")
         return False
 
 
@@ -153,7 +153,44 @@ class SendJackTaskTransformer(TaskTransformer):
                 SendJackTaskTransformer,
                 self)._get_field_name_map()
         field_name_map[FIELD.NAME] = SEND_JACK_FIELD.TITLE
-        field_name_map[FIELD.DESCRIPTION] = (
-                SEND_JACK_FIELD.CUSTOMER_DESCRIPTION)
+        field_name_map[FIELD.DESCRIPTION] = SEND_JACK_FIELD.SUMMARY
+        # private description will be generated in service_quirks()
 
         return field_name_map
+
+
+    def _pull_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to pull
+        additional fields into the raw task. """
+        instructions_blob = ""
+        instructions_str = raw_task.get(SEND_JACK_FIELD.INSTRUCTIONS_STR)
+        if instructions_str is not None:
+            instructions_blob = unicode("INSTRUCTIONS:\n\n{}\n\n\n").format(
+                    instructions_str)
+
+        notes_blob = ""
+        notes = raw_task.get(SEND_JACK_FIELD.NOTES)
+        if notes is not None:
+            notes_blob = unicode("EXTRA NOTES:\n\n{}\n\n\n").format(notes)
+
+        private_description = unicode("{}{}").format(
+                instructions_blob,
+                notes_blob)
+
+        raw_task[FIELD.PRIVATE_DESCRIPTION] = private_description
+
+        return raw_task
+
+
+    def _push_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to push
+        fields back into their proper spot.
+
+        Note: Send Jack shouldn't receive any updates on important properties
+        it turns out.
+
+        """
+        raw_task.pop(FIELD.PRIVATE_DESCRIPTION, None)
+        raw_task.pop(FIELD.DESCRIPTION, None)
+
+        return raw_task

@@ -29,6 +29,10 @@ class _Field(object):
         return "description"
 
     @constant
+    def PRIVATE_DESCRIPTION(self):
+        return "private_description"
+
+    @constant
     def EMAIL(self):
         return "email"
 
@@ -113,6 +117,7 @@ class Task(object):
         self._properties = {}
         self._set_status(None)
         self.set_description(None)
+        self.set_private_description(None)
         self.set_email(None)
         self.set_price(None)
         self.set_location(None)
@@ -207,6 +212,14 @@ class Task(object):
         self._set_property(FIELD.DESCRIPTION, description)
 
 
+    def private_description(self):
+        return self._get_property(FIELD.PRIVATE_DESCRIPTION)
+
+
+    def set_private_description(self, private_description):
+        self._set_property(FIELD.PRIVATE_DESCRIPTION, private_description)
+
+
     def price(self):
         return self._get_property(FIELD.PRICE)
 
@@ -288,6 +301,7 @@ class Task(object):
                 "status": self._get_status(),
                 "location": self.location(),
                 "description": self.description(),
+                "private_description": self.private_description(),
                 "spec ready?": self.is_spec_ready(),
                 "updated?": self.is_updated()
                 }
