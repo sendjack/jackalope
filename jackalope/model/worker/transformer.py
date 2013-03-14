@@ -45,6 +45,10 @@ class _Field(object):
         return "description"
 
     @constant
+    def PRIVATE_DESCRIPTION(self):
+        return "private_description"
+
+    @constant
     def CATEGORY(self):
         return "category"
 
@@ -466,6 +470,7 @@ class TaskTransformer(object):
                 FIELD.PRICE: FIELD.PRICE,
                 FIELD.EMAIL: FIELD.EMAIL,
                 FIELD.DESCRIPTION: FIELD.DESCRIPTION,
+                FIELD.PRIVATE_DESCRIPTION: FIELD.PRIVATE_DESCRIPTION,
                 FIELD.LOCATION: FIELD.LOCATION,
                 FIELD.STATUS: FIELD.STATUS,
                 }
@@ -481,6 +486,10 @@ class TaskTransformer(object):
                 FIELD.PRICE: (task.price, task.set_price),
                 FIELD.EMAIL: (task.email, task.set_email),
                 FIELD.DESCRIPTION: (task.description, task.set_description),
+                FIELD.PRIVATE_DESCRIPTION: (
+                        task.private_description,
+                        task.set_private_description
+                        ),
                 FIELD.LOCATION: (task.location, task.set_location),
                 }
 
