@@ -10,7 +10,7 @@ from jutil.decorators import constant
 from jutil import environment
 
 from .worker import Employer
-from .transformer import TaskTransformer, FIELD
+from .transformer import TaskTransformer, FIELD, VALUE
 
 
 class _SendJackField(object):
@@ -19,22 +19,34 @@ class _SendJackField(object):
 
     @constant
     def TITLE(self):
-        return "customer_title"
-
-    @constant
-    def CUSTOMER_DESCRIPTION(self):
-        return "customer_description"
+        return "title"
 
     @constant
     def TASK_ID(self):
         return "task_id"
 
     @constant
+    def MORE_DETAILS(self):
+        return "more_details"
+
+    @constant
+    def SUMMARY(self):
+        return "summary"
+
+    @constant
     def IS_FROM_CUSTOMER(self):
         return "is_from_customer"
 
-
 SEND_JACK_FIELD = _SendJackField()
+
+
+class _SendJackValue(object):
+
+    @constant
+    def CONFIRMED(self):
+        return "confirmed"
+
+SEND_JACK_VALUE = _SendJackValue()
 
 
 class _SendJack(object):
@@ -57,11 +69,11 @@ class _SendJack(object):
 
     @constant
     def TASK_PATH(self):
-        return "/a/task"
+        return "/a/instances"
 
     @constant
     def COMMENT_PATH(self):
-        return "/a/comment"
+        return "/a/comments"
 
 SEND_JACK = _SendJack()
 
@@ -115,7 +127,7 @@ class SendJackEmployer(Employer):
         # fields. Unless we send out an email...but that doesn't seem to be a
         # good idea.
         raise NotImplementedError(
-                "SendJack cannot be notified that additiona fields are needed")
+                "SendJack can't be notified that additional fields are needed")
         return False
 
 
@@ -153,7 +165,47 @@ class SendJackTaskTransformer(TaskTransformer):
                 SendJackTaskTransformer,
                 self)._get_field_name_map()
         field_name_map[FIELD.NAME] = SEND_JACK_FIELD.TITLE
-        field_name_map[FIELD.DESCRIPTION] = (
-                SEND_JACK_FIELD.CUSTOMER_DESCRIPTION)
+        field_name_map[FIELD.DESCRIPTION] = SEND_JACK_FIELD.SUMMARY
+        # private description will be generated in service_quirks()
 
         return field_name_map
+
+
+    def _pull_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to pull
+        additional fields into the raw task. """
+
+        # Translate CONFIRMED status to CREATED
+        status = raw_task.get(FIELD.STATUS)
+        if status == SEND_JACK_VALUE.CONFIRMED:
+            raw_task[FIELD.STATUS] = VALUE.CREATED
+
+        # Create private-Description
+        description = raw_task.get(FIELD.DESCRIPTION)
+        if description is not None:
+            description = unicode("{}\n\n").format(description)
+        more_details = raw_task.get(SEND_JACK_FIELD.MORE_DETAILS)
+        private_description = unicode("{}{}").format(description, more_details)
+        raw_task[FIELD.PRIVATE_DESCRIPTION] = private_description
+
+        return raw_task
+
+
+    def _push_service_quirks(self, raw_task):
+        """ Interact with the service in very service specific ways to push
+        fields back into their proper spot.
+
+        Note: Send Jack shouldn't receive any updates on important properties
+        it turns out.
+
+        """
+        # Remove these fields so that SendJack doesn't get bad data.
+        raw_task.pop(FIELD.PRIVATE_DESCRIPTION, None)
+        raw_task.pop(FIELD.DESCRIPTION, None)
+
+        # Translate CREATED back into CONFIRMED
+        status = raw_task.get(FIELD.STATUS)
+        if status == VALUE.CREATED:
+            raw_task[FIELD.STATUS] = SEND_JACK_VALUE.CONFIRMED
+
+        return raw_task

@@ -55,10 +55,6 @@ class _TaskRabbitField(object):
     def EMAIL(self):
         return "email"
 
-    @constant
-    def PRIVATE_DESCRIPTION(self):
-        return "private_description"
-
 TASK_RABBIT_FIELD = _TaskRabbitField()
 
 
@@ -192,7 +188,11 @@ class TaskRabbitEmployee(Employee):
         blurb = TaskRabbitTaskTransformer.get_jackalope_blurb(
                 TASK_RABBIT.VENDOR_IN_HTML,
                 tr_id)
-        updated_fields_dict = {TASK_RABBIT_FIELD.PRIVATE_DESCRIPTION: blurb}
+        private_description = unicode("{}\n{}").format(
+                new_raw_task_dict.get(FIELD.PRIVATE_DESCRIPTION),
+                blurb)
+
+        updated_fields_dict = {FIELD.PRIVATE_DESCRIPTION: private_description}
         new_raw_task_dict = self._put(
                 TASK_RABBIT.PROTOCOL,
                 TASK_RABBIT.DOMAIN,
