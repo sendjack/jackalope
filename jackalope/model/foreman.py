@@ -86,6 +86,12 @@ class Foreman(object):
         self._process_employer_tasks(employer, employer_tasks)
 
 
+    #def send_jack_for_employee_task(self, vendor_name, task_id):
+    #    employee = self._employees.get(vendor_name)
+    #    employee_tasks = {task_id: employee.read_task(task_id)}
+    #    self._process_employee_tasks(employee, employee_tasks)
+
+
     def _process_employer_tasks(self, employer, tasks):
         """Process a dict of `Employer` service `Task` keyed on id."""
         print "\n STEP 2: PROCESS THE TASKS ------>\n"

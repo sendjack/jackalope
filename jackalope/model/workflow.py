@@ -170,7 +170,7 @@ class PairedWorkflow(Workflow):
 
         # same state
         if employer_task.has_same_status(employee_task):
-            print "same state"
+            print "Employee and Employer in same STATE"
 
         # employer created / employee posted
         elif employer_task.is_created() and employee_task.is_posted():
@@ -188,7 +188,7 @@ class PairedWorkflow(Workflow):
 
         # employee task is completed and employer task is assigned, then update
         elif (
-                (employer_task.is_posted or employer_task.is_assigned()) and
+                (employer_task.is_posted() or employer_task.is_assigned()) and
                 employee_task.is_completed()
                 ):
             print "Task just COMPLETED by employee."
