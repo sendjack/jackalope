@@ -36,7 +36,7 @@ class ServiceWorker(object):
     def __init__(self):
         raise OverrideRequiredError()
 
-
+    @property
     def name(self):
         """Return the name of the vendor."""
         raise OverrideRequiredError()

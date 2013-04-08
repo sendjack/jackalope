@@ -1,5 +1,5 @@
-code=uXi1nMDLE3HffEqAUAzI
-&client_id=qEad0EtKPx2NGF5r6ZxtGxDI53GxjX01B1C4hsa7
-&client_secret=y9UiusJ60UxAKumAKxqwvF5F4uavmlPFDBtPiuk0
+code=8m0ex2sOt2ofk9C1NqKG
+&client_id=f2iRyZsJKRRjKMCQVypqvnOk5X522CM0AEm1Llf3
+&client_secret=isDllvgbgCfnSndSjOoB9RBNtX75SiPyBRyEBC37
 &grant_type=authorization_code
-&redirect_uri=http://alpha.sendjack.com/callback/tr
+&redirect_uri=http://208.120.145.135:5100/callback/tr

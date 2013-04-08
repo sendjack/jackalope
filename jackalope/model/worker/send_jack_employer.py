@@ -84,6 +84,7 @@ class SendJackEmployer(Employer):
         self._headers = {}
 
 
+    @property
     def name(self):
         return SEND_JACK.VENDOR
 

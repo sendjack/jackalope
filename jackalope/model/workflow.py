@@ -28,7 +28,7 @@ class Workflow(object):
     ----------
     _worker : `ServiceWorker`
     _task : `Task`
-    _forman : `Foreman`
+    _foreman : `Foreman`
     _is_employer_workflow: `bool`
         If Employer initiated this Workflow, then True.
     _task_changed : `bool`
@@ -127,8 +127,7 @@ class PairedWorkflow(Workflow):
                 is_employer_workflow)
 
         self._reciprocal_task_changed = False
-        self._set_smart_reciprocal_worker()
-        self._set_reciprocal_task()
+        self._set_reciprocal_worker_and_task()
 
 
     def _reconcile_tasks(self):
@@ -145,13 +144,13 @@ class PairedWorkflow(Workflow):
         if self._task_changed:
             self._db_worker.update_vendor_synched_ts(
                     self._task.id(),
-                    self._worker.name(),
+                    self._worker.name,
                     current_ts)
             updated_task = self._worker.update_task(self._task)
         if self._reciprocal_task_changed:
             self._db_worker.update_vendor_synched_ts(
                     self._reciprocal_task.id(),
-                    self._reciprocal_worker.name(),
+                    self._reciprocal_worker.name,
                     current_ts)
             # TODO: uncomment this line when TaskRabbitWorker.update_task works
             #self._reciprocal_worker.update_task(self._reciprocal_task)
@@ -237,7 +236,7 @@ class PairedWorkflow(Workflow):
         if task.is_assigned() or task.is_completed() or task.is_approved():
             comments = worker.read_comments(task.id())
             task.set_comments(comments)
-            synched_ts = db_worker.get_synched_ts(task.id(), worker.name())
+            synched_ts = db_worker.get_synched_ts(task.id(), worker.name)
             new_comments = task.get_comments_since_ts(synched_ts)
             if new_comments:
                 self._task_changed = True
@@ -313,30 +312,23 @@ class PairedWorkflow(Workflow):
             self._task_changed = True
 
 
-    def _set_smart_reciprocal_worker(self):
-        """Figure out which reciprocal ServiceWorker should match this Task and
-        set the *_reciprocal_worker*."""
-        # TODO make this function pull from a dictionary or database
-        if self._is_employer_workflow:
-            self._reciprocal_worker = self._foreman.get_task_rabbit_worker()
-        else:
-            self._reciprocal_worker = self._foreman.get_asana_worker()
-
-
-    def _set_reciprocal_task(self):
-        """Set the *_reciprocal_task* and create it first if it doesn't
-        exist."""
+    def _set_reciprocal_worker_and_task(self):
+        """Set the reciprocoal worker and task, and create the task if it
+        doesn't yet exist."""
         (reciprocal_id, reciprocal_service_name) = (
                 self._db_worker.get_reciprocal_task_info(
                         self._task.id(),
-                        self._worker.name()))
-        # if it exists, just store it.
+                        self._worker.name))
+        # if task exists then store it and the worker
         if reciprocal_id:
+            self._reciprocal_worker = self._foreman.get_worker(
+                    reciprocal_service_name)
             self._reciprocal_task = self._reciprocal_worker.read_task(
                     reciprocal_id)
         else:
             # if it doesn't exist and the Workflow was started by an employer,
             # then create it.
+            self._reciprocal_worker = self._foreman.get_worker()
             if self._is_employer_workflow:
                 self._reciprocal_task = self._create_reciprocal_task()
             # Employee initiated Workflows cannot create reciprocal tasks.
@@ -350,17 +342,17 @@ class PairedWorkflow(Workflow):
         reciprocal_task = self._reciprocal_worker.create_task(self._task)
         self._db_worker.create_vendor_task(
                 self._task.id(),
-                self._worker.name(),
+                self._worker.name,
                 0,
                 reciprocal_task.id(),
-                self._reciprocal_worker.name())
+                self._reciprocal_worker.name)
 
         self._db_worker.create_vendor_task(
                 reciprocal_task.id(),
-                self._reciprocal_worker.name(),
+                self._reciprocal_worker.name,
                 0,
                 self._task.id(),
-                self._worker.name())
+                self._worker.name)
 
         self._task = self._worker.update_task(self._task)
         #self._worker.add_comment(
@@ -395,6 +387,25 @@ class WorkflowFactory(object):
         workflow = workflow_constructor(employer, employer_task, foreman)
 
         print "Task", employer_task.id(), ": WORKFLOW OF", workflow_constructor
+
+        return workflow
+
+
+    @classmethod
+    def instantiate_from_employee(
+            class_,
+            employee,
+            employee_task,
+            foreman):
+        task_class = type(employee_task)
+        workflow_constructor = class_.WORKFLOW_TASK_MAPPING.get(task_class)
+        workflow = workflow_constructor(
+                employee,
+                employee_task,
+                foreman,
+                False)
+
+        print "Task", employee_task.id(), ": WORKFLOW OF", workflow_constructor
 
         return workflow
 

@@ -48,6 +48,14 @@ class _TaskRabbitField(object):
         return "content"
 
     @constant
+    def VIRTUAL(self):
+        return "virtual"
+
+    @constant
+    def PRIVATE_RUNNER(self):
+        return "private_runner"
+
+    @constant
     def RUNNER(self):
         return "runner"
 
@@ -160,7 +168,7 @@ class TaskRabbitEmployee(Employee):
                 REQUEST.AUTH_HEADER: REQUEST.OAUTH + TASK_RABBIT.ACCESS_TOKEN,
                 }
 
-
+    @property
     def name(self):
         """Return the name of the vendor."""
         return TASK_RABBIT.VENDOR
@@ -346,7 +354,7 @@ class TaskRabbitTaskTransformer(TaskTransformer):
 
     """
 
-    CITY_ID = "4"
+    CITY_ID = "9999"
 
 
     def __init__(self):
@@ -359,11 +367,12 @@ class TaskRabbitTaskTransformer(TaskTransformer):
                 TaskRabbitTaskTransformer,
                 self)._deconstruct_task_to_dict()
 
-        # TODO: Remove this
+        # TODO: Remove this when incoming tasks have location
         location_service_field = self._get_service_field_name(FIELD.LOCATION)
         if not raw_task.get(location_service_field):
             print "No Location, so adding one myself."
             raw_task[location_service_field] = self.CITY_ID
+            raw_task[TASK_RABBIT_FIELD.VIRTUAL] = True
 
         task_wrapper = {}
         task_wrapper[TASK_RABBIT_FIELD.TASK] = raw_task
@@ -444,6 +453,9 @@ class TaskRabbitTaskTransformer(TaskTransformer):
         else:
             print "status push error"
             raw_task[status_service_field] = TASK_RABBIT_VALUE.OPENED
+
+        # all task rabbit tasks should be private
+        raw_task[TASK_RABBIT_FIELD.PRIVATE_RUNNER] = True
 
         return raw_task
 

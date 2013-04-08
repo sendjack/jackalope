@@ -20,9 +20,9 @@ class Foreman(object):
 
     Attributes
     ----------
-    employers : dict
-    employees : dict
-    workers : dict
+    _employers : dict
+    _employees : dict
+    _workers : dict
 
     """
 
@@ -42,14 +42,10 @@ class Foreman(object):
         self._workers.update(self._employees)
 
 
-    def get_task_rabbit_worker(self):
-        """Return an instance of the `TaskRabbitEmployee`."""
-        return self._employees[TASK_RABBIT.VENDOR]
-
-
-    def get_asana_worker(self):
-        """Return an instance of the `AsanaEmployer`."""
-        return self._employers[ASANA.VENDOR]
+    def get_worker(self, key=None):
+        """Return the requested worker, but if no worker requested, then return
+        the default employee, TaskRabbit."""
+        return self._workers.get(key, self._employees.get(TASK_RABBIT.VENDOR))
 
 
     def ferry_comment(self, sender_vendor, sender_vendor_task_id, message):
@@ -80,21 +76,20 @@ class Foreman(object):
             self._process_employer_tasks(employer, employer_tasks)
 
 
-    def send_jack_for_employer_task(self, vendor_name, task_id):
+    def send_jack_for_task(self, vendor_name, task_id):
         employer = self._employers.get(vendor_name)
-        employer_tasks = {task_id: employer.read_task(task_id)}
-        self._process_employer_tasks(employer, employer_tasks)
-
-
-    #def send_jack_for_employee_task(self, vendor_name, task_id):
-    #    employee = self._employees.get(vendor_name)
-    #    employee_tasks = {task_id: employee.read_task(task_id)}
-    #    self._process_employee_tasks(employee, employee_tasks)
+        if employer:
+            employer_tasks = {task_id: employer.read_task(task_id)}
+            self._process_employer_tasks(employer, employer_tasks)
+        else:
+            employee = self._employees.get(vendor_name)
+            employee_tasks = {task_id: employee.read_task(task_id)}
+            self._process_employee_tasks(employee, employee_tasks)
 
 
     def _process_employer_tasks(self, employer, tasks):
         """Process a dict of `Employer` service `Task` keyed on id."""
-        print "\n STEP 2: PROCESS THE TASKS ------>\n"
+        print "\n STEP: PROCESS THE EMPLOYER TASKS ------>\n"
 
         for task in tasks.values():
             if task is not None:
@@ -122,4 +117,27 @@ class Foreman(object):
 
     def _process_employee_tasks(self, employee, tasks):
         """Process a dict of `Employee` service `Task` keyed on id."""
-        raise NotImplementedError()
+        print "\n STEP: PROCESS THE EMPLOYEE TASKS ------>\n"
+
+        for task in tasks.values():
+            if task is not None:
+                # hand the Tasks over to a Workflow and evaluate the statuses.
+                # keep on processing Task until it doesn't change.
+                task_to_process = task
+                id = task.id()
+                process_iterations = 0
+                print "START processing task", id
+
+                while task_to_process:
+                    task_to_process._print_task()
+                    print "\t processed task", process_iterations, "times\n"
+
+                    workflow = WorkflowFactory.instantiate_from_employee(
+                            employee,
+                            task_to_process,
+                            self)
+                    task_to_process = workflow.process()
+
+                    process_iterations = process_iterations + 1
+
+                print "END proccessing task", id, "\n"
