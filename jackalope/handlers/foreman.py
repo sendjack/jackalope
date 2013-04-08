@@ -5,7 +5,6 @@
     Handle incoming requests to check all tasks.
 
 """
-#import json
 import tornado.web
 
 from model.foreman import Foreman

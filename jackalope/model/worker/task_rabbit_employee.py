@@ -168,7 +168,7 @@ class TaskRabbitEmployee(Employee):
                 REQUEST.AUTH_HEADER: REQUEST.OAUTH + TASK_RABBIT.ACCESS_TOKEN,
                 }
 
-
+    @property
     def name(self):
         """Return the name of the vendor."""
         return TASK_RABBIT.VENDOR

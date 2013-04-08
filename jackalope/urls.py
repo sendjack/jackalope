@@ -11,9 +11,9 @@ from handlers.foreman import ForemanHandler
 
 
 url_patterns = [
-        (r"/sendjack/task/?([0-9]+)?", SendJackTaskHandler),
-        (r"/sendjack/comment/?([0-9]+)?", SendJackCommentHandler),
-        (r"/taskrabbit/task/?([0-9]+)?", TaskRabbitTaskHandler),
-        (r"/taskrabbit/comment/?([0-9]+)?", TaskRabbitCommentHandler),
+        (r"/sendjack/tasks/?([0-9]+)?", SendJackTaskHandler),
+        (r"/sendjack/comments/?([0-9]+)?", SendJackCommentHandler),
+        (r"/taskrabbit/tasks/?([0-9]+)?", TaskRabbitTaskHandler),
+        (r"/taskrabbit/comments/?([0-9]+)?", TaskRabbitCommentHandler),
         (r"/jackalope", ForemanHandler),
         ]
