@@ -123,6 +123,7 @@ class AsanaEmployer(Employer):
                 self._asana_api.list_workspaces())
 
 
+    @property
     def name(self):
         """Return the name of the vendor."""
         return ASANA.VENDOR
